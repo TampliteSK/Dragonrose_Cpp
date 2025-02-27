@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dragonrose_Cpp", "Dragonrose_Cpp.vcxproj", "{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Debug|x64.ActiveCfg = Debug|x64
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Debug|x64.Build.0 = Debug|x64
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Debug|x86.ActiveCfg = Debug|Win32
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Debug|x86.Build.0 = Debug|Win32
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Release|x64.ActiveCfg = Release|x64
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Release|x64.Build.0 = Release|x64
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Release|x86.ActiveCfg = Release|Win32
+		{24230CE4-37D6-44A4-97DB-4AB2CAA0C80C}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0D21DC76-E463-4392-A21F-48B98E2A7881}
+	EndGlobalSection
+EndGlobal
