@@ -6,6 +6,6 @@
 #include <cstdint>
 #include "Board.hpp"
 
-void perft_test(Board *pos, int depth, uint64_t& nodes);
+uint64_t run_perft(Board *pos, uint8_t depth, bool print_info);
 
 #endif // PERFT_HPP

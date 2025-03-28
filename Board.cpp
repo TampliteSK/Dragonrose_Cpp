@@ -5,6 +5,7 @@
 #include "Board.hpp"
 #include "bitboard.hpp"
 #include "zobrist.hpp"
+#include "moveio.hpp"
 
 // Constructors
 Board::Board() {
@@ -16,9 +17,37 @@ Board::Board(const std::string FEN) {
 	parse_fen(FEN);
 }
 
+// Copy constructor
+Board::Board(const Board& other) {
+	std::copy(std::begin(other.pieces), std::end(other.pieces), pieces);
+	std::copy(std::begin(other.bitboards), std::end(other.bitboards), bitboards);
+	std::copy(std::begin(other.occupancies), std::end(other.occupancies), occupancies);
+
+	std::copy(std::begin(other.piece_num), std::end(other.piece_num), piece_num);
+
+	std::copy(std::begin(other.king_sq), std::end(other.king_sq), king_sq);
+	side = other.side;
+	enpas = other.enpas;
+	castle_perms = other.castle_perms;
+	fifty_move = other.fifty_move;
+
+	ply = other.ply;
+	his_ply = other.his_ply;
+	hash_key = other.hash_key;
+	std::copy(std::begin(other.move_history), std::end(other.move_history), move_history);
+
+	std::copy(&other.killer_moves[0][0], &other.killer_moves[0][0] + 2 * MAX_DEPTH, &killer_moves[0][0]);
+	std::copy(&other.history_moves[0][0], &other.history_moves[0][0] + 13 * 64, &history_moves[0][0]);
+}
+
 /*
 	Board manipulation
 */
+
+// Clone method
+Board* Board::clone() const {
+	return new Board(*this); // Calls the copy constructor
+}
 
 void Board::reset_board() {
 
@@ -188,14 +217,25 @@ void Board::parse_fen(const std::string FEN) {
 	}
 
 	// Fifty-move counter parsing
-	if (FEN[pfen + 1] == ' ') {
-		// Single digit
-		fifty_move = FEN[pfen] - '0';
+	uint16_t half_moves = 0;
+	while (pfen < FEN.length() && FEN[pfen] != ' ') {
+		half_moves = half_moves * 10 + (FEN[pfen] - '0');
+		pfen++;
 	}
-	else {
-		// Double digit
-		fifty_move = (FEN[pfen] - '0') * 10 + (FEN[pfen + 1] - '0');
+	fifty_move = half_moves;
+	pfen++; // Move past the space
+
+	// Full move number parsing
+	uint16_t full_move = 0;
+	while (pfen < FEN.length()) {
+		if (FEN[pfen] == ' ') {
+			break;
+		}
+		full_move = full_move * 10 + (FEN[pfen] - '0');
+		pfen++;
 	}
+	// ply = his_ply = full_move;
+
 
 	// Zobrist key
 	hash_key = generate_hash_key(*this);
@@ -236,6 +276,14 @@ void Board::print_board() const {
 
     std::cout << "       Hash key: " << std::hex << hash_key << "\n\n";
 	std::cout << std::dec; // Reset output to base 10
+}
+
+void Board::print_move_history() const {
+	std::cout << "Move history: ";
+	for (int i = 0; i < his_ply; ++i) {
+		std::cout << print_move(move_history[i].move) << " ";
+	}
+	std::cout << "\n";
 }
 
 /*
@@ -307,12 +355,22 @@ void Board::set_piece(uint8_t sq, uint8_t new_pce) {
 }
 void Board::set_bitboard(uint8_t pce, uint8_t index, uint8_t new_bit) {
 	if (pce < 13) {
-		bitboards[pce] |= (new_bit << index);
+		if (new_bit) {
+			bitboards[pce] |= (1ULL << index); // Set the bit
+		}
+		else {
+			bitboards[pce] &= ~(1ULL << index); // Clear the bit
+		}
 	}
 }
 void Board::set_occupancy(uint8_t col, uint8_t index, uint8_t new_bit) {
 	if (col < 3) {
-		occupancies[col] |= (new_bit << index);
+		if (new_bit) {
+			occupancies[col] |= (1ULL << index); // Set the bit
+		}
+		else {
+			occupancies[col] &= ~(1ULL << index); // Clear the bit
+		}
 	}
 }
 

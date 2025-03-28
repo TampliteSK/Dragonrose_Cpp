@@ -15,28 +15,8 @@
 int main(int argc, char* argv[]) {
 	init_all();
 
-	Board *pos = new Board();
-	pos->parse_fen(START_POS);
-	
-	/*
-	std::vector<Move> move_list;
-	generate_moves(pos, move_list);
-	sort_moves(pos, move_list);
-	print_move_list(move_list);
-
-	bool status = false;
-	status = make_move(pos, move_list[0].move);
-	pos->print_board();
-	std::cout << "Is move legal? " << status << std::endl;
-	take_move(pos);
-	pos->print_board();
-	make_move(pos, move_list[1].move);
-	std::cout << "Is move legal? " << status << std::endl;
-	pos->print_board();
-	*/
-
-	uint64_t nodes = 0;
-	perft_test(pos, 2, nodes);
+	Board* pos = new Board(START_POS);
+	run_perft(pos, 5, true);
 
 	return 0;
 }

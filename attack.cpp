@@ -5,11 +5,12 @@
 #include "attackgen.hpp"
 #include "Board.hpp"
 #include "bitboard.hpp"
+#include "movegen.hpp"
 
 // Check if the current square is attacked by a given side
 bool is_square_attacked(const Board *pos, uint8_t sq, uint8_t side) {
 
-    // Pawns
+    // Pawns (flip the direction of the atacks)
     if ((side == WHITE) && (pawn_attacks[BLACK][sq] & pos->get_bitboard(wP))) return true;
     if ((side == BLACK) && (pawn_attacks[WHITE][sq] & pos->get_bitboard(bP))) return true;
 
@@ -62,6 +63,14 @@ Bitboard get_piece_attacks(const Board *pos, uint8_t pce, uint8_t sq) {
     if (piece_type[pce] ==   KING) return king_attacks[sq];
 }
 
+bool is_move_attack(const Board *pos, int move) {
+    uint8_t piece = get_move_piece(move);
+    uint8_t target_sq = get_move_target(move);
+    // Generate the attacks at the target sq, as if the piece is already there
+    return get_piece_attacks(pos, piece, target_sq) & pos->get_occupancy(pos->get_side() ^ 1);
+}
+
+// Replace with incremental version in 
 Bitboard get_all_attacks(const Board *pos, uint8_t side, bool king_included) {
     Bitboard copy = pos->get_occupancy(side);
     Bitboard attacks = 0ULL;

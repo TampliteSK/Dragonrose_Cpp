@@ -161,6 +161,8 @@ void take_move(Board *pos) {
 
 bool make_move(Board *pos, int move) {
 
+	Board* copy = pos->clone();
+
 	int from = get_move_source(move);
 	int to = get_move_target(move);
 	int side = pos->get_side();
@@ -171,98 +173,105 @@ bool make_move(Board *pos, int move) {
 	if (get_move_enpassant(move)) {
 		// Clear the captured pawn
 		if (side == WHITE) {
-			clear_piece(pos, to + 8);
+			clear_piece(copy, to + 8);
 		}
 		else {
-			clear_piece(pos, to - 8);
+			clear_piece(copy, to - 8);
 		}
 	}
 	else if (get_move_castling(move)) {
 		// Move the corresponding rook
 		switch (to) {
 			case c1:
-				move_piece(pos, a1, d1);
+				move_piece(copy, a1, d1);
 				break;
 			case c8:
-				move_piece(pos, a8, d8);
+				move_piece(copy, a8, d8);
 				break;
 			case g1:
-				move_piece(pos, h1, f1);
+				move_piece(copy, h1, f1);
 				break;
 			case g8:
-				move_piece(pos, h8, f8);
+				move_piece(copy, h8, f8);
 				break;
 		}
 	}
 
-	if (pos->get_enpas() != NO_SQ) {
-		HASH_EP(pos);
+	if (copy->get_enpas() != NO_SQ) {
+		HASH_EP(copy);
 	}
-	HASH_CA(pos);
+	HASH_CA(copy);
 
 	box.move = move;
-	box.fifty_move = pos->get_fifty_move();
-	box.enpas = pos->get_enpas();
-	box.castle_perms = pos->get_castle_perms();
-	pos->set_move_history(pos->get_his_ply(), box);
+	box.fifty_move = copy->get_fifty_move();
+	box.enpas = copy->get_enpas();
+	box.castle_perms = copy->get_castle_perms();
+	copy->set_move_history(copy->get_his_ply(), box);
 
-	uint8_t castle_perms = pos->get_castle_perms();
+	uint8_t castle_perms = copy->get_castle_perms();
 	castle_perms &= castling_rights[from];
 	castle_perms &= castling_rights[to];
-	pos->set_castle_perms(castle_perms);
-	pos->set_enpas(NO_SQ);
+	copy->set_castle_perms(castle_perms);
+	copy->set_enpas(NO_SQ);
 
-	HASH_CA(pos);
+	HASH_CA(copy);
 
-	pos->set_fifty_move(pos->get_fifty_move() + 1);
+	copy->set_fifty_move(copy->get_fifty_move() + 1);
 
 	// Handle captures
 	int captured = get_move_capture(move);
 	if (captured != EMPTY) {
-		clear_piece(pos, to);
-		pos->set_fifty_move(0);
+		clear_piece(copy, to);
+		copy->set_fifty_move(0);
 	}
 
-	pos->set_ply(pos->get_ply() + 1);
-	pos->set_his_ply(pos->get_his_ply() + 1);
 
-	if (piece_type[pos->get_piece(from)] == PAWN) {
-		pos->set_fifty_move(0);
-		// Check if it's a double advance
+	copy->set_ply(copy->get_ply() + 1);
+	copy->set_his_ply(copy->get_his_ply() + 1);
+
+	if (piece_type[copy->get_piece(from)] == PAWN) {
+		copy->set_fifty_move(0);
+		// Check if it's double advance
 		if (get_move_double(move)) {
 			if (side == WHITE) {
-				pos->set_enpas(from - 8);
+				copy->set_enpas(from - 8);
 			}
 			else {
-				pos->set_enpas(from + 8);
+				copy->set_enpas(from + 8);
 			}
-			HASH_EP(pos);
+			HASH_EP(copy);
 		}
 	}
 
-	move_piece(pos, from, to);
+	move_piece(copy, from, to);
 
 	// Handle promotions
 	int prPce = get_move_promoted(move);
 	if (prPce != EMPTY) {
 		// Replace the pawn with the promoted piece
-		clear_piece(pos, to);
-		add_piece(pos, to, prPce);
+		clear_piece(copy, to);
+		add_piece(copy, to, prPce);
 	}
 
 	// Detect king move
-	if (piece_type[pos->get_piece(to)] == KING) {
-		pos->set_king_sq(pos->get_side(), to);
+	if (piece_type[copy->get_piece(to)] == KING) {
+		copy->set_king_sq(copy->get_side(), to);
+	}
+	
+	// Switch sides
+	copy->set_side(copy->get_side() ^ 1);
+	HASH_SIDE(copy);
+
+	// It is an illegal move if we reveal a check to our king
+	// side: Our side (the mover)
+	// pos->get_side(): Opponent's side (switched after making the move)
+	if (is_square_attacked(copy, copy->get_king_sq(side), copy->get_side())) {
+		delete copy;
+		return false; // Illegal move
 	}
 
-	pos->set_side(pos->get_side() ^ 1);
-	HASH_SIDE(pos);
-
-	if (is_square_attacked(pos, pos->get_king_sq(side), pos->get_side())) {
-		take_move(pos);
-		return false;
-	}
-
+	*pos = *copy;
+	delete copy;
 	return true;
 }
 

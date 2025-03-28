@@ -26,12 +26,17 @@ typedef struct {
 
 class Board {
 public:
+	// Constructors
 	Board();
 	Board(const std::string FEN);
+	Board(const Board& other); // Copy constructor
+
+	Board* clone() const; // Clone method
 	void reset_board();
 	void update_vars();
 	void parse_fen(const std::string FEN);
 	void print_board() const;
+	void print_move_history() const;
 
 	// Getters
 	uint8_t get_piece(uint8_t sq) const;

@@ -1,0 +1,159 @@
+// ttable.cpp
+
+// #include <iostream>
+#include "ttable.hpp"
+#include "Board.hpp"
+#include "makemove.hpp"
+#include "search.hpp"
+
+HashTable hash_table[1]; // Global hash
+
+int probe_PV_move(const Board* pos, const HashTable* table) {
+	int index = pos->get_hash_key() % table->max_entries;
+
+	if (table->pTable[index].hash_key == pos->get_hash_key()) {
+		return table->pTable[index].move;
+	}
+
+	return NO_MOVE;
+}
+
+int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
+
+	int move = probe_PV_move(pos, table);
+	int count = 0;
+
+	/*
+	while (move != NO_MOVE && count < depth) {
+
+		if (MoveExists(pos, move)) {
+			make_move(pos, move);
+			pos->PvArray[count++] = move;
+		}
+		else {
+			break;
+		}
+		move = probe_PV_move(pos, table);
+	}
+	*/
+
+	while (pos->get_ply() > 0) {
+		take_move(pos);
+	}
+
+	return count;
+
+}
+
+void clear_hash_table(HashTable* table) {
+	for (int i = 0; i < table->max_entries; ++i) {
+		table->pTable[i].hash_key = 0ULL;
+		table->pTable[i].move = NO_MOVE;
+		table->pTable[i].depth = 0;
+		table->pTable[i].score = 0;
+		table->pTable[i].flags = 0;
+		table->pTable[i].age = 0;
+	}
+
+	table->new_write = 0;
+	table->table_age = 0;
+}
+
+void init_hash_table(HashTable* table, const uint16_t MB) {
+
+	int HashSize = 0x100000 * MB;
+	table->max_entries = HashSize / sizeof(HashEntry) - 2;
+
+	if (table->pTable != NULL) {
+		free(table->pTable);
+	}
+
+	table->pTable = (HashEntry*)malloc(table->max_entries * sizeof(HashEntry));
+	if (table->pTable == NULL) {
+		init_hash_table(table, MB / 2); // Retry hash allocation with half size if failed
+	}
+	else {
+		clear_hash_table(table);
+		// std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
+	}
+
+}
+
+bool probe_hash_entry(Board* pos, HashTable* table, int* move, int* score, int alpha, int beta, int depth) {
+
+	int index = pos->get_hash_key() % table->max_entries;
+
+	if (table->pTable[index].hash_key == pos->get_hash_key()) {
+		*move = table->pTable[index].move;
+		if (table->pTable[index].depth >= depth) {
+			table->hit++;
+
+			*score = table->pTable[index].score;
+			if (*score > MATE_SCORE) *score -= pos->get_ply();
+			else if (*score < -MATE_SCORE) *score += pos->get_ply();
+
+			switch (table->pTable[index].flags) {
+			case HFALPHA: if (*score <= alpha) {
+				*score = alpha;
+				return true;
+			}
+						break;
+			case HFBETA: if (*score >= beta) {
+				*score = beta;
+				return true;
+			}
+					   break;
+			case HFEXACT:
+				return true;
+				break;
+			}
+		}
+	}
+
+	return false;
+}
+
+void store_hash_entry(Board* pos, HashTable* table, const int move, uint32_t score, const uint8_t flags, const uint8_t depth) {
+
+	int index = pos->get_hash_key() % table->max_entries;
+	bool replace = false;
+
+	// Check if there is an existing entry at a certain index
+	if (table->pTable[index].hash_key == 0) {
+		table->new_write++;
+		table->num_entries++;
+		replace = true;
+	}
+	else {
+		int entryAge = table->pTable[index].age;
+		// Existing entry is old, or equal age but shallower depth
+		if (entryAge < table->table_age) {
+			// Existing entry is old, so we replace it
+			replace = true;
+			table->overwrite++;
+		}
+		else if (entryAge == table->table_age && table->pTable[index].depth < depth) {
+			// Existing entry is equal age, but at a shallower depth, we still replace it
+			replace = true;
+			table->overwrite++;
+		}
+	}
+
+	if (!replace) return; // No need to overwrite the entry
+
+	int written_score = score;
+	if (score > MATE_SCORE) {
+		written_score += pos->get_ply();
+	}
+	else if (score < -MATE_SCORE) {
+		written_score -= pos->get_ply();
+	}
+
+	table->pTable[index].move = move;
+	table->pTable[index].hash_key = pos->get_hash_key();
+	table->pTable[index].flags = flags;
+	table->pTable[index].score = written_score;
+	table->pTable[index].depth = depth;
+	table->pTable[index].age = table->table_age;
+}
+

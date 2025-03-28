@@ -141,6 +141,7 @@
     <ClInclude Include="perft.hpp" />
     <ClInclude Include="search.hpp" />
     <ClInclude Include="timeman.hpp" />
+    <ClInclude Include="ttable.hpp" />
     <ClInclude Include="zobrist.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -155,7 +156,9 @@
     <ClCompile Include="movegen.cpp" />
     <ClCompile Include="moveio.cpp" />
     <ClCompile Include="perft.cpp" />
+    <ClCompile Include="search.cpp" />
     <ClCompile Include="timeman.cpp" />
+    <ClCompile Include="ttable.cpp" />
     <ClCompile Include="zobrist.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

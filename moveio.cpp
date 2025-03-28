@@ -100,3 +100,25 @@ void print_move_list(const std::vector<Move> move_list) {
     // Print total number of moves
     std::cout << "\n\n     Total number of moves: " << move_list.size() << "\n\n";
 }
+
+// print move list (comapct version)
+void print_move_list_compact(const std::vector<Move> move_list) {
+
+    // Do nothing on empty move list
+    if (move_list.empty()) {
+        std::cout << "\nMove list has no moves!\n";
+        return;
+    }
+
+    std::cout << "Generated moves: ";
+
+    for (int move_count = 0; move_count < move_list.size(); move_count++) {
+        Move move_struct = move_list.at(move_count);
+        int move = move_struct.move;
+        int score = move_struct.score;
+        std::cout << print_move(move) << " (" << score << ") ";
+    }
+
+    // Print total number of moves
+    std::cout << "\nCount: " << move_list.size() << "\n\n";
+}

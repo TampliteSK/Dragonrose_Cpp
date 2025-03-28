@@ -6,6 +6,8 @@
 #include <cstdint>
 #include "Board.hpp"
 
+#define PIN_ILLEGAL_TEST "r1bqk1nr/pppp1ppp/2n5/4p3/1b2P3/2NP4/PPP2PPP/R1BQKBNR w KQkq - 3"
+
 constexpr uint8_t NO_MOVE = 0;
 
 // Functions

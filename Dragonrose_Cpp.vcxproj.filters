@@ -54,6 +54,9 @@
     <ClInclude Include="timeman.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ttable.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp">
@@ -93,6 +96,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="timeman.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ttable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
