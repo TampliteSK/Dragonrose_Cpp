@@ -9,14 +9,27 @@
 #include "movegen.hpp"
 #include "moveio.hpp"
 #include "perft.hpp"
-
-#define TEST1 "r3kn1r/p3b1p1/2pq1p2/2p1p2p/6bP/1P1P1NP1/PBPNQP2/2K1R2R b kq - 4 15"
+#include "search.hpp"
+#include "timeman.hpp"
+#include "ttable.hpp"
 
 int main(int argc, char* argv[]) {
 	init_all();
 
 	Board* pos = new Board(START_POS);
-	run_perft(pos, 5, true);
+	
+	SearchInfo* info = (SearchInfo*)malloc(sizeof(SearchInfo));
+	init_searchinfo(info);
+
+	HashTable* hash_table = (HashTable*)malloc(sizeof(HashTable)); // Global hash
+	hash_table->pTable = NULL;
+
+	info->depth = 5;
+	info->start_time = get_time_ms();
+	info->stop_time = get_time_ms() * 2;
+
+	init_hash_table(hash_table, 16);
+	search_position(pos, hash_table, info);
 
 	return 0;
 }

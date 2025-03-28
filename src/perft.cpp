@@ -23,7 +23,7 @@ uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
     long start = 0;
 
     std::vector<Move> move_list;
-    generate_moves(pos, move_list);
+    generate_moves(pos, move_list, false);
 
     if (print_info) {
         std::cout << "\n     Performance test\n\n";

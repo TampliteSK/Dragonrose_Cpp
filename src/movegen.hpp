@@ -11,11 +11,8 @@ typedef struct {
     int score;
 } Move;
 
-// move types
-enum { all_moves, only_captures };
-
 // Functions
-void generate_moves(const Board *pos, std::vector<Move>& move_list);
+void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_only);
 void sort_moves(const Board *pos, std::vector<Move>& move_list);
 
 /*

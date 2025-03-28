@@ -3,12 +3,11 @@
 #ifndef BOARD_HPP
 #define BOARD_HPP
 
+#include "datatypes.hpp"
 #include <string>
 #include <cstdint>
-#include "datatypes.hpp"
-#include "search.hpp"
 
-const uint16_t MAX_GAME_MOVES = 2048;
+typedef unsigned long long Bitboard;
 
 #define GET_RANK(sq) ((sq) / 8)
 #define GET_FILE(sq) ((sq) % 8)
@@ -57,7 +56,8 @@ public:
 	UndoBox* get_move_history() const;
 
 	int get_killer_move(uint8_t id, uint8_t depth) const;
-	int get_history_move(uint8_t pce, uint8_t sq) const;
+	int get_history_score(uint8_t pce, uint8_t sq) const;
+	int get_PV_move(uint8_t ply) const;
 
 	// Setters
 	void set_piece(uint8_t sq, uint8_t new_pce);
@@ -77,8 +77,9 @@ public:
 	void set_hash_key(uint64_t new_key);
 	void set_move_history(int index, UndoBox new_box);
 
-	void set_killer_move(uint8_t id, uint8_t depth, int new_move);
-	void set_history_move(uint8_t pce, uint8_t sq, int new_move);
+	void set_killer_move(uint8_t id, uint8_t depth, int new_score);
+	void set_history_score(uint8_t pce, uint8_t sq, int new_score);
+	void set_PV_move(uint8_t index, int move);
 
 	bool operator==(const Board& other) const;
 private:
@@ -97,10 +98,11 @@ private:
 	uint8_t ply;
 	uint16_t his_ply;
 	uint64_t hash_key;
-	UndoBox move_history[MAX_GAME_MOVES]; // Fixed indices, easier to manage than vector
+	UndoBox move_history[2048]; // Fixed indices, easier to manage than vector
 
-	int killer_moves[2][MAX_DEPTH]; // killer moves [id][ply]
+	int killer_moves[2][64]; // killer moves [id][ply]
 	int history_moves[13][64]; // history moves [piece][square]
+	int PV_array[64];
 };
 
 #endif // BOARD_HPP

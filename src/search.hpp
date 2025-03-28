@@ -4,10 +4,11 @@
 #define SEARCH_HPP
 
 #include <cstdint>
+#include "ttable.hpp"
+#include "Board.hpp"
+#include "datatypes.hpp"
 
-constexpr uint8_t MAX_DEPTH = 64;
-constexpr uint16_t INF_BOUND = 30000;
-constexpr uint16_t MATE_SCORE = INF_BOUND - MAX_DEPTH;
+class Board;
 
 typedef struct {
 	uint64_t start_time;
@@ -23,9 +24,12 @@ typedef struct {
 
 	float fh; // beta cutoffs
 	float fhf; // legal moves
-	uint16_t nullCut;
+	uint16_t null_cut;
 
 } SearchInfo;
 
+// Functions
+void search_position(Board* pos, HashTable* table, SearchInfo* info);
+void init_searchinfo(SearchInfo* info);
 
 #endif // SEARCH_HPP

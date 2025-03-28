@@ -1,13 +1,13 @@
-# Dragonrose Cpp Chess Engine
+# Dragonrose_Cpp Chess Engine
 
 ## Overview
 
 **A rewrite of the original [Dragonrose](https://github.com/TampliteSK/dragonrose) in C++.** <br>
 Notable differences with older repo: <br>
-- Inherent use of magic bitboards and pre-generated attack tables
-- More addition of original code (e.g. movegen)
-- Taking inspiration from more engines
+- Uses magic bitboards to generate attacks, as well as pre-generated attack tables
+- Custom movegen 
 - Consistent naming convention, data types and parameter ordering
+- Taking inspiration from more engines
 Through the rewrite, the code quality is expected to increase, and my knowledge of C++ can be improved. <br>
 You are free to borrow and modify my code if you so wish, as long as you give credit. <br>
 To use the engine, either grab the binary from releases, or build the project locally. In the future I will consider releasing Linux builds. <br>
@@ -63,7 +63,6 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Endgame knowledge: Drawn endgame detection (7-man equivalent), 50-move rule adjustment
 
 ## Playing Strength
-
 - Latest version is about 2350 CCRL in strength. At the moment it is quite inconsistent in tests, so the estimate may not be accurate.
 - The Chesscom rating is estimated based on its games against human players (1800 - 2500). However it suffers greatly from small sample size, so take it with a grain of salt.
 

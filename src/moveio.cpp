@@ -28,7 +28,7 @@ std::string print_move(int move) {
 int parse_move(const Board *pos, std::string move_string) {
 
     std::vector<Move> move_list;
-    generate_moves(pos, move_list);
+    generate_moves(pos, move_list, false);
 
     // Parse squares
     int source_square = (move_string[0] - 'a') + (8 - (move_string[1] - '0')) * 8;

@@ -1,12 +1,9 @@
 // ttable.cpp
 
-// #include <iostream>
+#include <iostream>
 #include "ttable.hpp"
 #include "Board.hpp"
 #include "makemove.hpp"
-#include "search.hpp"
-
-HashTable hash_table[1]; // Global hash
 
 int probe_PV_move(const Board* pos, const HashTable* table) {
 	int index = pos->get_hash_key() % table->max_entries;
@@ -18,29 +15,27 @@ int probe_PV_move(const Board* pos, const HashTable* table) {
 	return NO_MOVE;
 }
 
+// Returns number of moves in the PV
 int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 
-	int move = probe_PV_move(pos, table);
+	Board* copy = pos->clone();
+
+	int move = probe_PV_move(copy, table);
 	int count = 0;
 
-	/*
+	// Try the moves of the stored PV to see if they are legal
 	while (move != NO_MOVE && count < depth) {
-
-		if (MoveExists(pos, move)) {
-			make_move(pos, move);
-			pos->PvArray[count++] = move;
+		if (!make_move(copy, move)) {
+			pos->set_PV_move(count, move);
+			count++;
 		}
 		else {
 			break;
 		}
-		move = probe_PV_move(pos, table);
-	}
-	*/
-
-	while (pos->get_ply() > 0) {
-		take_move(pos);
+		move = probe_PV_move(copy, table);
 	}
 
+	delete copy; // Revert to pos
 	return count;
 
 }
@@ -70,36 +65,37 @@ void init_hash_table(HashTable* table, const uint16_t MB) {
 
 	table->pTable = (HashEntry*)malloc(table->max_entries * sizeof(HashEntry));
 	if (table->pTable == NULL) {
+		std::cout << "malloc failed for " << MB << "MB. retrying\n";
 		init_hash_table(table, MB / 2); // Retry hash allocation with half size if failed
 	}
 	else {
 		clear_hash_table(table);
-		// std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
+		std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
 	}
 
 }
 
-bool probe_hash_entry(Board* pos, HashTable* table, int* move, int* score, int alpha, int beta, int depth) {
+bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int alpha, int beta, int depth) {
 
 	int index = pos->get_hash_key() % table->max_entries;
 
 	if (table->pTable[index].hash_key == pos->get_hash_key()) {
-		*move = table->pTable[index].move;
+		move = table->pTable[index].move;
 		if (table->pTable[index].depth >= depth) {
 			table->hit++;
 
-			*score = table->pTable[index].score;
-			if (*score > MATE_SCORE) *score -= pos->get_ply();
-			else if (*score < -MATE_SCORE) *score += pos->get_ply();
+			score = table->pTable[index].score;
+			if (score > MATE_SCORE)		  score -= pos->get_ply();
+			else if (score < -MATE_SCORE) score += pos->get_ply();
 
 			switch (table->pTable[index].flags) {
-			case HFALPHA: if (*score <= alpha) {
-				*score = alpha;
+			case HFALPHA: if (score <= alpha) {
+				score = alpha;
 				return true;
 			}
 						break;
-			case HFBETA: if (*score >= beta) {
-				*score = beta;
+			case HFBETA: if (score >= beta) {
+				score = beta;
 				return true;
 			}
 					   break;
@@ -156,4 +152,3 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, uint32_t sco
 	table->pTable[index].depth = depth;
 	table->pTable[index].age = table->table_age;
 }
-

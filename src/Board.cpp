@@ -38,6 +38,7 @@ Board::Board(const Board& other) {
 
 	std::copy(&other.killer_moves[0][0], &other.killer_moves[0][0] + 2 * MAX_DEPTH, &killer_moves[0][0]);
 	std::copy(&other.history_moves[0][0], &other.history_moves[0][0] + 13 * 64, &history_moves[0][0]);
+	std::copy(&other.PV_array[0], &other.PV_array[0] + MAX_DEPTH, &PV_array[0]);
 }
 
 /*
@@ -83,6 +84,10 @@ void Board::reset_board() {
 		for (int sq = 0; sq < 64; ++sq) {
 			history_moves[pce][sq] = 0;
 		}
+	}
+
+	for (int ply = 0; ply < MAX_DEPTH; ++ply) {
+		PV_array[ply] = 0; // NO_MOVE
 	}
 
 	for (UndoBox box : move_history) {
@@ -340,8 +345,11 @@ UndoBox* Board::get_move_history() const {
 int Board::get_killer_move(uint8_t id, uint8_t depth) const {
 	return killer_moves[id][depth];
 }
-int Board::get_history_move(uint8_t pce, uint8_t sq) const {
+int Board::get_history_score(uint8_t pce, uint8_t sq) const {
 	return history_moves[pce][sq];
+}
+int Board::get_PV_move(uint8_t index) const {
+	return PV_array[index];
 }
 
 /*
@@ -411,15 +419,18 @@ void Board::set_move_history(int index, UndoBox new_box) {
 	move_history[index] = new_box;
 }
 
-void Board::set_killer_move(uint8_t id, uint8_t depth, int new_move) {
+void Board::set_killer_move(uint8_t id, uint8_t depth, int new_score) {
 	if (id < 2 && depth < MAX_DEPTH) {
-		killer_moves[id][depth] = new_move;
+		killer_moves[id][depth] = new_score;
 	}
 }
-void Board::set_history_move(uint8_t pce, uint8_t sq, int new_move) {
+void Board::set_history_score(uint8_t pce, uint8_t sq, int new_score) {
 	if (pce < 13 && sq < 64) {
-		history_moves[pce][sq] = new_move;
+		history_moves[pce][sq] = new_score;
 	}
+}
+void Board::set_PV_move(uint8_t ply, int move) {
+	PV_array[ply] = move;
 }
 
 /*
