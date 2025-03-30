@@ -13,6 +13,8 @@ typedef unsigned long long Bitboard;
 #define MAX_GAME_MOVES 2048
 #define MATE_SCORE ((INF_BOUND) - (MAX_DEPTH))
 
+#define CLAMP(value, min, max) ((value) < (min) ? (min) : ((value) > (max) ? (max) : (value)))
+
 // Colour
 enum { WHITE, BLACK, BOTH };
 

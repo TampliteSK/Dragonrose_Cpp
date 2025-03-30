@@ -8,7 +8,7 @@
 
 class Board;
 
-constexpr uint16_t MAX_HASH = 65536;
+constexpr uint32_t MAX_HASH = 65536;
 
 // Hash entry flags
 enum { HFNONE, HFALPHA, HFBETA, HFEXACT };

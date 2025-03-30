@@ -71,7 +71,7 @@ void init_hash_table(HashTable* table, const uint16_t MB) {
 	}
 	else {
 		clear_hash_table(table);
-		std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
+		// std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
 	}
 
 }
