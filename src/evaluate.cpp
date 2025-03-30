@@ -116,7 +116,7 @@ static inline double compute_PSQT(uint8_t pce, uint8_t sq, double weight) {
 		score += PSQT_MG[piece_type[pce] - 1][sq] * weight + PSQT_EG[piece_type[pce] - 1][sq] * (1 - weight);
 	}
 	else {
-		score += PSQT_MG[piece_type[pce] - 1][Mirror64[sq]] * weight + PSQT_EG[piece_type[pce] = 1][Mirror64[sq]] * (1 - weight);
+		score += PSQT_MG[piece_type[pce] - 1][Mirror64[sq]] * weight + PSQT_EG[piece_type[pce] - 1][Mirror64[sq]] * (1 - weight);
 	}
 	return score;
 }

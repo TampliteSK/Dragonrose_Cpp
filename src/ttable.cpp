@@ -4,6 +4,7 @@
 #include "ttable.hpp"
 #include "Board.hpp"
 #include "makemove.hpp"
+#include "moveio.hpp"
 
 int probe_PV_move(const Board* pos, const HashTable* table) {
 	int index = pos->get_hash_key() % table->max_entries;
@@ -26,18 +27,17 @@ int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 	// Try the moves of the stored PV to see if they are legal
 	while (move != NO_MOVE && count < depth) {
 		if (!make_move(copy, move)) {
-			pos->set_PV_move(count, move);
-			count++;
+			break; // Illegal move
 		}
 		else {
-			break;
+			pos->set_PV_move(count, move);
+			count++;
 		}
 		move = probe_PV_move(copy, table);
 	}
 
 	delete copy; // Revert to pos
 	return count;
-
 }
 
 void clear_hash_table(HashTable* table) {
@@ -50,6 +50,7 @@ void clear_hash_table(HashTable* table) {
 		table->pTable[i].age = 0;
 	}
 
+	table->num_entries = 0;
 	table->new_write = 0;
 	table->table_age = 0;
 }
@@ -116,19 +117,20 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, uint32_t sco
 
 	// Check if there is an existing entry at a certain index
 	if (table->pTable[index].hash_key == 0) {
+		// Store entry if it doesn't exist
 		table->new_write++;
 		table->num_entries++;
 		replace = true;
 	}
 	else {
-		int entryAge = table->pTable[index].age;
+		int entry_age = table->pTable[index].age;
 		// Existing entry is old, or equal age but shallower depth
-		if (entryAge < table->table_age) {
+		if (entry_age < table->table_age) {
 			// Existing entry is old, so we replace it
 			replace = true;
 			table->overwrite++;
 		}
-		else if (entryAge == table->table_age && table->pTable[index].depth < depth) {
+		else if (entry_age == table->table_age && table->pTable[index].depth < depth) {
 			// Existing entry is equal age, but at a shallower depth, we still replace it
 			replace = true;
 			table->overwrite++;

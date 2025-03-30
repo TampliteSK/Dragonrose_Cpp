@@ -33,12 +33,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int best_move = NO_MOVE;
 	int PV_moves = 0;
 
-	// Aspiration windows variables
-	uint8_t window_size = 50; // Size for first 6 depths
-	int guess = -INF_BOUND;
-	int alpha = -INF_BOUND;
-	int beta = INF_BOUND;
-
 	clear_search_vars(pos, table, info); // Initialise searchHistory and killers
 
 	/*
@@ -52,37 +46,8 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	if (best_move == NO_MOVE) {
 
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
-			// Do a full search on the first depth
-			if (curr_depth == 1) {
-				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
-			}
-			else {
 
-				// Aspiration windows
-				if (curr_depth > 6) {
-					// Window size decreases linearly with depth, with a minimum value of 25
-					window_size = std::max(-2.5 * curr_depth + 65, (double)25);
-				}
-				alpha = guess - window_size;
-				beta = guess + window_size;
-
-				uint8_t reSearch = true;
-				while (reSearch) {
-					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, true);
-
-					// Re-search with a full window if fail-low or fail-high
-					if (best_score <= alpha || best_score >= beta) {
-						alpha = -INF_BOUND;
-						beta = INF_BOUND;
-					}
-					else {
-						// Successful search, exit re-search loop
-						reSearch = false;
-					}
-				}
-			}
-
-			guess = best_score;
+			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
 
 			if (info->stopped) {
 				break;
@@ -93,7 +58,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			// Display mate if there's forced mate
 			uint64_t time = get_time_ms() - info->start_time; // in ms
-			uint64_t nps = (int)(((double)info->nodes / (time + 1)) * 1000);
+			uint64_t nps = (int)((info->nodes / (time + 0.01)) * 1000); // Add 0.01ms to prevent division by zero error
 
 			bool mate_found = false; // Save computation
 			int8_t mate_moves = 0;
@@ -103,17 +68,17 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				// copysign(1.0, value) outputs +/- 1.0 depending on the sign of "value" (i.e. sgn(value))
 				// Note that /2 is integer division (e.g. 3/2 = 1)
 				mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * copysign(1.0, best_score);
-				std::cout << "info score mate " << mate_moves
-					<< " depth " << curr_depth
+				std::cout << "info depth " << curr_depth
+					<< " score mate " << mate_moves
 					<< " nodes " << info->nodes
 					<< " nps " << nps
-					<< " hashfull " << (int)(table->num_entries / double(table->max_entries) * 1000)
+					<< " hashfull " << (uint32_t)(table->num_entries / double(table->max_entries) * 1000)
 					<< " time " << time
 					<< " pv";
 			}
 			else {
-				std::cout << "info score cp " << best_score
-					<< " depth " << curr_depth
+				std::cout << "info depth " << curr_depth
+					<< " score cp " << best_score
 					<< " nodes " << info->nodes
 					<< " nps " << nps
 					<< " hashfull " << (int)(table->num_entries / double(table->max_entries) * 1000)
@@ -252,6 +217,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	/*
 		Null-move Pruning
 	*/
+
+	/*
 	uint8_t big_pieces = count_bits(pos->get_occupancy(US)) - count_bits(pos->get_bitboard((US == WHITE) ? wP : bP));
 	//                     Note kings are considered bigPce, so we have to set the range to >1
 	if (do_null && !in_check && pos->get_ply() && (big_pieces > 1) && depth >= 4) {
@@ -268,6 +235,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			return score;
 		}
 	}
+	*/
 
 	std::vector<Move> list;
 	generate_moves(pos, list, false);
@@ -301,7 +269,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		legal++;
 		info->nodes++;
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, depth - 1, true);
+		score = -negamax_alphabeta(copy, table, info, -beta, -alpha, depth - 1, true);
 		
 		delete copy;
 
@@ -309,12 +277,30 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			return 0;
 		}
 
-		// Update bestScore, bestMove and killers
+		// Update best_score and best_move
 		if (score > best_score) {
 			best_score = score;
 			best_move = curr_move;
+			// std::cout << "New best move: " << print_move(best_move) << "\n";
 
 			if (score > alpha) {
+
+				if (score >= beta) {
+					if (legal == 1) {
+						info->fhf++;
+					}
+					info->fh++;
+
+					if (get_move_capture(curr_move) == 0) {
+						pos->set_killer_move(1, pos->get_ply(), pos->get_killer_move(0, pos->get_ply()));
+						pos->set_killer_move(0, pos->get_ply(), curr_move);
+					}
+
+					store_hash_entry(pos, table, best_move, best_score, HFBETA, depth);
+
+					return best_score; // Fail-soft beta-cutoff
+				}
+
 				alpha = score;
 
 				if (get_move_capture(curr_move) == 0) {
@@ -322,21 +308,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 					pos->set_history_score(pos->get_piece(get_move_source(best_move)), get_move_target(best_move), current_score + depth);
 				}
 			}
-		}
-		if (score >= beta) {
-			if (legal == 1) {
-				info->fhf++;
-			}
-			info->fh++;
-
-			if (get_move_capture(curr_move) == 0) {
-				pos->set_killer_move(1, pos->get_ply(), pos->get_killer_move(0, pos->get_ply()));
-				pos->set_killer_move(0, pos->get_ply(), curr_move);
-			}
-
-			store_hash_entry(pos, table, best_move, best_score, HFBETA, depth);
-
-			return best_score; // Fail-soft beta-cutoff
 		}
 	}
 
