@@ -31,13 +31,13 @@ void sort_moves(const Board *pos, std::vector<Move>& move_list);
 // encode move
 #define encode_move(source, target, piece, promoted, capture, double_adv, enpassant, castling) \
     (source) |           \
-    (target << 6) |      \
-    (piece << 12) |      \
-    (promoted << 16) |   \
-    (capture << 20) |    \
-    (double_adv << 21) | \
-    (enpassant << 22) |  \
-    (castling << 23)     \
+    ((target) << 6) |      \
+    ((piece) << 12) |      \
+    ((promoted) << 16) |   \
+    ((capture) << 20) |    \
+    ((double_adv) << 21) | \
+    ((enpassant) << 22) |  \
+    ((castling) << 23)     \
 
 // extract source square, target square, piece, promoted piece, capture flag, double pawn push flag, enpassant flag, and castling flag
 #define get_move_source(move) (move & 0x3f)

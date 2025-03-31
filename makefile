@@ -5,7 +5,7 @@ CXX ?= g++
 SRCS = $(wildcard src/*.cpp)
 
 # Attaching "EXE=<name>" to the above command allows you to rename the executable to <name>. By default it is "Dragonrose.exe"
-EXE ?= Dragonrose
+EXE ?= Dragonrose_Cpp
 
 
 #
