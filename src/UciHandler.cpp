@@ -93,7 +93,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         }
 
         time_allocated -= 50; // overhead
-        info->stop_time = int(info->start_time + time_allocated + inc / 2);
+        info->stop_time = uint64_t(info->start_time + time_allocated + inc / 2);
     }
     else {
         // No time was given. Just run until depth is reached
