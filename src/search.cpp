@@ -34,6 +34,12 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int best_move = NO_MOVE;
 	int PV_moves = 0;
 
+	// Aspiration windows
+	uint8_t window_size = 50; // Size for first 6 depths
+	int guess = -INF_BOUND;
+	int alpha = -INF_BOUND;
+	int beta = INF_BOUND;
+
 	clear_search_vars(pos, table, info); // Initialise searchHistory and killers
 
 	/*
@@ -48,14 +54,46 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
 
-			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
+			// Do a full search on depth 1
+			if (curr_depth == 1) {
+				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
+			}
+			else {
+
+				// Aspiration windows
+				if (curr_depth > 6) {
+					// Window size decreases linearly with depth, with a minimum value of 25
+					window_size = std::max(-2.5 * curr_depth + 65, 25.0);
+				}
+				alpha = guess - window_size;
+				beta = guess + window_size;
+
+				bool reSearch = true;
+				while (reSearch) {
+					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, true);
+
+					// Re-search with a wider window on the side that fails
+					if (best_score <= alpha) {
+						alpha = -INF_BOUND;
+					}
+					else if (best_score >= beta) {
+						beta = INF_BOUND;
+					}
+					else {
+						// Successful search, exit re-search loop
+						reSearch = false;
+					}
+				}
+			}
+
+			guess = best_score;
+
+			PV_moves = get_PV_line(pos, table, curr_depth);
+			best_move = pos->get_PV_move(0);
 
 			if (info->stopped) {
 				break;
 			}
-
-			PV_moves = get_PV_line(pos, table, curr_depth);
-			best_move = pos->get_PV_move(0);
 
 			// Display mate if there's forced mate
 			uint64_t time = get_time_ms() - info->start_time; // in ms
@@ -176,7 +214,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 	return best_score;
 }
 
-// Negamax Search with Alpha-beta Pruning
+// Negamax Search with Alpha-beta Pruning and Principle Variation Search (PVS)
 static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, bool do_null) {
 
 	if (depth <= 0) {
@@ -272,16 +310,12 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		legal++;
 		info->nodes++;
 
-		if (depth == 1) {
-			delete copy;
-			return quiescence(pos, info, alpha, beta);
-		}
-
 		score = -negamax_alphabeta(copy, table, info, -beta, -alpha, depth - 1, true);
 		
 		delete copy;
 
 		if (info->stopped) {
+			std::cout << "Early exit at move_num: " << move_num << "\n";
 			return 0;
 		}
 
@@ -289,7 +323,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (score > best_score) {
 			best_score = score;
 			best_move = curr_move;
-			// std::cout << "New best move: " << print_move(best_move) << "\n";
 
 			if (score > alpha) {
 

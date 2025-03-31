@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    std::ios_base::sync_with_stdio(false);
     std::string line;
     while (true) {
         std::getline(std::cin, line);
