@@ -315,7 +315,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		delete copy;
 
 		if (info->stopped) {
-			std::cout << "Early exit at move_num: " << move_num << "\n";
 			return 0;
 		}
 
