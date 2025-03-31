@@ -33,7 +33,11 @@ int main(int argc, char* argv[]) {
 
     // Handle CLI Arguments
     for (int arg_num = 0; arg_num < argc; ++arg_num) {
+
+        // Doesn't work properly atm, will fix later
         if (strncmp(argv[arg_num], "bench", 5) == 0) {
+
+            init_hash_table(hash_table, 16);
             uint64_t total_nodes = 0;
             uint64_t start = get_time_ms();
 

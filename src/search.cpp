@@ -144,6 +144,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 
 		// Check if it's a legal move
 		if (!make_move(copy, list.at(move_num).move)) {
+			delete copy;
 			continue;
 		}
 		info->nodes++;
@@ -265,10 +266,16 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
 		if (!make_move(copy, curr_move)) {
+			delete copy;
 			continue;
 		}
 		legal++;
 		info->nodes++;
+
+		if (depth == 1) {
+			delete copy;
+			return quiescence(pos, info, alpha, beta);
+		}
 
 		score = -negamax_alphabeta(copy, table, info, -beta, -alpha, depth - 1, true);
 		
