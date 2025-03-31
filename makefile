@@ -1,6 +1,6 @@
 # Compiler
-# Run "make CXX=<compiler>" and replace <compiler> with either gcc or clang
-# If left unspecified, gcc is used as default
+# Run "make CXX=<compiler>" and replace <compiler> with either g++ or clang++
+# If left unspecified, g++ is used as default
 CXX ?= g++
 SRCS = $(wildcard src/*.cpp)
 
@@ -18,11 +18,12 @@ WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic -Wno-unused-command
 OPT_FLAGS = -Ofast -march=native -funroll-loops
 
 # Custom additional flags like -g
-MISC_FLAGS ?= -std=c++20
+MISC_FLAGS ?= 
 
 # Detect Clang
 ifeq ($(CXX), clang)
 	OPT_FLAGS = -O3 -ffast-math -flto -march=native -funroll-loops
+	LIB_FLAGS = -lstdc++
 endif
 
 
@@ -33,7 +34,7 @@ endif
 
 # Default target
 all:
-	$(CXX) $(SRCS) -o $(EXE) $(OPT_FLAGS) $(MISC_FLAGS)
+	$(CXX) $(SRCS) -o $(EXE) $(OPT_FLAGS) $(MISC_FLAGS) -std=c++20
 
 # Clean target to remove the executable
 clean:

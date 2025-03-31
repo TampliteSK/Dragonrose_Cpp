@@ -79,7 +79,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    delete pos;
 	free(info);
+    free(hash_table->pTable);
 	free(hash_table);
     free(options);
 
