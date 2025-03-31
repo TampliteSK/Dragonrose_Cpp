@@ -19,7 +19,7 @@ uint64_t generate_random_U64() {
 
 void init_hash_keys() {
 	for (int pce = 0; pce < 13; ++pce) {
-		for (int sq = 0; sq < 120; ++sq) {
+		for (int sq = 0; sq < 64; ++sq) {
 			piece_keys[pce][sq] = generate_random_U64();
 		}
 	}

@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
                 std::cout << "\n=== Benching position " << index << "/49 ===\n";
                 info->nodes = 0;
                 std::cout << "Position: " << bench_positions[index] << "\n";
-                // ParseFen(bench_positions[index], pos);
-                // ParseGo("go depth 7", info, pos, hash_table);
+                pos->parse_fen(bench_positions[index]);
+                uci->parse_go(pos, hash_table, info, "go depth 3");
                 total_nodes += info->nodes;
             }
 
@@ -56,10 +56,6 @@ int main(int argc, char* argv[]) {
             return 0;
         }
     }
-
-    // Disable buffering for stdin and stdout
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
 
     std::string line;
     while (true) {

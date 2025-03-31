@@ -61,6 +61,7 @@ Bitboard get_piece_attacks(const Board *pos, uint8_t pce, uint8_t sq) {
     if (piece_type[pce] ==   ROOK) return get_rook_attacks(sq, pos->get_occupancy(BOTH));
     if (piece_type[pce] ==  QUEEN) return get_queen_attacks(sq, pos->get_occupancy(BOTH));
     if (piece_type[pce] ==   KING) return king_attacks[sq];
+    return 0ULL;
 }
 
 bool is_move_attack(const Board *pos, int move) {

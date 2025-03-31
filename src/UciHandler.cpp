@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <iostream>
 #include <sstream>
+#include <cmath>
 
 /*
     Private methods
@@ -103,7 +104,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         info->depth = MAX_DEPTH;
     }
 
-    std::cout << "time: " << time << " start: " << info->start_time << " stop: " << info->stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
+    // std::cout << "time: " << time << " start: " << info->start_time << " stop: " << info->stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
     search_position(pos, table, info);
 }
 
@@ -141,9 +142,6 @@ void UciHandler::parse_position(Board* pos, const std::string& line) {
 }
 
 void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOptions* options) {
-    // Disable buffering for stdin and stdout
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
 
     std::string line;
     std::cout << "id name " << ENGINE_NAME << std::endl;

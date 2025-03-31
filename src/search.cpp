@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 
 #include "attack.hpp"
 #include "bitboard.hpp"
