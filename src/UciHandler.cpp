@@ -92,7 +92,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
             }
         }
 
-        time_allocated -= 50; // Buffer
+        time_allocated += 100; // Buffer
         info->stop_time = uint64_t(info->start_time + time_allocated + inc / 2);
     }
     else {
@@ -166,7 +166,6 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         }
         else if (line.substr(0, 8) == "position") {
             parse_position(pos, line);
-            pos->print_move_history();
         }
         else if (line.substr(0, 10) == "ucinewgame") {
             clear_hash_table(table);

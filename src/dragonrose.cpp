@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
                 info->nodes = 0;
                 std::cout << "Position: " << bench_positions[index] << "\n";
                 pos->parse_fen(bench_positions[index]);
+                clear_hash_table(hash_table);
                 uci->parse_go(pos, hash_table, info, "go depth 3");
                 total_nodes += info->nodes;
             }
@@ -61,7 +62,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::ios_base::sync_with_stdio(false);
     std::string line;
     while (true) {
         std::getline(std::cin, line);
@@ -74,7 +74,9 @@ int main(int argc, char* argv[]) {
             continue;
         }
         else if (line.substr(0, 4) == "perft") {
+            std::cout << "Running perft\n";
             run_perft(pos, 5, true);
+            std::cout << "Done perft\n";
         }
         else if (line.substr(0, 4) == "quit") {
             break;

@@ -33,8 +33,6 @@ uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
     for (int move_count = 0; move_count < move_list.size(); ++move_count) {
         Board* copy = pos->clone(); // Start with a fresh copy every move
         
-        int piece = get_move_piece(move_list.at(move_count).move);
-        
         // Skip illegal moves
         if (!make_move(copy, move_list.at(move_count).move)) {
             delete copy;

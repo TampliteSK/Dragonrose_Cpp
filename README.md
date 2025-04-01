@@ -26,7 +26,7 @@ Aside from VICE, Dragonrose also draws inspiration from other engines such as
 ## How to Use
 
 - Challenge it on Lichess [here](https://lichess.org/@/DragonroseDev)
-- To run it locally either download a binary from releases or build it yourself with the makefile. Run `make CC=<compiler>` and replace compiler with your preferred compiler (gcc / clang). With it you can pick one of two options:
+- To run it locally either download a binary from releases or build it yourself with the makefile. Run `make CXX=<compiler>` and replace compiler with your preferred compiler (g++ / clang++). With it you can pick one of two options:
   - Plug it into a chess GUI such as Arena or Cutechess
   - Directly run the executable (usually for testing). You can run it normally with ./Dragonrose or run a benchmark with ./Dragonrose bench
 
@@ -41,13 +41,13 @@ Aside from VICE, Dragonrose also draws inspiration from other engines such as
 ## Main Features
 
 Search:
-- Negamax Alpha-beta search
+- Negamax alpha-beta search (fail-soft)
   - PV-search
   - Null-move pruning
-  - Futility pruning
-  - Late move pruning
-- Quiesence search
-  - Delta pruning
+  - Futility pruning (TODO)
+  - Late move pruning (TODO)
+- Quiesence search (fail-soft)
+  - Delta pruning (TODO)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Iterative deepening
 - Transposition table using "age"
@@ -57,6 +57,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Tapered eval
   - Material
   - Piece-square table bonuses
+- TODO:
 - King safety: customised king tropism, pawn shield, king open files penalty, king in centre penalty
 - Piece bonuses: Rook/queen open-file bonuses
 - Pawn bonuses / penalties: Passed pawns, isolated pawns, stacked pawns
@@ -80,22 +81,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 
 ## Changelogs <br>
 ### 0.x: <br>
-0.28 (dev): Rework king safety. Added extended futility pruning. Improved endgame knowledge. | Elo gain: ~5. <br>
-0.27c: Added doubled pawns. Improved time management. Minor code restructuring. <br>
-0.27b: Improved aspiration windows. Improved move ordering. Added OpenBench support. | Elo gain: ~30. <br>
-0.27: Added late move pruning. Improved drawn endgame detection. Optimised king tropism. | Elo gain: ~50. <br>
-0.26d: Added aspiration windows. <br>
-0.26: Added king tropism. Improved time management. <br>
-0.25: Added futility pruning. | Elo gain: ~20. <br> 
-0.24c: Enabled O3 optimisation. Added mate ouptut. <br>
-0.24b: Fixed delta pruning. Optimised memory (variable sizes). <br>
-0.24: Added delta pruning. Added punishments for minor pieces in front of pawns. | Elo gain: ~40. <br>
-0.23: Added king safety to evaluation (pawn shield and punish open files near king). <br>
-0.22: Improved time management (tested on Lichess). Slight speed boost. <br>
-0.21: Slight speed boost. <br>
-0.2: Fixed crash. Improved tapered eval. | Elo gain: ~240. <br>
-0.11: Added tapered eval to material (point values). <br>
-0.1: Added tapered eval to PSQT. <br>
+0.29 (dev): Completely rewritten from scratch. Using fail-soft for Quiescence Search and Negamax Alpha-beta Search
 
 ## To-do list
 - Optimise attackgen (magic bitboard)

@@ -96,7 +96,7 @@ private:
 	uint8_t fifty_move; // Counter for 50-move rule
 
 	uint8_t ply;
-	uint16_t his_ply;
+	uint8_t his_ply;
 	uint64_t hash_key;
 	UndoBox move_history[2048]; // Fixed indices, easier to manage than vector
 

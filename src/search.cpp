@@ -34,7 +34,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int best_move = NO_MOVE;
 	int PV_moves = 0;
 
-	// Aspiration windows
+	// Aspiration windows variables
 	uint8_t window_size = 50; // Size for first 6 depths
 	int guess = -INF_BOUND;
 	int alpha = -INF_BOUND;
@@ -54,13 +54,15 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
 
+			/*
+				Aspiration windows
+			*/
+
 			// Do a full search on depth 1
 			if (curr_depth == 1) {
 				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
 			}
 			else {
-
-				// Aspiration windows
 				if (curr_depth > 6) {
 					// Window size decreases linearly with depth, with a minimum value of 25
 					window_size = std::max(-2.5 * curr_depth + 65, 25.0);
@@ -108,6 +110,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				// Note that /2 is integer division (e.g. 3/2 = 1)
 				mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * copysign(1.0, best_score);
 				std::cout << "info depth " << curr_depth
+					<< " seldepth " << (int)info->seldepth
 					<< " score mate " << mate_moves
 					<< " nodes " << info->nodes
 					<< " nps " << nps
@@ -117,6 +120,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 			else {
 				std::cout << "info depth " << curr_depth
+					<< " seldepth " << (int)info->seldepth
 					<< " score cp " << best_score
 					<< " nodes " << info->nodes
 					<< " nps " << nps
@@ -147,10 +151,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) {
 
-	// Check if time is up after every 2048 nodes
-	if ((info->nodes & 2047) == 0) {
-		check_time(info);
-	}
+	check_time(info); // Check if time is up
 
 	if (check_repetition(pos) || pos->get_fifty_move() >= 100) {
 		return 0;
@@ -158,6 +159,10 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 
 	if (pos->get_ply() >= MAX_DEPTH) {
 		return evaluate_pos(pos);
+	}
+
+	if (pos->get_ply() > info->seldepth) {
+		info->seldepth = pos->get_ply();
 	}
 
 	int stand_pat = evaluate_pos(pos);
@@ -221,10 +226,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		return quiescence(pos, info, alpha, beta);
 	}
 
-	// Check if time's up after every 2048 nodes
-	if ((info->nodes & 2047) == 0) {
-		check_time(info);
-	}
+	check_time(info); // Check if time is up
 
 	// Check draw
 	if ((check_repetition(pos) || pos->get_fifty_move() >= 100) && pos->get_ply()) {
@@ -234,6 +236,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	// Max depth reached
 	if (pos->get_ply() >= MAX_DEPTH) {
 		return evaluate_pos(pos);
+	}
+
+	if (pos->get_ply() > info->seldepth) {
+		info->seldepth = pos->get_ply();
 	}
 
 	uint8_t US = pos->get_side();
@@ -258,24 +264,26 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		Null-move Pruning
 	*/
 
-	/*
-	uint8_t big_pieces = count_bits(pos->get_occupancy(US)) - count_bits(pos->get_bitboard((US == WHITE) ? wP : bP));
-	//                     Note kings are considered bigPce, so we have to set the range to >1
-	if (do_null && !in_check && pos->get_ply() && (big_pieces > 1) && depth >= 4) {
-		Board* copy = pos->clone();
-		make_null_move(copy);
-		score = -negamax_alphabeta(copy, table, info, -beta, -beta + 1, depth - 4, false);
-		delete copy;
-		if (info->stopped) {
-			return 0;
-		}
+	// uint8_t big_pieces = count_bits(pos->get_occupancy(US)) - count_bits(pos->get_bitboard((US == WHITE) ? wP : bP));
+	bool is_endgame = count_bits(pos->get_occupancy(BOTH)) < 8;
+	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
+	if (depth >= 4 && !is_endgame) {
+		if (do_null && !in_check && pos->get_ply()) {
+			Board* copy = pos->clone();
+			make_null_move(copy);
+			score = -negamax_alphabeta(copy, table, info, -beta, -beta + 1, depth - 4, false);
+			delete copy;
 
-		if (score >= beta && abs(score) < MATE_SCORE) {
-			info->null_cut++;
-			return score;
+			if (info->stopped) {
+				return 0;
+			}
+
+			if (score >= beta && abs(score) < MATE_SCORE) {
+				info->null_cut++;
+				return score;
+			}
 		}
 	}
-	*/
 
 	std::vector<Move> list;
 	generate_moves(pos, list, false);
@@ -414,7 +422,8 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 	table->cut = 0;
 	table->table_age++;
 	pos->set_ply(0);
-
+	
+	info->seldepth = 0;
 	info->stopped = false;
 	info->nodes = 0;
 	info->fh = 0;
@@ -425,11 +434,14 @@ void init_searchinfo(SearchInfo* info) {
 	info->start_time = 0;
 	info->stop_time = 0;
 	info->depth = 0;
+	info->seldepth = 0;
 	info->nodes = 0;
+
 	info->timeset = false;
 	info->movestogo = 0;
 	info->quit = false;
 	info->stopped = false;
+
 	info->fh = 0.0f;
 	info->fhf = 0.0f;
 	info->null_cut = 0;

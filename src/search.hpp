@@ -14,11 +14,11 @@ typedef struct {
 	uint64_t start_time;
 	uint64_t stop_time;
 	uint8_t depth;
+	uint8_t seldepth;
 	uint64_t nodes;
 
 	bool timeset;
 	uint16_t movestogo;
-
 	bool quit;
 	bool stopped;
 
