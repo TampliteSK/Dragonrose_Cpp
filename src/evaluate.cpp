@@ -56,7 +56,7 @@ int evaluate_pos(const Board* pos) {
 	// score += count_tempi(pos) * MG_weight(pos); // Towards endgame considering tempi is useless
 
 	// Piece activity
-	// core += count_activity(pos);
+	score += count_activity(pos);
 	
 	// Bishop pair bonus
 	if (pos->get_piece_num(wB) > 2) score += bishop_pair;
@@ -228,13 +228,12 @@ static inline int16_t count_tempi(const Board* pos) {
 
 // Use the number of squares attack as a proxy for piece activity / mobility
 // Based on jk_182's Lichess article: https://lichess.org/@/jk_182/blog/calculating-piece-activity/FAOY6Ii7
-/*
 static inline int8_t count_activity(const Board* pos) {
-	Bitboard white_attacks = get_all_piece_attacks(pos, WHITE);
-	Bitboard black_attacks = get_all_piece_attacks(pos, BLACK);
+	Bitboard white_attacks = get_all_attacks(pos, WHITE, false);
+	Bitboard black_attacks = get_all_attacks(pos, BLACK, false);
 
+	// Double count attacks in the enemy's half
 	int8_t net_white_activity = count_bits(white_attacks) + count_bits(white_attacks & TOP_HALF)
 						      - count_bits(black_attacks) - count_bits(black_attacks & BOTTOM_HALF);
 	return net_white_activity * 2;
 }
-*/

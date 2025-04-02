@@ -71,7 +71,7 @@ bool is_move_attack(const Board *pos, int move) {
     return get_piece_attacks(pos, piece, target_sq) & pos->get_occupancy(pos->get_side() ^ 1);
 }
 
-// Replace with incremental version in 
+// Replace with incremental version in board
 Bitboard get_all_attacks(const Board *pos, uint8_t side, bool king_included) {
     Bitboard copy = pos->get_occupancy(side);
     Bitboard attacks = 0ULL;
