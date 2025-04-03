@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 
+#include "search.hpp"
 #include "attack.hpp"
 #include "bitboard.hpp"
 #include "Board.hpp"
@@ -13,9 +14,10 @@
 #include "makemove.hpp"
 #include "movegen.hpp"
 #include "moveio.hpp"
-#include "search.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
+
+int LMR_reduction_table[MAX_DEPTH][280];
 
 // Function prototypes
 static inline void check_time(SearchInfo* info);
@@ -296,7 +298,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	if (PV_move != NO_MOVE) {
 		for (int move_num = 0; move_num < list.size(); ++move_num) {
 			if (list.at(move_num).move == PV_move) {
-				list.at(move_num).score = 2000000;
+				list.at(move_num).score = 10'000'000;
 				break;
 			}
 		}
@@ -309,6 +311,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		Board* copy = pos->clone();
 		int curr_move = list.at(move_num).move;
 
+		bool is_capture = get_move_capture(curr_move);
+		bool is_promotion = (bool)get_move_promoted(curr_move);
+
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
 		if (!make_move(copy, curr_move)) {
@@ -318,7 +323,29 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		legal++;
 		info->nodes++;
 
-		score = -negamax_alphabeta(copy, table, info, -beta, -alpha, depth - 1, true);
+		/*
+			Late Move Reductions
+		*/
+		// We calculate less promising moves at lower depths
+
+		int reduced_depth = depth - 1; // We move further into the tree
+
+		// Do not reduce if it's completely winning / near mating position
+		// Check if it's a "late move"
+		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
+			uint8_t self_king_sq = pos->get_king_sq(US);
+			uint8_t moving_pce = get_move_piece(curr_move);
+			uint8_t target_sq = get_move_target(curr_move);
+			// uint8_t MoveIsAttack = IsAttack(moving_pce, target_sq, pos);
+			// uint8_t target_sq_within_king_zone = dist_between_squares(self_king_sq, target_sq) <= 3; // Checks if a move's target square is within 3 king moves
+			
+			if (!in_check && !is_capture && !is_promotion && piece_type[moving_pce] != PAWN) {
+				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
+				reduced_depth = std::max(reduced_depth - r, 1);
+			}
+		}
+
+		score = -negamax_alphabeta(copy, table, info, -beta, -alpha, reduced_depth, true);
 		
 		delete copy;
 
@@ -445,4 +472,12 @@ void init_searchinfo(SearchInfo* info) {
 	info->fh = 0.0f;
 	info->fhf = 0.0f;
 	info->null_cut = 0;
+}
+
+void init_LMR_table() {
+	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
+		for (int move_num = 4; move_num < 280; ++move_num) {
+			LMR_reduction_table[depth][move_num] = int(1 + log(depth) * log(move_num) / 3.00);
+		}
+	}
 }

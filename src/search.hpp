@@ -28,8 +28,11 @@ typedef struct {
 
 } SearchInfo;
 
+extern int LMR_reduction_table[MAX_DEPTH][280]; // [ply][move_num]
+
 // Functions
 void search_position(Board* pos, HashTable* table, SearchInfo* info);
 void init_searchinfo(SearchInfo* info);
+void init_LMR_table();
 
 #endif // SEARCH_HPP

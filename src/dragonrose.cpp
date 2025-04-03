@@ -73,10 +73,8 @@ int main(int argc, char* argv[]) {
             if (info->quit == true) break;
             continue;
         }
-        else if (line.substr(0, 4) == "perft") {
-            std::cout << "Running perft\n";
+        else if (line.substr(0, 5) == "perft") {
             run_perft(pos, 5, true);
-            std::cout << "Done perft\n";
         }
         else if (line.substr(0, 4) == "quit") {
             break;

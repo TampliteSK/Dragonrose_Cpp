@@ -2,6 +2,7 @@
 
 #include "attackgen.hpp"
 #include "zobrist.hpp"
+#include "search.hpp"
 
 void init_all() {
 
@@ -10,6 +11,6 @@ void init_all() {
 	init_sliders_attacks(IS_BISHOP);
 	init_sliders_attacks(IS_ROOK);
 
-	// zobrist.hpp
-	init_hash_keys();
+	init_hash_keys(); // zobrist.hpp
+	init_LMR_table(); // search.hpp
 }

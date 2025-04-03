@@ -20,7 +20,7 @@ uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
     }
 
     uint64_t nodes = 0;
-    long start = 0;
+    uint64_t start = 0;
 
     std::vector<Move> move_list;
     generate_moves(pos, move_list, false);
@@ -64,7 +64,7 @@ uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
         uint64_t time = get_time_ms() - start;
         std::cout << "\n    Depth: " << (int)depth << "\n"
             << "    Nodes: " << nodes << "\n"
-            << "     Time: " << time << "ms (" << (double)time / 1000 << "s)\n"
+            << "     Time: " << time << "ms (" << int((double)time / 1000) << "s)\n"
             << "      NPS: " << int(nodes / (double)time * 1000) << "\n\n";
     }
  
