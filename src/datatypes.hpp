@@ -4,7 +4,7 @@
 #define DATATYPES_HPP
 
 #include <string>
-#include "ttable.hpp"
+#include <cstdint>
 
 typedef unsigned long long Bitboard;
 

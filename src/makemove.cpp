@@ -92,7 +92,6 @@ static void move_piece(Board *pos, const int from, const int to) {
 */
 
 void take_move(Board *pos) {
-
 	pos->set_ply(pos->get_ply() - 1);
 	pos->set_his_ply(pos->get_his_ply() - 1);
 
@@ -111,7 +110,7 @@ void take_move(Board *pos) {
 	pos->set_castle_perms(box.castle_perms);
 	pos->set_fifty_move(box.fifty_move);
 	pos->set_enpas(box.enpas);
-	free(history);
+	delete history;
 
 	// Rehash
 	if (pos->get_enpas() != NO_SQ) {
@@ -123,6 +122,7 @@ void take_move(Board *pos) {
 	HASH_SIDE(pos);
 
 	if (get_move_enpassant(move)) {
+		// Recover the pawn that was enpassanted
 		if (pos->get_side() == WHITE) {
 			add_piece(pos, to + 8, bP);
 		}
@@ -152,13 +152,125 @@ void take_move(Board *pos) {
 		add_piece(pos, to, captured);
 	}
 
-	// Undo promotions
+	// Undo promotion
 	if (get_move_promoted(move) != EMPTY) {
-		clear_piece(pos, from);
-		add_piece(pos, from, (piece_col[get_move_promoted(move)] == WHITE ? wP : bP));
+		clear_piece(pos, to);
+		add_piece(pos, from, (piece_col[get_move_promoted(move)] == WHITE) ? wP : bP);
 	}
 }
 
+bool make_move(Board* pos, int move) {
+	int from = get_move_source(move);
+	int to = get_move_target(move);
+	int side = pos->get_side();
+
+	UndoBox box = { 0, 0, 0, 0, 0 };
+	box.hash_key = pos->get_hash_key();
+
+	if (get_move_enpassant(move)) {
+		// Clear the captured pawn
+		if (side == WHITE) {
+			clear_piece(pos, to + 8);
+		}
+		else {
+			clear_piece(pos, to - 8);
+		}
+	}
+	else if (get_move_castling(move)) {
+		// Move the corresponding rook
+		switch (to) {
+		case c1:
+			move_piece(pos, a1, d1);
+			break;
+		case c8:
+			move_piece(pos, a8, d8);
+			break;
+		case g1:
+			move_piece(pos, h1, f1);
+			break;
+		case g8:
+			move_piece(pos, h8, f8);
+			break;
+		}
+	}
+
+	if (pos->get_enpas() != NO_SQ) {
+		HASH_EP(pos);
+	}
+	HASH_CA(pos);
+
+	box.move = move;
+	box.fifty_move = pos->get_fifty_move();
+	box.enpas = pos->get_enpas();
+	box.castle_perms = pos->get_castle_perms();
+	pos->set_move_history(pos->get_his_ply(), box);
+
+	uint8_t castle_perms = pos->get_castle_perms();
+	castle_perms &= castling_rights[from];
+	castle_perms &= castling_rights[to];
+	pos->set_castle_perms(castle_perms);
+	pos->set_enpas(NO_SQ);
+
+	HASH_CA(pos);
+
+	pos->set_fifty_move(pos->get_fifty_move() + 1);
+
+	// Handle captures
+	int captured = get_move_capture(move);
+	if (captured != EMPTY) {
+		clear_piece(pos, to);
+		pos->set_fifty_move(0);
+	}
+
+
+	pos->set_ply(pos->get_ply() + 1);
+	pos->set_his_ply(pos->get_his_ply() + 1);
+
+	if (piece_type[pos->get_piece(from)] == PAWN) {
+		pos->set_fifty_move(0);
+		// Check if it's double advance
+		if (get_move_double(move)) {
+			if (side == WHITE) {
+				pos->set_enpas(from - 8);
+			}
+			else {
+				pos->set_enpas(from + 8);
+			}
+			HASH_EP(pos);
+		}
+	}
+
+	move_piece(pos, from, to);
+
+	// Handle promotions
+	int prPce = get_move_promoted(move);
+	if (prPce != EMPTY) {
+		// Replace the pawn with the promoted piece
+		clear_piece(pos, to);
+		add_piece(pos, to, prPce);
+	}
+
+	// Detect king move
+	if (piece_type[pos->get_piece(to)] == KING) {
+		pos->set_king_sq(pos->get_side(), to);
+	}
+
+	// Switch sides
+	pos->set_side(pos->get_side() ^ 1);
+	HASH_SIDE(pos);
+
+	// It is an illegal move if we reveal a check to our king
+	// side: Our side (the mover)
+	// pos->get_side(): Opponent's side (switched after making the move)
+	if (is_square_attacked(pos, pos->get_king_sq(side), pos->get_side())) {
+		take_move(pos);
+		return false; // Illegal move
+	}
+
+	return true;
+}
+
+/*
 bool make_move(Board *pos, int move) {
 
 	Board* copy = pos->clone();
@@ -274,6 +386,7 @@ bool make_move(Board *pos, int move) {
 	delete copy;
 	return true;
 }
+*/
 
 /*
 	Null move manipulation

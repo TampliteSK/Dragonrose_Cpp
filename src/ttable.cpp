@@ -6,6 +6,8 @@
 #include "makemove.hpp"
 #include "moveio.hpp"
 
+HashTable table[1];
+
 int probe_PV_move(const Board* pos, const HashTable* table) {
 	int index = pos->get_hash_key() % table->max_entries;
 
@@ -124,14 +126,15 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, uint32_t sco
 	}
 	else {
 		int entry_age = table->pTable[index].age;
-		// Existing entry is old, or equal age but shallower depth
-		if (entry_age < table->table_age) {
-			// Existing entry is old, so we replace it
+		uint8_t entry_depth = table->pTable[index].depth;
+		
+		// Replacement condition 1: Greater age (newer entry)
+		if (table->table_age > entry_age) {
 			replace = true;
 			table->overwrite++;
 		}
-		else if (entry_age == table->table_age && table->pTable[index].depth < depth) {
-			// Existing entry is equal age, but at a shallower depth, we still replace it
+		// Replacement condition 2: Same age and greater depth
+		else if (entry_age == table->table_age && depth > entry_depth) {
 			replace = true;
 			table->overwrite++;
 		}

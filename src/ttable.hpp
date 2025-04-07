@@ -4,6 +4,7 @@
 #define TTABLE_HPP
 
 #include <cstdint>
+#include "datatypes.hpp"
 #include "Board.hpp"
 
 class Board;

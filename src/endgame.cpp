@@ -20,7 +20,7 @@ bool check_material_draw(const Board* pos) {
 	// Upper bound of a bishop's value in the endgame (slightly higher than actual value due to tapered eval)
 	#define MAX_MINOR_PIECE 310
 
-	return count_material(pos) < MAX_MINOR_PIECE;
+	return abs(count_material(pos)) < MAX_MINOR_PIECE;
 }
 
 /*

@@ -14,7 +14,9 @@
 
 // UCI options struct
 typedef struct {
-	bool use_book; // type check
+	uint16_t hash_size; // type spin
+	uint16_t threads; // type spin
+	// bool use_book; // type check
 } UciOptions;
 
 class UciHandler {

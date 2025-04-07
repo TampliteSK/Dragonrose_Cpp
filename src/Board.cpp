@@ -308,7 +308,6 @@ Bitboard Board::get_occupancy(uint8_t col) const {
 uint8_t Board::get_piece_num(uint8_t pce) const {
 	return piece_num[pce];
 }
-
 uint8_t Board::get_king_sq(uint8_t col) const {
 	return king_sq[col];
 }
@@ -383,11 +382,8 @@ void Board::set_occupancy(uint8_t col, uint8_t index, uint8_t new_bit) {
 }
 
 void Board::set_piece_num(uint8_t pce, uint8_t new_num) {
-	if (pce < 13) {
-		piece_num[pce] = new_num;
-	}
+	piece_num[pce] = new_num;
 }
-
 void Board::set_king_sq(uint8_t col, uint8_t new_sq) {
 	if (col < 3) {
 		king_sq[col] = new_sq;
@@ -415,8 +411,10 @@ void Board::set_his_ply(uint16_t new_his_ply) {
 void Board::set_hash_key(uint64_t new_key) {
 	hash_key = new_key;
 }
-void Board::set_move_history(int index, UndoBox new_box) {
-	move_history[index] = new_box;
+void Board::set_move_history(uint16_t index, UndoBox new_box) {
+	if (index < 2048) {
+		move_history[index] = new_box;
+	}
 }
 
 void Board::set_killer_move(uint8_t id, uint8_t depth, int new_score) {
@@ -443,6 +441,7 @@ bool Board::operator==(const Board& other) const {
 	// Compare pieces
 	for (int i = 0; i < 64; ++i) {
 		if (this->pieces[i] != other.pieces[i]) {
+			std::cout << "Discrepancy of piece at square " << i << ": Left board: " << this->pieces[i] << ". Right board: " << other.pieces[i] << "\n";
 			return false;
 		}
 	}
@@ -450,6 +449,7 @@ bool Board::operator==(const Board& other) const {
 	// Compare bitboards
 	for (int i = 0; i < 13; ++i) {
 		if (this->bitboards[i] != other.bitboards[i]) {
+			std::cout << "Discrepancy of bitboard at index " << i << "\n";
 			return false;
 		}
 	}
@@ -457,13 +457,7 @@ bool Board::operator==(const Board& other) const {
 	// Compare occupancies
 	for (int i = 0; i < 3; ++i) {
 		if (this->occupancies[i] != other.occupancies[i]) {
-			return false;
-		}
-	}
-
-	// Compare piece numbers
-	for (int i = 0; i < 13; ++i) {
-		if (this->piece_num[i] != other.piece_num[i]) {
+			std::cout << "Discrepancy of occupancies at index " << i << "\n";
 			return false;
 		}
 	}
@@ -471,6 +465,7 @@ bool Board::operator==(const Board& other) const {
 	// Compare king squares
 	for (int i = 0; i < 3; ++i) {
 		if (this->king_sq[i] != other.king_sq[i]) {
+			std::cout << "Discrepancy of king_sq at index " << i << ": Left board: " << this->king_sq[i] << ". Right board: " << other.king_sq[i] << "\n";
 			return false;
 		}
 	}
@@ -483,6 +478,7 @@ bool Board::operator==(const Board& other) const {
 		this->ply != other.ply ||
 		this->his_ply != other.his_ply ||
 		this->hash_key != other.hash_key) {
+		std::cout << "Either side, enpas, castle_perms, fiftymove, ply, hisply or hashkey is different\n";
 		return false;
 	}
 
@@ -493,8 +489,63 @@ bool Board::operator==(const Board& other) const {
 			this->move_history[i].enpas        != other.move_history[i].enpas ||
 			this->move_history[i].fifty_move   != other.move_history[i].fifty_move ||
 			this->move_history[i].hash_key     != other.move_history[i].hash_key) {
+			std::cout << "Discrepancy of move history at ply " << i << "\n";
 			return false;
 		}
+	}
+
+	return true;
+}
+
+// Check if every attribute is the same
+bool check_boards(const Board* pos1, const Board* pos2) {
+
+	// Compare pieces
+	for (int i = 0; i < 64; ++i) {
+		if (pos1->get_piece(i) != pos2->get_piece(i)) {
+			std::cout << "Discrepancy of piece at square " << i << ": Left board: "
+				<< static_cast<int>(pos1->get_piece(i)) << ". Right board: "
+				<< static_cast<int>(pos2->get_piece(i)) << "\n";
+			return false;
+		}
+	}
+
+	// Compare bitboards
+	for (int i = 0; i < 13; ++i) {
+		if (pos1->get_bitboard(i) != pos2->get_bitboard(i)) {
+			std::cout << "Discrepancy of bitboard at index " << i << "\n";
+			return false;
+		}
+	}
+
+	// Compare occupancies
+	for (int i = 0; i < 3; ++i) {
+		if (pos1->get_occupancy(i) != pos2->get_occupancy(i)) {
+			std::cout << "Discrepancy of occupancies at index " << i << "\n";
+			return false;
+		}
+	}
+
+	// Compare king squares
+	for (int i = 0; i < 3; ++i) {
+		if (pos1->get_king_sq(i) != pos2->get_king_sq(i)) {
+			std::cout << "Discrepancy of king_sq at index " << i << ": Left board: "
+				<< static_cast<int>(pos1->get_king_sq(i)) << ". Right board: "
+				<< static_cast<int>(pos2->get_king_sq(i)) << "\n";
+			return false;
+		}
+	}
+
+	// Compare other attributes
+	if (pos1->get_side() != pos2->get_side() ||
+		pos1->get_enpas() != pos2->get_enpas() ||
+		pos1->get_castle_perms() != pos2->get_castle_perms() ||
+		pos1->get_fifty_move() != pos2->get_fifty_move() ||
+		pos1->get_ply() != pos2->get_ply() ||
+		pos1->get_his_ply() != pos2->get_his_ply() ||
+		pos1->get_hash_key() != pos2->get_hash_key()) {
+		std::cout << "Either side, enpas, castle_perms, fiftymove, ply, hisply or hashkey is different\n";
+		return false;
 	}
 
 	return true;

@@ -43,7 +43,6 @@ public:
 	Bitboard get_occupancy(uint8_t col) const;
 
 	uint8_t get_piece_num(uint8_t pce) const;
-
 	uint8_t get_king_sq(uint8_t col) const;
 	uint8_t get_side() const;
 	uint8_t get_enpas() const;
@@ -63,9 +62,8 @@ public:
 	void set_piece(uint8_t sq, uint8_t new_pce);
 	void set_bitboard(uint8_t pce, uint8_t index, uint8_t new_bit);
 	void set_occupancy(uint8_t col, uint8_t index, uint8_t new_bit);
-	
-	void set_piece_num(uint8_t pce, uint8_t new_num);
 
+	void set_piece_num(uint8_t pce, uint8_t new_num);
 	void set_king_sq(uint8_t col, uint8_t new_sq);
 	void set_side(uint8_t new_side);
 	void set_enpas(uint8_t new_sq);
@@ -75,7 +73,7 @@ public:
 	void set_ply(uint8_t new_ply);
 	void set_his_ply(uint16_t new_his_ply);
 	void set_hash_key(uint64_t new_key);
-	void set_move_history(int index, UndoBox new_box);
+	void set_move_history(uint16_t index, UndoBox new_box);
 
 	void set_killer_move(uint8_t id, uint8_t depth, int new_score);
 	void set_history_score(uint8_t pce, uint8_t sq, int new_score);
@@ -88,7 +86,6 @@ private:
 	Bitboard occupancies[3];
 
 	uint8_t piece_num[13];
-
 	uint8_t king_sq[3];
 	uint8_t side;
 	uint8_t enpas;
@@ -104,5 +101,7 @@ private:
 	int history_moves[13][64]; // history moves [piece][square]
 	int PV_array[64];
 };
+
+bool check_boards(const Board* pos1, const Board* pos2);
 
 #endif // BOARD_HPP

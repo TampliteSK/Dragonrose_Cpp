@@ -14,7 +14,6 @@
 #include "makemove.hpp"
 #include "movegen.hpp"
 #include "moveio.hpp"
-#include "perft.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
@@ -72,9 +71,6 @@ int main(int argc, char* argv[]) {
             uci->uci_loop(pos, hash_table, info, options);
             if (info->quit == true) break;
             continue;
-        }
-        else if (line.substr(0, 5) == "perft") {
-            run_perft(pos, 5, true);
         }
         else if (line.substr(0, 4) == "quit") {
             break;

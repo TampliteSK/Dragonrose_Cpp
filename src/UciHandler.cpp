@@ -7,6 +7,8 @@
 #include "search.hpp"
 #include "timeman.hpp"
 #include "UciHandler.hpp"
+#include "perft.hpp"
+
 #include <cstdint>
 #include <iostream>
 #include <sstream>
@@ -151,8 +153,6 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
     int MB = 16;
     init_hash_table(table, MB);
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "option name Book type check default false" << std::endl;
-    options->use_book = false;
     std::cout << "uciok" << std::endl;
 
     while (true) {
@@ -172,7 +172,16 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             parse_position(pos, "position startpos\n");
         }
         else if (line.substr(0, 2) == "go") {
-            parse_go(pos, table, info, line);
+            if (line.substr(0, 8) == "go perft") {
+                // go perft
+                pos->parse_fen("rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
+                pos->print_board();
+                run_perft(pos, 2, true);
+            }
+            else {
+                // Normal go command
+                parse_go(pos, table, info, line);
+            }  
         }
         else if (line.substr(0, 3) == "run") {
             parse_go(pos, table, info, "go infinite");
@@ -196,16 +205,6 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             }
             else {
                 std::cout << "Invalid Hash value" << std::endl;
-            }
-        }
-        else if (line.substr(0, 26) == "setoption name Book value ") {
-            if (line.find("true") != std::string::npos) {
-                std::cout << "Set Book to true" << std::endl;
-                options->use_book = true;
-            }
-            else {
-                std::cout << "Set Book to false" << std::endl;
-                options->use_book = false;
             }
         }
 
