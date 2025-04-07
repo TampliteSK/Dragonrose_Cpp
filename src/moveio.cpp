@@ -90,7 +90,7 @@ void print_move_list(const std::vector<Move> move_list) {
             << ascii_squares[get_move_target(move)]
             << (get_move_promoted(move) ? ascii_pieces[get_move_promoted(move)] : ' ')
             << "   " << ascii_pieces[get_move_piece(move)]
-            << "         " << (get_move_capture(move) ? 1 : 0)
+            << "         " << get_move_captured(move)
             << "         " << (get_move_double(move) ? 1 : 0)
             << "         " << (get_move_enpassant(move) ? 1 : 0)
             << "         " << (get_move_castling(move) ? 1 : 0)

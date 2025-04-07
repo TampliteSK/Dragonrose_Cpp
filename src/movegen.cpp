@@ -87,19 +87,20 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 
                     // generate pawn captures
                     while (attacks) {
-                        // init target square
+
                         target_square = pop_ls1b(attacks);
+                        int target_pce = pos->get_piece(target_square);
 
                         // pawn promotion
                         if (source_square >= a7 && source_square <= h7) {
-                            add_move(move_list, encode_move(source_square, target_square, piece, wQ, 1, 0, 0, 0), 5'000'000);
-                            add_move(move_list, encode_move(source_square, target_square, piece, wR, 1, 0, 0, 0), 200'000);
-                            add_move(move_list, encode_move(source_square, target_square, piece, wB, 1, 0, 0, 0), 100'000);
-                            add_move(move_list, encode_move(source_square, target_square, piece, wN, 1, 0, 0, 0), 300'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, wQ, target_pce, 0, 0, 0), 5'000'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, wR, target_pce, 0, 0, 0), 200'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, wB, target_pce, 0, 0, 0), 100'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, wN, target_pce, 0, 0, 0), 300'000);
                         }
                         else {
                             // Normal capture
-                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                            add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                         }
                     }
 
@@ -108,7 +109,7 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
                         Bitboard enpassant_attacks = pawn_attacks[pos->get_side()][source_square] & (1ULL << pos->get_enpas()); // Check if enpassant is a valid capture
                         if (enpassant_attacks) {
                             int target_enpassant = pop_ls1b(enpassant_attacks);
-                            add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0), 0);
+                            add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, bP, 0, 1, 0), 0);
                         }
                     }
                 }
@@ -177,17 +178,18 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
                     while (attacks) {
 
                         target_square = pop_ls1b(attacks);
+                        int target_pce = pos->get_piece(target_square);
 
                         // pawn promotion
                         if (source_square >= a2 && source_square <= h2) {
-                            add_move(move_list, encode_move(source_square, target_square, piece, bQ, 0, 0, 0, 0), 5'000'000);
-                            add_move(move_list, encode_move(source_square, target_square, piece, bR, 0, 0, 0, 0), 200'000);
-                            add_move(move_list, encode_move(source_square, target_square, piece, bB, 0, 0, 0, 0), 100'000);
-                            add_move(move_list, encode_move(source_square, target_square, piece, bN, 0, 0, 0, 0), 300'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, bQ, target_pce, 0, 0, 0), 5'000'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, bR, target_pce, 0, 0, 0), 200'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, bB, target_pce, 0, 0, 0), 100'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, bN, target_pce, 0, 0, 0), 300'000);
                         }
                         else {
                             // Normal capture
-                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                            add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                         }
                     }
 
@@ -197,7 +199,7 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
                         if (enpassant_attacks) {
                             // init enpassant capture target square
                             int target_enpassant = pop_ls1b(enpassant_attacks);
-                            add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0), 0);
+                            add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, wP, 0, 1, 0), 0);
                         }
                     }
                 }
@@ -238,11 +240,12 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
+                    int target_pce = pos->get_piece(target_square);
 
                     // Capture move 
                     // Check if the square is occupied by an enemy piece
                     if (piece_col[pos->get_piece(target_square)] == (pos->get_side() ^ 1)) {
-                        add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                        add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                     }
                     // Quiet move
                     else if (!noisy_only) {
@@ -263,10 +266,11 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
+                    int target_pce = pos->get_piece(target_square);
 
                     // Capture move
                     if (piece_col[pos->get_piece(target_square)] == (pos->get_side() ^ 1)) {
-                        add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                        add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                     } 
                     // Quiet move
                     else if (!noisy_only) {
@@ -287,10 +291,11 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
+                    int target_pce = pos->get_piece(target_square);
 
                     // Capture move
                     if (piece_col[pos->get_piece(target_square)] == (pos->get_side() ^ 1)) {
-                        add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                        add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                     }
                     // Quiet move
                     else if (!noisy_only) {
@@ -311,10 +316,11 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
+                    int target_pce = pos->get_piece(target_square);
 
                     // Capture move
                     if (piece_col[pos->get_piece(target_square)] == (pos->get_side() ^ 1)) {
-                        add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                        add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                     }
                     // Quiet move
                     else if (!noisy_only) {
@@ -335,10 +341,11 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
+                    int target_pce = pos->get_piece(target_square);
 
                     // Capture move
                     if (piece_col[pos->get_piece(target_square)] == (pos->get_side() ^ 1)) {
-                        add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0), 0);
+                        add_move(move_list, encode_move(source_square, target_square, piece, 0, target_pce, 0, 0, 0), 0);
                     }
                     // Quiet move
                     else if (!noisy_only) {
@@ -372,9 +379,9 @@ static inline int score_move(const Board *pos, int move) {
     // ...
 
     // Score capture move
-    if (get_move_capture(move)) {
-        int target_piece = pos->get_piece(get_move_target(move));
-        return mvv_lva[get_move_piece(move) - 1][target_piece - 1] + 2'000'000;
+    int captured = get_move_captured(move);
+    if (captured) {
+        return mvv_lva[get_move_piece(move) - 1][captured - 1] + 2'000'000;
     }
 
     // Score quiet move

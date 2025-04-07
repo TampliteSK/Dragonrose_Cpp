@@ -76,7 +76,25 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            std::cout << "No tests\n";
+            pos->parse_fen("rnbqkbnr/p1pppppp/8/1p6/P7/8/1PPPPPPP/RNBQKBNR w KQkq - 0 2");
+            std::vector<Move> list;
+            generate_moves(pos, list, false);
+
+            for (int i = 0; i < list.size(); ++i) {
+                std::cout << "====================\n";
+                std::cout << "= MAKING MOVE " << print_move(list[i].move) << " =\n";
+                std::cout << "====================\n";
+                make_move(pos, list[i].move);
+                pos->print_board();
+                print_bitboard(pos->get_bitboard(wP));
+                print_bitboard(pos->get_bitboard(bP));
+
+                std::cout << "=== TAKING MOVE\n";
+                take_move(pos);
+                pos->print_board();
+                print_bitboard(pos->get_bitboard(wP));
+                print_bitboard(pos->get_bitboard(bP));
+            }
         }
     }
 

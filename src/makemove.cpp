@@ -147,14 +147,14 @@ void take_move(Board *pos) {
 	}
 
 	// Undo captures
-	int captured = get_move_capture(move);
-	if (captured != EMPTY) {
+	int captured = get_move_captured(move);
+	if (captured != EMPTY && !get_move_enpassant(move)) {
 		add_piece(pos, to, captured);
 	}
 
 	// Undo promotion
 	if (get_move_promoted(move) != EMPTY) {
-		clear_piece(pos, to);
+		clear_piece(pos, from);
 		add_piece(pos, from, (piece_col[get_move_promoted(move)] == WHITE) ? wP : bP);
 	}
 }
@@ -216,8 +216,8 @@ bool make_move(Board* pos, int move) {
 	pos->set_fifty_move(pos->get_fifty_move() + 1);
 
 	// Handle captures
-	int captured = get_move_capture(move);
-	if (captured != EMPTY) {
+	int captured = get_move_captured(move);
+	if (captured) {
 		clear_piece(pos, to);
 		pos->set_fifty_move(0);
 	}

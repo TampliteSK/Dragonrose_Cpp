@@ -6,8 +6,6 @@
 #include "makemove.hpp"
 #include "moveio.hpp"
 
-HashTable table[1];
-
 int probe_PV_move(const Board* pos, const HashTable* table) {
 	int index = pos->get_hash_key() % table->max_entries;
 

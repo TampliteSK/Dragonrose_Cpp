@@ -185,19 +185,17 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 	sort_moves(pos, list);
 
 	for (int move_num = 0; move_num < list.size(); ++move_num) {
-		Board* copy = pos->clone();
 
 		// Check if it's a legal move
-		if (!make_move(copy, list.at(move_num).move)) {
-			delete copy;
+		if (!make_move(pos, list.at(move_num).move)) {
 			continue;
 		}
 		info->nodes++;
 		legal++;
 
-		int score = -quiescence(copy, info, -beta, -alpha);
+		int score = -quiescence(pos, info, -beta, -alpha);
 
-		delete copy;
+		take_move(pos);
 
 		if (info->stopped) {
 			return 0;
@@ -307,17 +305,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	sort_moves(pos, list);
 
 	for (int move_num = 0; move_num < list.size(); ++move_num) {
-
-		Board* copy = pos->clone();
 		int curr_move = list.at(move_num).move;
 
-		bool is_capture = get_move_capture(curr_move);
+		int captured = get_move_captured(curr_move);
 		bool is_promotion = (bool)get_move_promoted(curr_move);
 
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
-		if (!make_move(copy, curr_move)) {
-			delete copy;
+		if (!make_move(pos, curr_move)) {
 			continue;
 		}
 		legal++;
@@ -339,15 +334,15 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			// uint8_t MoveIsAttack = IsAttack(moving_pce, target_sq, pos);
 			// uint8_t target_sq_within_king_zone = dist_between_squares(self_king_sq, target_sq) <= 3; // Checks if a move's target square is within 3 king moves
 			
-			if (!in_check && !is_capture && !is_promotion && piece_type[moving_pce] != PAWN) {
+			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
 				reduced_depth = std::max(reduced_depth - r, 1);
 			}
 		}
 
-		score = -negamax_alphabeta(copy, table, info, -beta, -alpha, reduced_depth, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, true);
 		
-		delete copy;
+		take_move(pos);
 
 		if (info->stopped) {
 			return 0;
@@ -366,7 +361,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 					}
 					info->fh++;
 
-					if (get_move_capture(curr_move) == 0) {
+					if (get_move_captured(curr_move) == 0) {
 						pos->set_killer_move(1, pos->get_ply(), pos->get_killer_move(0, pos->get_ply()));
 						pos->set_killer_move(0, pos->get_ply(), curr_move);
 					}
@@ -378,7 +373,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				alpha = score;
 
-				if (get_move_capture(curr_move) == 0) {
+				if (get_move_captured(curr_move) == 0) {
 					int current_score = pos->get_history_score(pos->get_piece(get_move_source(best_move)), get_move_target(best_move));
 					pos->set_history_score(pos->get_piece(get_move_source(best_move)), get_move_target(best_move), current_score + depth);
 				}
@@ -477,7 +472,7 @@ void init_searchinfo(SearchInfo* info) {
 void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
 		for (int move_num = 4; move_num < 280; ++move_num) {
-			LMR_reduction_table[depth][move_num] = int(1 + log(depth) * log(move_num) / 3.00);
+			LMR_reduction_table[depth][move_num] = int(1 + log(depth) * log(move_num) / 2.75);
 		}
 	}
 }

@@ -266,12 +266,13 @@ void Board::print_board() const {
 
     std::cout << "\n     a b c d e f g h\n\n";
     std::cout << "           Side: " << (side == 0 ? "White" : "Black") << "\n";
-    std::cout << "     En passant: " << (enpas != NO_SQ ? ascii_squares[enpas] : "N/A") << "\n";
-	std::cout << "50-move counter: " << (int)fifty_move << "\n";
-	std::cout << "            Ply: " << (int)ply << "\n";
-	std::cout << "    History ply: " << (int)his_ply << "\n";
+    // std::cout << "     En passant: " << (enpas != NO_SQ ? ascii_squares[enpas] : "N/A") << "\n";
+	// std::cout << "50-move counter: " << (int)fifty_move << "\n";
+	// std::cout << "            Ply: " << (int)ply << "\n";
+	// std::cout << "    History ply: " << (int)his_ply << "\n";
 
     // Print castling rights
+	/*
     std::cout << "       Castling: "
         << ((castle_perms & WKCA) ? 'K' : '-')
         << ((castle_perms & WQCA) ? 'Q' : '-')
@@ -281,6 +282,7 @@ void Board::print_board() const {
 
     std::cout << "       Hash key: " << std::hex << hash_key << "\n\n";
 	std::cout << std::dec; // Reset output to base 10
+	*/
 }
 
 void Board::print_move_history() const {
@@ -382,7 +384,9 @@ void Board::set_occupancy(uint8_t col, uint8_t index, uint8_t new_bit) {
 }
 
 void Board::set_piece_num(uint8_t pce, uint8_t new_num) {
-	piece_num[pce] = new_num;
+	if (pce <= bK) {
+		piece_num[pce] = new_num;
+	}
 }
 void Board::set_king_sq(uint8_t col, uint8_t new_sq) {
 	if (col < 3) {

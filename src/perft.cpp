@@ -25,25 +25,14 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
     generate_moves(pos, move_list, false);
 
     if (print_info) {
-        print_move_list_compact(move_list);
-    }
-
-    if (print_info) {
         std::cout << "\n     Performance test\n\n";
         start = get_time_ms();
     }
 
     for (int move_count = 0; move_count < move_list.size(); ++move_count) {
 
-        Board* copy = pos->clone();
-
-        if (depth == 2) {
-            pos->print_board();
-        }
-
         // Skip illegal moves
         if (!make_move(pos, move_list.at(move_count).move)) {
-            std::cout << "Illegal move: " << print_move(move_list.at(move_count).move) << "\n";
             continue;
         }
 
@@ -59,10 +48,6 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
         uint64_t new_nodes = nodes - old_nodes;
 
         take_move(pos);
-
-        bool equal_pos = check_boards(pos, copy);
-
-        delete copy;
 
         // Print move if root level
         if (print_info) {

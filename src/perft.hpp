@@ -7,7 +7,14 @@
 #include "Board.hpp"
 
 // Common test positions
-// Passed: startpos d5, kiwipete d4, pos3 d5, pos4 d5, pos5 d4, pos6 d4
+/*
+	Startpos - Depth 6 passed
+	Kiwipete - Depth 4 passed
+	CPW_Pos3 - Depth 6 Passed
+	CPW_Pos4 - Depth 5 passed
+	CPW_Pos5 - Depth 4 passed
+	CPW_Pos6 - Depth 4 passed
+*/
 #define KIWIPETE "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
 #define CPW_POS3 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
 #define CPW_POS4 "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"

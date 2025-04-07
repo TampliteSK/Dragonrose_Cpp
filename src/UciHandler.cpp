@@ -155,6 +155,8 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "uciok" << std::endl;
 
+    pos->parse_fen(START_POS);
+
     while (true) {
         std::getline(std::cin, line);
 
@@ -173,10 +175,18 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         }
         else if (line.substr(0, 2) == "go") {
             if (line.substr(0, 8) == "go perft") {
-                // go perft
-                pos->parse_fen("rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
-                pos->print_board();
-                run_perft(pos, 2, true);
+                // Parse depth from "go perft X" command
+                int depth = 0;
+                size_t depth_pos = line.find("perft ");
+                if (depth_pos != std::string::npos) {
+                    try {
+                        depth = std::stoi(line.substr(depth_pos + 6));
+                    }
+                    catch (...) {
+                        depth = 5; // Fall back to default depth
+                    }
+                }
+                run_perft(pos, depth, true);
             }
             else {
                 // Normal go command
