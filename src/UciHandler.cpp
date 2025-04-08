@@ -171,7 +171,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         }
         else if (line.substr(0, 10) == "ucinewgame") {
             clear_hash_table(table);
-            parse_position(pos, "position startpos\n");
+            pos->parse_fen(START_POS);
         }
         else if (line.substr(0, 2) == "go") {
             if (line.substr(0, 8) == "go perft") {
@@ -216,6 +216,9 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             else {
                 std::cout << "Invalid Hash value" << std::endl;
             }
+        }
+        else if (line.substr(0, 5) == "print") {
+            pos->print_board();
         }
 
         if (info->quit) break;

@@ -34,7 +34,7 @@ endif
 
 # Default target
 all:
-	$(CXX) $(SRCS) -o $(EXE) $(OPT_FLAGS) $(MISC_FLAGS) -std=c++20
+	$(CXX) $(SRCS) -o $(EXE).exe $(OPT_FLAGS) $(MISC_FLAGS) -std=c++20
 
 # Clean target to remove the executable
 clean:
