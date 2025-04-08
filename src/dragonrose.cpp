@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Position: " << bench_positions[index] << "\n";
                 pos->parse_fen(bench_positions[index]);
                 clear_hash_table(hash_table);
-                uci->parse_go(pos, hash_table, info, "go depth 3");
+                uci->parse_go(pos, hash_table, info, "go depth 4");
                 total_nodes += info->nodes;
             }
 
@@ -56,7 +56,12 @@ int main(int argc, char* argv[]) {
             std::cout << total_nodes << " nodes " << int(total_nodes / (double)time) << " nps\n";
 
             // Quit after benching is finished
-            info->quit = true;
+            delete pos;
+            free(info);
+            free(hash_table->pTable);
+            free(hash_table);
+            free(uci);
+            free(options);
             return 0;
         }
     }
@@ -91,6 +96,7 @@ int main(int argc, char* argv[]) {
 	free(info);
     free(hash_table->pTable);
 	free(hash_table);
+    free(uci);
     free(options);
 
 	return 0;

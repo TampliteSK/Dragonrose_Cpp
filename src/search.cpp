@@ -269,10 +269,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
 	if (depth >= 4 && !is_endgame) {
 		if (do_null && !in_check && pos->get_ply()) {
-			Board* copy = pos->clone();
-			make_null_move(copy);
-			score = -negamax_alphabeta(copy, table, info, -beta, -beta + 1, depth - 4, false);
-			delete copy;
+			make_null_move(pos);
+			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, false);
+			take_null_move(pos);
 
 			if (info->stopped) {
 				return 0;

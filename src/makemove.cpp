@@ -314,6 +314,7 @@ void take_null_move(Board *pos) {
 	pos->set_castle_perms(box.castle_perms);
 	pos->set_fifty_move(box.fifty_move);
 	pos->set_enpas(box.enpas);
+	delete history;
 
 	if (pos->get_enpas() != NO_SQ) {
 		HASH_EP(pos);
