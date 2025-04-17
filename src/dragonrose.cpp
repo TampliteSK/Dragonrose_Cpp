@@ -22,7 +22,8 @@
 int main(int argc, char* argv[]) {
 	init_all();
 
-	Board* pos = new Board(START_POS);
+    Board* pos = (Board*)malloc(sizeof(Board));;
+    reset_board(pos);
 	SearchInfo* info = (SearchInfo*)malloc(sizeof(SearchInfo));
 	init_searchinfo(info);
 	HashTable* hash_table = (HashTable*)malloc(sizeof(HashTable)); // Global hash
@@ -41,10 +42,10 @@ int main(int argc, char* argv[]) {
             uint64_t start = get_time_ms();
 
             for (int index = 0; index < 50; ++index) {
-                std::cout << "\n=== Benching position " << index << "/49 ===\n";
+                std::cout << "\n=== Benching position " << index+1 << "/50 ===\n";
                 info->nodes = 0;
                 std::cout << "Position: " << bench_positions[index] << "\n";
-                pos->parse_fen(bench_positions[index]);
+                parse_fen(pos, bench_positions[index]);
                 clear_hash_table(hash_table);
                 uci->parse_go(pos, hash_table, info, "go depth 4");
                 total_nodes += info->nodes;
@@ -53,15 +54,15 @@ int main(int argc, char* argv[]) {
             uint64_t end = get_time_ms();
             uint64_t time = end - start;
             std::cout << "\n-#-#- Benchmark results -#-#-\n";
-            std::cout << total_nodes << " nodes " << int(total_nodes / (double)time) << " nps\n";
+            std::cout << total_nodes << " nodes " << int(total_nodes / (double)time * 1000) << " nps\n";
 
             // Quit after benching is finished
-            delete pos;
+            free(pos);
             free(info);
             free(hash_table->pTable);
             free(hash_table);
-            free(uci);
             free(options);
+            delete uci;
             return 0;
         }
     }
@@ -81,7 +82,7 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            pos->parse_fen("QQQQQQBk/Q6B/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - - 0 1");
+            parse_fen(pos, "QQQQQQBk/Q6B/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - - 0 1");
             uint64_t start = get_time_ms();
             for (int i = 0; i < 100000; ++i) {
                 std::vector<Move> list;
@@ -92,12 +93,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    delete pos;
+    free(pos);
 	free(info);
     free(hash_table->pTable);
 	free(hash_table);
-    free(uci);
     free(options);
+    delete uci;
 
 	return 0;
 }

@@ -8,8 +8,6 @@
 #include "Board.hpp"
 #include "datatypes.hpp"
 
-class Board;
-
 typedef struct {
 	uint64_t start_time;
 	uint64_t stop_time;

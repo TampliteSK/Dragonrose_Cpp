@@ -93,7 +93,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			guess = best_score;
 
 			PV_moves = get_PV_line(pos, table, curr_depth);
-			best_move = pos->get_PV_move(0);
+			best_move = pos->PV_array[0];
 
 			if (info->stopped) {
 				break;
@@ -133,7 +133,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			// Print PV
 			for (int i = 0; i < PV_moves; ++i) {
-				std::cout << " " << print_move(pos->get_PV_move(i));
+				std::cout << " " << print_move(pos->PV_array[i]);
 			}
 			std::cout << "\n";
 
@@ -155,16 +155,16 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 
 	check_time(info); // Check if time is up
 
-	if (check_repetition(pos) || pos->get_fifty_move() >= 100) {
+	if (check_repetition(pos) || pos->fifty_move >= 100) {
 		return 0;
 	}
 
-	if (pos->get_ply() >= MAX_DEPTH) {
+	if (pos->ply >= MAX_DEPTH) {
 		return evaluate_pos(pos);
 	}
 
-	if (pos->get_ply() > info->seldepth) {
-		info->seldepth = pos->get_ply();
+	if (pos->ply > info->seldepth) {
+		info->seldepth = pos->ply;
 	}
 
 	int stand_pat = evaluate_pos(pos);
@@ -184,7 +184,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 
 	sort_moves(pos, list);
 
-	for (int move_num = 0; move_num < list.size(); ++move_num) {
+	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 
 		// Check if it's a legal move
 		if (!make_move(pos, list.at(move_num).move)) {
@@ -229,24 +229,24 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	check_time(info); // Check if time is up
 
 	// Check draw
-	if ((check_repetition(pos) || pos->get_fifty_move() >= 100) && pos->get_ply()) {
+	if ((check_repetition(pos) || pos->fifty_move >= 100) && pos->ply) {
 		return 0;
 	}
 
 	// Max depth reached
-	if (pos->get_ply() >= MAX_DEPTH) {
+	if (pos->ply >= MAX_DEPTH) {
 		return evaluate_pos(pos);
 	}
 
-	if (pos->get_ply() > info->seldepth) {
-		info->seldepth = pos->get_ply();
+	if (pos->ply > info->seldepth) {
+		info->seldepth = pos->ply;
 	}
 
-	uint8_t US = pos->get_side();
-	uint8_t THEM = pos->get_side() ^ 1;
+	uint8_t US = pos->side;
+	uint8_t THEM = US ^ 1;
 
 	// Check extension to avoid horizon effect
-	bool in_check = is_square_attacked(pos, pos->get_king_sq(US), THEM);
+	bool in_check = is_square_attacked(pos, pos->king_sq[US], THEM);
 	if (in_check) {
 		depth++;
 	}
@@ -265,10 +265,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	*/
 
 	// uint8_t big_pieces = count_bits(pos->get_occupancy(US)) - count_bits(pos->get_bitboard((US == WHITE) ? wP : bP));
-	bool is_endgame = count_bits(pos->get_occupancy(BOTH)) < 8;
+	bool is_endgame = count_bits(pos->occupancies[BOTH]) < 8;
 	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
 	if (depth >= 4 && !is_endgame) {
-		if (do_null && !in_check && pos->get_ply()) {
+		if (do_null && !in_check && pos->ply) {
 			make_null_move(pos);
 			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, false);
 			take_null_move(pos);
@@ -293,7 +293,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	// Order PV move as first move (linear search)
 	if (PV_move != NO_MOVE) {
-		for (int move_num = 0; move_num < list.size(); ++move_num) {
+		for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 			if (list.at(move_num).move == PV_move) {
 				list.at(move_num).score = 10'000'000;
 				break;
@@ -303,7 +303,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	sort_moves(pos, list);
 
-	for (int move_num = 0; move_num < list.size(); ++move_num) {
+	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int curr_move = list.at(move_num).move;
 
 		int captured = get_move_captured(curr_move);
@@ -327,9 +327,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
 		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
-			uint8_t self_king_sq = pos->get_king_sq(US);
 			uint8_t moving_pce = get_move_piece(curr_move);
-			uint8_t target_sq = get_move_target(curr_move);
+			// uint8_t self_king_sq = pos->king_sq[US];
+			// uint8_t target_sq = get_move_target(curr_move);
 			// uint8_t MoveIsAttack = IsAttack(moving_pce, target_sq, pos);
 			// uint8_t target_sq_within_king_zone = dist_between_squares(self_king_sq, target_sq) <= 3; // Checks if a move's target square is within 3 king moves
 			
@@ -361,8 +361,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 					info->fh++;
 
 					if (get_move_captured(curr_move) == 0) {
-						pos->set_killer_move(1, pos->get_ply(), pos->get_killer_move(0, pos->get_ply()));
-						pos->set_killer_move(0, pos->get_ply(), curr_move);
+						pos->killer_moves[1][pos->ply] = pos->killer_moves[0][pos->ply];
+						pos->killer_moves[0][pos->ply] = curr_move;
 					}
 
 					store_hash_entry(pos, table, best_move, best_score, HFBETA, depth);
@@ -373,8 +373,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				alpha = score;
 
 				if (get_move_captured(curr_move) == 0) {
-					int current_score = pos->get_history_score(pos->get_piece(get_move_source(best_move)), get_move_target(best_move));
-					pos->set_history_score(pos->get_piece(get_move_source(best_move)), get_move_target(best_move), current_score + depth);
+					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
 				}
 			}
 		}
@@ -383,7 +382,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	if (legal == 0) {
 		if (in_check) {
 			// Checkmate
-			return -INF_BOUND + pos->get_ply(); 
+			return -INF_BOUND + pos->ply; 
 		}
 		else {
 			// Stalemate
@@ -414,14 +413,11 @@ static inline void check_time(SearchInfo* info) {
 
 // Check if there's a two-fold repetition (linear search)
 static inline bool check_repetition(const Board* pos) {
-	UndoBox* history = pos->get_move_history();
-	for (int i = pos->get_his_ply() - pos->get_fifty_move(); i < pos->get_his_ply() - 1; ++i) {
-		if (pos->get_hash_key() == history[i].hash_key) {
-			free(history);
+	for (int i = pos->his_ply - pos->fifty_move; i < pos->his_ply - 1; ++i) {
+		if (pos->hash_key == pos->move_history[i].hash_key) {
 			return true;
 		}
 	}
-	free(history);
 	return false;
 }
 
@@ -429,12 +425,12 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 
 	for (int pce = 0; pce < 13; ++pce) {
 		for (int sq = 0; sq < 64; ++sq) {
-			pos->set_history_score(pce, sq, 40000);
+			pos->history_moves[pce][sq] = 40000;
 		}
 	}
 	for (int id = 0; id < 2; ++id) {
 		for (int depth = 0; depth < MAX_DEPTH; ++depth) {
-			pos->set_killer_move(id, depth, 40000);
+			pos->killer_moves[id][depth] = 40000;
 		}
 	}
 
@@ -442,7 +438,7 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 	table->hit = 0;
 	table->cut = 0;
 	table->table_age++;
-	pos->set_ply(0);
+	pos->ply = 0;
 	
 	info->seldepth = 0;
 	info->stopped = false;

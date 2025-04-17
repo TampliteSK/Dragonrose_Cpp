@@ -35,7 +35,7 @@ int parse_move(const Board *pos, std::string move_string) {
     int target_square = (move_string[2] - 'a') + (8 - (move_string[3] - '0')) * 8;
 
     // Search if the move exists in the list
-    for (int move_count = 0; move_count < move_list.size(); move_count++) {
+    for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
 
         int move = move_list.at(move_count).move;
 
@@ -79,7 +79,7 @@ void print_move_list(const std::vector<Move> move_list) {
     std::cout << "\n     move    piece     capture   double    enpass    castling    score\n\n";
 
     // Loop over moves within a move list
-    for (int move_count = 0; move_count < move_list.size(); move_count++) {
+    for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
 
         Move move_struct = move_list.at(move_count);
         int move = move_struct.move;
@@ -112,7 +112,7 @@ void print_move_list_compact(const std::vector<Move> move_list) {
 
     std::cout << "Generated moves: ";
 
-    for (int move_count = 0; move_count < move_list.size(); move_count++) {
+    for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
         Move move_struct = move_list.at(move_count);
         int move = move_struct.move;
         int score = move_struct.score;

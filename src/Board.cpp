@@ -7,90 +7,47 @@
 #include "zobrist.hpp"
 #include "moveio.hpp"
 
-// Constructors
-Board::Board() {
-	reset_board();
-}
-
-Board::Board(const std::string FEN) {
-	reset_board();
-	parse_fen(FEN);
-}
-
-// Copy constructor
-Board::Board(const Board& other) {
-	std::copy(std::begin(other.pieces), std::end(other.pieces), pieces);
-	std::copy(std::begin(other.bitboards), std::end(other.bitboards), bitboards);
-	std::copy(std::begin(other.occupancies), std::end(other.occupancies), occupancies);
-
-	std::copy(std::begin(other.piece_num), std::end(other.piece_num), piece_num);
-
-	std::copy(std::begin(other.king_sq), std::end(other.king_sq), king_sq);
-	side = other.side;
-	enpas = other.enpas;
-	castle_perms = other.castle_perms;
-	fifty_move = other.fifty_move;
-
-	ply = other.ply;
-	his_ply = other.his_ply;
-	hash_key = other.hash_key;
-	std::copy(std::begin(other.move_history), std::end(other.move_history), move_history);
-
-	std::copy(&other.killer_moves[0][0], &other.killer_moves[0][0] + 2 * MAX_DEPTH, &killer_moves[0][0]);
-	std::copy(&other.history_moves[0][0], &other.history_moves[0][0] + 13 * 64, &history_moves[0][0]);
-	std::copy(&other.PV_array[0], &other.PV_array[0] + MAX_DEPTH, &PV_array[0]);
-}
-
 /*
-	Board manipulation
+	Macro board manipulation
 */
 
-// Clone method
-Board* Board::clone() const {
-	return new Board(*this); // Calls the copy constructor
-}
-
-void Board::reset_board() {
+void reset_board(Board* pos) {
 
 	for (int sq = 0; sq < 64; ++sq) {
-		pieces[sq] = EMPTY;
+		pos->pieces[sq] = EMPTY;
 	}
 
 	for (int i = 0; i < 13; ++i) {
-		bitboards[i] = 0ULL;
-        piece_num[i] = 0;
+		pos->bitboards[i] = 0ULL;
+		pos->piece_num[i] = 0;
 		if (i < 3) {
-			occupancies[i] = 0ULL;
-            king_sq[i] = NO_SQ;
+			pos->occupancies[i] = 0ULL;
+			pos->king_sq[i] = NO_SQ;
 		}
 	}
 
-	side = WHITE;
-	enpas = NO_SQ;
-	castle_perms = 0;
-	fifty_move = 0;
-
-	ply = 0;
-	his_ply = 0;
-	hash_key = 0ULL;
+	pos->side = WHITE;
+	pos->enpas = NO_SQ;
+	pos->castle_perms = 0;
+	pos->fifty_move = 0;
+	pos->ply = 0;
+	pos->his_ply = 0;
+	pos->hash_key = 0ULL;
 
 	for (int index = 0; index < 2; ++index) {
 		for (int ply = 0; ply < MAX_DEPTH; ++ply) {
-			killer_moves[index][ply] = 0;
+			pos->killer_moves[index][ply] = 0;
 		}
 	}
-
 	for (int pce = 0; pce < 13; ++pce) {
 		for (int sq = 0; sq < 64; ++sq) {
-			history_moves[pce][sq] = 0;
+			pos->history_moves[pce][sq] = 0;
 		}
 	}
-
 	for (int ply = 0; ply < MAX_DEPTH; ++ply) {
-		PV_array[ply] = 0; // NO_MOVE
+		pos->PV_array[ply] = 0; // NO_MOVE
 	}
-
-	for (UndoBox box : move_history) {
+	for (UndoBox& box : pos->move_history) {
 		box.castle_perms = 0;
 		box.enpas = 0;
 		box.fifty_move = 0;
@@ -100,24 +57,24 @@ void Board::reset_board() {
 }
 
 // Update other variables of the board, for when only bitboards and occupancies were setup
-void Board::update_vars() {
+void update_vars(Board* pos) {
 	for (int pce = wP; pce <= bK; ++pce) {
-		piece_num[pce] = count_bits(bitboards[pce]);
+		pos->piece_num[pce] = count_bits(pos->bitboards[pce]);
 		if (piece_type[pce] == KING) {
-			Bitboard copy = bitboards[pce];
-			king_sq[piece_col[pce]] = pop_ls1b(copy);
+			Bitboard copy = pos->bitboards[pce];
+			pos->king_sq[piece_col[pce]] = pop_ls1b(copy);
 		}
 	}
 }
 
 // Rewritten from VICE parse_fen() function by Richard Allbert
-void Board::parse_fen(const std::string FEN) {
+void parse_fen(Board* pos, const std::string FEN) {
 
 	if (FEN.length() <= 0) {
 		std::cerr << "Board parse_fen() error: Invalid FEN length.\n";
 	}
 
-	reset_board();
+	reset_board(pos);
 	int pfen = 0; // Pointer to FEN character.
 
 	/********************
@@ -130,7 +87,7 @@ void Board::parse_fen(const std::string FEN) {
 	int count = 0; // no. of consecutive empty squares / placeholder
 	int sq    = 0;
 
-	while ((rank <= RANK_1) && pfen < FEN.length()) {
+	while ((rank <= RANK_1) && pfen < (int)FEN.length()) {
 		count = 1;
 
 		switch (FEN[pfen]) {
@@ -176,10 +133,10 @@ void Board::parse_fen(const std::string FEN) {
 			sq = FR2SQ(file, rank);
 			// Skips a file if empty square
 			if (piece != EMPTY) { 
-				pieces[sq] = piece;
-				SET_BIT(bitboards[piece], sq);
-				SET_BIT(occupancies[BOTH], sq);
-				SET_BIT(occupancies[piece_col[piece]], sq);
+				pos->pieces[sq] = piece;
+				SET_BIT(pos->bitboards[piece], sq);
+				SET_BIT(pos->occupancies[BOTH], sq);
+				SET_BIT(pos->occupancies[piece_col[piece]], sq);
 			}
 			file++;
 		}
@@ -191,7 +148,7 @@ void Board::parse_fen(const std::string FEN) {
 	****************** */
 
 	// Side-to-move parsing
-	side = (FEN[pfen] == 'w') ? WHITE : BLACK;
+	pos->side = (FEN[pfen] == 'w') ? WHITE : BLACK;
 	pfen += 2;
 
 	// Castling perm parsing
@@ -200,10 +157,10 @@ void Board::parse_fen(const std::string FEN) {
 			break;
 		}
 		switch (FEN[pfen]) {
-			case 'K': castle_perms |= WKCA; break;
-			case 'Q': castle_perms |= WQCA; break;
-			case 'k': castle_perms |= BKCA; break;
-			case 'q': castle_perms |= BQCA; break;
+			case 'K': pos->castle_perms |= WKCA; break;
+			case 'Q': pos->castle_perms |= WQCA; break;
+			case 'k': pos->castle_perms |= BKCA; break;
+			case 'q': pos->castle_perms |= BQCA; break;
 			default: break;
 		}
 		pfen++;
@@ -214,7 +171,7 @@ void Board::parse_fen(const std::string FEN) {
 	if (FEN[pfen] != '-') {
 		file = FEN[pfen]     - 'a';
 		rank = 8 - int(FEN[pfen + 1] - '1');
-		enpas = FR2SQ(file, rank);
+		pos->enpas = FR2SQ(file, rank);
 		pfen += 3;
 	}
 	else {
@@ -223,32 +180,33 @@ void Board::parse_fen(const std::string FEN) {
 
 	// Fifty-move counter parsing
 	uint16_t half_moves = 0;
-	while (pfen < FEN.length() && FEN[pfen] != ' ') {
+	while (pfen < (int)FEN.length() && FEN[pfen] != ' ') {
 		half_moves = half_moves * 10 + (FEN[pfen] - '0');
 		pfen++;
 	}
-	fifty_move = half_moves;
+	pos->fifty_move = half_moves;
 	pfen++; // Move past the space
 
 	// Full move number parsing
 	uint16_t full_move = 0;
-	while (pfen < FEN.length()) {
+	while (pfen < (int)FEN.length()) {
 		if (FEN[pfen] == ' ') {
 			break;
 		}
 		full_move = full_move * 10 + (FEN[pfen] - '0');
 		pfen++;
 	}
-	// ply = his_ply = full_move;
 
-
-	// Zobrist key
-	hash_key = generate_hash_key(*this);
+	pos->hash_key = generate_hash_key(pos); // Get Zobrist key for the position
 	
-	update_vars();
+	update_vars(pos);
 }
 
-void Board::print_board() const {
+/*
+	Output functions (debug)
+*/
+
+void print_board(const Board* pos) {
     std::cout << "\n";
 
     for (int rank = RANK_8; rank <= RANK_1; rank++) {
@@ -257,7 +215,7 @@ void Board::print_board() const {
                 std::cout << "  " << (8 - rank) << " "; // Print rank number
 
 			uint8_t sq = FR2SQ(file, rank);
-            int piece = pieces[sq];
+            int piece = pos->pieces[sq];
             std::cout << " " << ascii_pieces[piece];
         }
 
@@ -265,256 +223,52 @@ void Board::print_board() const {
     }
 
     std::cout << "\n     a b c d e f g h\n\n";
-    std::cout << "           Side: " << (side == 0 ? "White" : "Black") << "\n";
-    std::cout << "     En passant: " << (enpas != NO_SQ ? ascii_squares[enpas] : "N/A") << "\n";
-	std::cout << "50-move counter: " << (int)fifty_move << "\n";
-	std::cout << "            Ply: " << (int)ply << "\n";
-	std::cout << "    History ply: " << (int)his_ply << "\n";
+    std::cout << "           Side: " << (pos->side == 0 ? "White" : "Black") << "\n";
+    std::cout << "     En passant: " << (pos->enpas != NO_SQ ? ascii_squares[pos->enpas] : "N/A") << "\n";
+	std::cout << "50-move counter: " << (int)pos->fifty_move << "\n";
+	std::cout << "            Ply: " << (int)pos->ply << "\n";
+	std::cout << "    History ply: " << (int)pos->his_ply << "\n";
 
     // Print castling rights
     std::cout << "       Castling: "
-        << ((castle_perms & WKCA) ? 'K' : '-')
-        << ((castle_perms & WQCA) ? 'Q' : '-')
-        << ((castle_perms & BKCA) ? 'k' : '-')
-        << ((castle_perms & BQCA) ? 'q' : '-')
+        << ((pos->castle_perms & WKCA) ? 'K' : '-')
+        << ((pos->castle_perms & WQCA) ? 'Q' : '-')
+        << ((pos->castle_perms & BKCA) ? 'k' : '-')
+        << ((pos->castle_perms & BQCA) ? 'q' : '-')
         << "\n";
 
-    std::cout << "       Hash key: " << std::hex << hash_key << "\n\n";
+    std::cout << "       Hash key: " << std::hex << pos->hash_key << "\n\n";
 	std::cout << std::dec; // Reset output to base 10
 }
 
-void Board::print_move_history() const {
+void print_move_history(const Board* pos) {
 	std::cout << "Move history: ";
-	for (int i = 0; i < his_ply; ++i) {
-		std::cout << print_move(move_history[i].move) << " ";
+	for (int i = 0; i < pos->his_ply; ++i) {
+		std::cout << print_move(pos->move_history[i].move) << " ";
 	}
 	std::cout << "\n";
 }
 
 /*
-	Getter functions
+	Misc function
 */
 
-uint8_t Board::get_piece(uint8_t sq) const {
-	return pieces[sq];
-}
-Bitboard Board::get_bitboard(uint8_t pce) const {
-	return bitboards[pce];
-}
-Bitboard Board::get_occupancy(uint8_t col) const {
-	return occupancies[col];
-}
-
-uint8_t Board::get_piece_num(uint8_t pce) const {
-	return piece_num[pce];
-}
-uint8_t Board::get_king_sq(uint8_t col) const {
-	return king_sq[col];
-}
-uint8_t Board::get_side() const {
-	return side;
-}
-uint8_t Board::get_enpas() const {
-	return enpas;
-}
-uint8_t Board::get_castle_perms() const {
-	return castle_perms;
-}
-uint8_t Board::get_fifty_move() const {
-	return fifty_move;
-}
-
-uint8_t Board::get_ply() const {
-	return ply;
-}
-uint16_t Board::get_his_ply() const {
-	return his_ply;
-}
-uint64_t Board::get_hash_key() const {
-	return hash_key;
-}
-UndoBox* Board::get_move_history() const {
-	UndoBox* history = new UndoBox[MAX_GAME_MOVES];
-	for (int i = 0; i < MAX_GAME_MOVES; ++i) {
-		history[i] = move_history[i];
-	}
-	return history;
-}
-
-int Board::get_killer_move(uint8_t id, uint8_t depth) const {
-	return killer_moves[id][depth];
-}
-int Board::get_history_score(uint8_t pce, uint8_t sq) const {
-	return history_moves[pce][sq];
-}
-int Board::get_PV_move(uint8_t index) const {
-	return PV_array[index];
-}
-
-/*
-	Setters
-*/
-
-void Board::set_piece(uint8_t sq, uint8_t new_pce) {
-	if (sq < 64) {
-		pieces[sq] = new_pce;
-	}
-}
-void Board::set_bitboard(uint8_t pce, uint8_t index, uint8_t new_bit) {
-	if (pce < 13) {
-		if (new_bit) {
-			bitboards[pce] |= (1ULL << index); // Set the bit
-		}
-		else {
-			bitboards[pce] &= ~(1ULL << index); // Clear the bit
-		}
-	}
-}
-void Board::set_occupancy(uint8_t col, uint8_t index, uint8_t new_bit) {
-	if (col < 3) {
-		if (new_bit) {
-			occupancies[col] |= (1ULL << index); // Set the bit
-		}
-		else {
-			occupancies[col] &= ~(1ULL << index); // Clear the bit
-		}
-	}
-}
-
-void Board::set_piece_num(uint8_t pce, uint8_t new_num) {
-	if (pce <= bK) {
-		piece_num[pce] = new_num;
-	}
-}
-void Board::set_king_sq(uint8_t col, uint8_t new_sq) {
-	if (col < 3) {
-		king_sq[col] = new_sq;
-	}
-}
-void Board::set_side(uint8_t new_side) {
-	side = new_side;
-}
-void Board::set_enpas(uint8_t new_sq) {
-	enpas = new_sq;
-}
-void Board::set_castle_perms(uint8_t new_perms) {
-	castle_perms = new_perms;
-}
-void Board::set_fifty_move(uint8_t new_count) {
-	fifty_move = new_count;
-}
-
-void Board::set_ply(uint8_t new_ply) {
-	ply = new_ply;
-}
-void Board::set_his_ply(uint16_t new_his_ply) {
-	his_ply = new_his_ply;
-}
-void Board::set_hash_key(uint64_t new_key) {
-	hash_key = new_key;
-}
-void Board::set_move_history(uint16_t index, UndoBox new_box) {
-	if (index < 2048) {
-		move_history[index] = new_box;
-	}
-}
-
-void Board::set_killer_move(uint8_t id, uint8_t depth, int new_score) {
-	if (id < 2 && depth < MAX_DEPTH) {
-		killer_moves[id][depth] = new_score;
-	}
-}
-void Board::set_history_score(uint8_t pce, uint8_t sq, int new_score) {
-	if (pce < 13 && sq < 64) {
-		history_moves[pce][sq] = new_score;
-	}
-}
-void Board::set_PV_move(uint8_t ply, int move) {
-	PV_array[ply] = move;
-}
-
-/*
-	Equality Overload
-*/
-
-// Check if every attribute is the same
-bool Board::operator==(const Board& other) const {
-
-	// Compare pieces
-	for (int i = 0; i < 64; ++i) {
-		if (this->pieces[i] != other.pieces[i]) {
-			std::cout << "Discrepancy of piece at square " << i << ": Left board: " << this->pieces[i] << ". Right board: " << other.pieces[i] << "\n";
-			return false;
-		}
-	}
-
-	// Compare bitboards
-	for (int i = 0; i < 13; ++i) {
-		if (this->bitboards[i] != other.bitboards[i]) {
-			std::cout << "Discrepancy of bitboard at index " << i << "\n";
-			return false;
-		}
-	}
-
-	// Compare occupancies
-	for (int i = 0; i < 3; ++i) {
-		if (this->occupancies[i] != other.occupancies[i]) {
-			std::cout << "Discrepancy of occupancies at index " << i << "\n";
-			return false;
-		}
-	}
-
-	// Compare king squares
-	for (int i = 0; i < 3; ++i) {
-		if (this->king_sq[i] != other.king_sq[i]) {
-			std::cout << "Discrepancy of king_sq at index " << i << ": Left board: " << this->king_sq[i] << ". Right board: " << other.king_sq[i] << "\n";
-			return false;
-		}
-	}
-
-	// Compare other attributes
-	if (this->side != other.side ||
-		this->enpas != other.enpas ||
-		this->castle_perms != other.castle_perms ||
-		this->fifty_move != other.fifty_move ||
-		this->ply != other.ply ||
-		this->his_ply != other.his_ply ||
-		this->hash_key != other.hash_key) {
-		std::cout << "Either side, enpas, castle_perms, fiftymove, ply, hisply or hashkey is different\n";
-		return false;
-	}
-
-	// Compare move history
-	for (int i = 0; i < MAX_GAME_MOVES; ++i) {
-		if (this->move_history[i].move		   != other.move_history[i].move ||
-			this->move_history[i].castle_perms != other.move_history[i].castle_perms ||
-			this->move_history[i].enpas        != other.move_history[i].enpas ||
-			this->move_history[i].fifty_move   != other.move_history[i].fifty_move ||
-			this->move_history[i].hash_key     != other.move_history[i].hash_key) {
-			std::cout << "Discrepancy of move history at ply " << i << "\n";
-			return false;
-		}
-	}
-
-	return true;
-}
-
-// Check if every attribute is the same
+// Check if every attribute is the same. Returns true if they are
 bool check_boards(const Board* pos1, const Board* pos2) {
 
 	// Compare pieces
 	for (int i = 0; i < 64; ++i) {
-		if (pos1->get_piece(i) != pos2->get_piece(i)) {
+		if (pos1->pieces[i] != pos2->pieces[i]) {
 			std::cout << "Discrepancy of piece at square " << i << ": Left board: "
-				<< static_cast<int>(pos1->get_piece(i)) << ". Right board: "
-				<< static_cast<int>(pos2->get_piece(i)) << "\n";
+				<< ascii_pieces[pos1->pieces[i]] << ". Right board: "
+				<< ascii_pieces[pos1->pieces[i]] << "\n";
 			return false;
 		}
 	}
 
 	// Compare bitboards
 	for (int i = 0; i < 13; ++i) {
-		if (pos1->get_bitboard(i) != pos2->get_bitboard(i)) {
+		if (pos1->bitboards[i] != pos2->bitboards[i]) {
 			std::cout << "Discrepancy of bitboard at index " << i << "\n";
 			return false;
 		}
@@ -522,7 +276,7 @@ bool check_boards(const Board* pos1, const Board* pos2) {
 
 	// Compare occupancies
 	for (int i = 0; i < 3; ++i) {
-		if (pos1->get_occupancy(i) != pos2->get_occupancy(i)) {
+		if (pos1->occupancies[i] != pos2->occupancies[i]) {
 			std::cout << "Discrepancy of occupancies at index " << i << "\n";
 			return false;
 		}
@@ -530,22 +284,22 @@ bool check_boards(const Board* pos1, const Board* pos2) {
 
 	// Compare king squares
 	for (int i = 0; i < 3; ++i) {
-		if (pos1->get_king_sq(i) != pos2->get_king_sq(i)) {
+		if (pos1->king_sq[i] != pos2->king_sq[i]) {
 			std::cout << "Discrepancy of king_sq at index " << i << ": Left board: "
-				<< static_cast<int>(pos1->get_king_sq(i)) << ". Right board: "
-				<< static_cast<int>(pos2->get_king_sq(i)) << "\n";
+				<< ascii_squares[pos1->king_sq[i]] << ". Right board: "
+				<< ascii_squares[pos2->king_sq[i]] << "\n";
 			return false;
 		}
 	}
 
 	// Compare other attributes
-	if (pos1->get_side() != pos2->get_side() ||
-		pos1->get_enpas() != pos2->get_enpas() ||
-		pos1->get_castle_perms() != pos2->get_castle_perms() ||
-		pos1->get_fifty_move() != pos2->get_fifty_move() ||
-		pos1->get_ply() != pos2->get_ply() ||
-		pos1->get_his_ply() != pos2->get_his_ply() ||
-		pos1->get_hash_key() != pos2->get_hash_key()) {
+	if (pos1->side != pos2->side ||
+		pos1->enpas != pos2->enpas ||
+		pos1->castle_perms != pos2->castle_perms ||
+		pos1->fifty_move != pos2->fifty_move ||
+		pos1->ply != pos2->ply ||
+		pos1->his_ply != pos2->his_ply ||
+		pos1->hash_key != pos2->hash_key) {
 		std::cout << "Either side, enpas, castle_perms, fiftymove, ply, hisply or hashkey is different\n";
 		return false;
 	}

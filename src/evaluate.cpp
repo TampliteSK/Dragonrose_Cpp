@@ -27,15 +27,15 @@ static inline int8_t count_activity(const Board* pos);
 
 int evaluate_pos(const Board* pos) {
 
-	Bitboard pawns = pos->get_bitboard(wP) | pos->get_bitboard(bP);
-	bool is_TB_endgame = count_bits(pos->get_occupancy(BOTH)) - count_bits(pawns) < 8;
+	Bitboard pawns = pos->bitboards[wP] | pos->bitboards[bP];
+	bool is_TB_endgame = count_bits(pos->occupancies[BOTH]) - pos->piece_num[wP] - pos->piece_num[bP] < 8;
 	if (is_TB_endgame && count_bits(pawns) == 0) {
 		if (check_material_draw(pos)) {
 			return endgame_noise(3);
 		}
 	}
 
-	bool is_endgame = count_bits(pos->get_occupancy(BOTH)) < 8;
+	bool is_endgame = count_bits(pos->occupancies[BOTH]) < 8;
 	double score = 0;
 	double weight = MG_weight(pos);
 
@@ -59,12 +59,12 @@ int evaluate_pos(const Board* pos) {
 	score += count_activity(pos);
 	
 	// Bishop pair bonus
-	if (pos->get_piece_num(wB) > 2) score += bishop_pair;
-	if (pos->get_piece_num(bB) > 2) score -= bishop_pair;
+	if (pos->piece_num[wB] > 2) score += bishop_pair;
+	if (pos->piece_num[bB] > 2) score -= bishop_pair;
 	
 	// 50-move rule adjustment
 	if (score < MATE_SCORE) {
-		score = (score * ((100 - pos->get_fifty_move()) / 100.0));
+		score = (score * ((100 - pos->fifty_move) / 100.0));
 	}
 
 	// Endgame noise adjustment
@@ -73,7 +73,7 @@ int evaluate_pos(const Board* pos) {
 	}
 
 	// Perspective adjustment
-	return (int)(score * ((pos->get_side() == WHITE) ? 1 : -1));
+	return (int)(score * ((pos->side == WHITE) ? 1 : -1));
 }
 
 /*
@@ -88,9 +88,9 @@ static inline double MG_weight(const Board* pos) {
 
 	// Caissa game phase formula (0.11e)
 	// Performs about 200 elo better than PesTO's own tapered eval and directly scaling to material
-	uint8_t game_phase = 3 * (pos->get_piece_num(wN) + pos->get_piece_num(bN) + pos->get_piece_num(wB) + pos->get_piece_num(bB));
-	game_phase += 5 * (pos->get_piece_num(wR) + pos->get_piece_num(bR));
-	game_phase += 10 * (pos->get_piece_num(wQ) + pos->get_piece_num(bQ));
+	uint8_t game_phase = 3 * (pos->piece_num[wN] + pos->piece_num[bN] + pos->piece_num[wB] + pos->piece_num[bB]);
+	game_phase += 5 * (pos->piece_num[wR] + pos->piece_num[bR]);
+	game_phase += 10 * (pos->piece_num[wQ] + pos->piece_num[bQ]);
 	game_phase = std::min((int)game_phase, opening_phase); // Capped in case of early promotion
 
 	return game_phase / (double)opening_phase;
@@ -102,7 +102,7 @@ int count_material(const Board* pos) {
 	double weight = MG_weight(pos);
 
 	for (int pce = wP; pce <= bK; ++pce) {
-		double value = pos->get_piece_num(pce) * ( piece_value_MG[pce] * weight + piece_value_EG[pce] * (1 - weight) );
+		double value = pos->piece_num[pce] * ( piece_value_MG[pce] * weight + piece_value_EG[pce] * (1 - weight) );
 		sum += value * ((piece_col[pce] == WHITE) ? 1 : -1);
 	}
 
@@ -128,7 +128,7 @@ static inline double compute_PSQT(uint8_t pce, uint8_t sq, double weight) {
 static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight) {
 
 	double score = 0;
-	Bitboard pawns = pos->get_bitboard(pce);
+	Bitboard pawns = pos->bitboards[pce];
 
 	while (pawns) {
 		uint8_t sq = pop_ls1b(pawns);
@@ -141,7 +141,7 @@ static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight
 static inline double evaluate_knights(const Board* pos, uint8_t pce, double weight) {
 
 	double score = 0;
-	Bitboard knights = pos->get_bitboard(pce);
+	Bitboard knights = pos->bitboards[pce];
 
 	while (knights) {
 		uint8_t sq = pop_ls1b(knights);
@@ -154,7 +154,7 @@ static inline double evaluate_knights(const Board* pos, uint8_t pce, double weig
 static inline double evaluate_bishops(const Board* pos, uint8_t pce, double weight) {
 
 	double score = 0;
-	Bitboard bishops = pos->get_bitboard(pce);
+	Bitboard bishops = pos->bitboards[pce];
 
 	while (bishops) {
 		uint8_t sq = pop_ls1b(bishops);
@@ -167,7 +167,7 @@ static inline double evaluate_bishops(const Board* pos, uint8_t pce, double weig
 static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight) {
 
 	double score = 0;
-	Bitboard rooks = pos->get_bitboard(pce);
+	Bitboard rooks = pos->bitboards[pce];
 
 	while (rooks) {
 		uint8_t sq = pop_ls1b(rooks);
@@ -180,7 +180,7 @@ static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight
 static inline double evaluate_queens(const Board* pos, uint8_t pce, double weight) {
 
 	double score = 0;
-	Bitboard queens = pos->get_bitboard(pce);
+	Bitboard queens = pos->bitboards[pce];
 
 	while (queens) {
 		uint8_t sq = pop_ls1b(queens);
@@ -194,7 +194,7 @@ static inline double evaluate_kings(const Board* pos, uint8_t pce, double weight
 
 	double score = 0;
 	
-	uint8_t sq = pos->get_king_sq(piece_col[pce]);
+	uint8_t sq = pos->king_sq[piece_col[pce]];
 	score += compute_PSQT(pce, sq, weight);
 
 	return score;
@@ -215,12 +215,12 @@ static inline int16_t count_tempi(const Board* pos) {
 	Bitboard UNDEVELOPED_BLACK_ROOKS = (1ULL << a8) | (1ULL << h8);
 
 	int8_t net_developed_pieces_BB = 0;
-	net_developed_pieces_BB += count_bits((pos->get_occupancy(WHITE) ^ pos->get_bitboard(wP)) & DEVELOPMENT_MASK); // wN, wB, wQ
-	net_developed_pieces_BB += count_bits( ~(pos->get_bitboard(wR) & UNDEVELOPED_WHITE_ROOKS) );               // wR
-	net_developed_pieces_BB += count_bits( ~(pos->get_bitboard(wP) & bits_between_squares(d2, e2)) );          // wP (centre pawns)
-	net_developed_pieces_BB -= count_bits((pos->get_occupancy(BLACK) ^ pos->get_bitboard(bP)) & DEVELOPMENT_MASK); // bN, bB, b
-	net_developed_pieces_BB -= count_bits( ~(pos->get_bitboard(bR) & UNDEVELOPED_BLACK_ROOKS) );               // bR
-	net_developed_pieces_BB -= count_bits( ~(pos->get_bitboard(bP) & bits_between_squares(d7, e7)) );          // bP (centre pawns)
+	net_developed_pieces_BB += count_bits((pos->occupancies[WHITE] ^ pos->bitboards[wP]) & DEVELOPMENT_MASK); // wN, wB, wQ
+	net_developed_pieces_BB += count_bits( ~(pos->bitboards[wR] & UNDEVELOPED_WHITE_ROOKS) );               // wR
+	net_developed_pieces_BB += count_bits( ~(pos->bitboards[wP] & bits_between_squares(d2, e2)) );          // wP (centre pawns)
+	net_developed_pieces_BB -= count_bits((pos->occupancies[BLACK] ^ pos->bitboards[bP]) & DEVELOPMENT_MASK); // bN, bB, b
+	net_developed_pieces_BB -= count_bits( ~(pos->bitboards[bR] & UNDEVELOPED_BLACK_ROOKS) );               // bR
+	net_developed_pieces_BB -= count_bits( ~(pos->bitboards[bP] & bits_between_squares(d7, e7)) );          // bP (centre pawns)
 
 	// Add 1 tempo to account for White's first-move advantage
 	return (1 + net_developed_pieces_BB) * tempo;

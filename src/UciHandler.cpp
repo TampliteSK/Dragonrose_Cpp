@@ -36,7 +36,8 @@ UciHandler::UciHandler() {
 }
 
 void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const std::string& line) {
-    int depth = -1, movestogo = 30, movetime = -1;
+    // int movestogo = 30;
+    int depth = -1, movetime = -1;
     int time = -1, inc = 0;
     info->timeset = false;
 
@@ -44,26 +45,26 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         // Handle infinite case if necessary
     }
 
-    if (pos->get_side() == BLACK) {
+    if (pos->side == BLACK) {
         inc = get_value_from_line(line, "binc");
     }
-    if (pos->get_side() == WHITE) {
+    if (pos->side == WHITE) {
         inc = get_value_from_line(line, "winc");
     }
-    if (pos->get_side() == WHITE) {
+    if (pos->side == WHITE) {
         time = get_value_from_line(line, "wtime");
     }
-    if (pos->get_side() == BLACK) {
+    if (pos->side == BLACK) {
         time = get_value_from_line(line, "btime");
     }
 
-    movestogo = get_value_from_line(line, "movestogo");
+    // movestogo = get_value_from_line(line, "movestogo");
     movetime = get_value_from_line(line, "movetime");
     depth = get_value_from_line(line, "depth");
 
     if (movetime != -1) {
         time = movetime;
-        movestogo = 1;
+        // movestogo = 1;
     }
 
     info->start_time = get_time_ms();
@@ -79,14 +80,14 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
             time_allocated /= 80;
         }
         else {
-            if (pos->get_his_ply() <= 30) {
+            if (pos->his_ply <= 30) {
                 time_allocated *= 0.1;
-                phase_moves = round((30 - pos->get_his_ply() + ((pos->get_side() == BLACK) ? 0 : 1)) / 2.0);
+                phase_moves = round((30 - pos->his_ply + ((pos->side == BLACK) ? 0 : 1)) / 2.0);
                 time_allocated /= phase_moves;
             }
-            else if (pos->get_his_ply() <= 70) {
+            else if (pos->his_ply <= 70) {
                 time_allocated *= 0.45;
-                phase_moves = round((70 - pos->get_his_ply() + ((pos->get_side() == BLACK) ? 0 : 1)) / 2.0);
+                phase_moves = round((70 - pos->his_ply + ((pos->side == BLACK) ? 0 : 1)) / 2.0);
                 time_allocated /= phase_moves;
             }
             else {
@@ -114,15 +115,15 @@ void UciHandler::parse_position(Board* pos, const std::string& line) {
     std::string input = line.substr(9); // Skip "position "
 
     if (input.substr(0, 8) == "startpos") {
-        pos->parse_fen(START_POS);
+        parse_fen(pos, START_POS);
     }
     else {
         size_t fen_pos = input.find("fen");
         if (fen_pos == std::string::npos) {
-            pos->parse_fen(START_POS);
+            parse_fen(pos, START_POS);
         }
         else {
-            pos->parse_fen(input.substr(fen_pos + 4)); // Skip "fen "
+            parse_fen(pos, input.substr(fen_pos + 4)); // Skip "fen "
         }
     }
 
@@ -151,11 +152,12 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
 
     std::cout << "option name Hash type spin default 16 min 4 max " << MAX_HASH << std::endl;
     int MB = 16;
+    options->hash_size = 16;
     init_hash_table(table, MB);
     std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
     std::cout << "uciok" << std::endl;
 
-    pos->parse_fen(START_POS);
+    parse_fen(pos, START_POS);
 
     while (true) {
         std::getline(std::cin, line);
@@ -171,7 +173,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         }
         else if (line.substr(0, 10) == "ucinewgame") {
             clear_hash_table(table);
-            pos->parse_fen(START_POS);
+            parse_fen(pos, START_POS);
         }
         else if (line.substr(0, 2) == "go") {
             if (line.substr(0, 8) == "go perft") {
@@ -209,7 +211,8 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             std::istringstream iss(line.substr(26)); // Extract the relevant substring
             int new_MB;
             if (iss >> new_MB) { // Attempt to read the integer
-                MB = CLAMP(new_MB, 4, MAX_HASH);
+                MB = CLAMP(new_MB, 4, (int)MAX_HASH);
+                options->hash_size = MB;
                 init_hash_table(table, MB);
                 std::cout << "Set Hash to " << MB << " MB" << std::endl;
             }
@@ -218,7 +221,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             }
         }
         else if (line.substr(0, 5) == "print") {
-            pos->print_board();
+            print_board(pos);
         }
 
         if (info->quit) break;

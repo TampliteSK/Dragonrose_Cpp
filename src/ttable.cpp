@@ -7,9 +7,9 @@
 #include "moveio.hpp"
 
 int probe_PV_move(const Board* pos, const HashTable* table) {
-	int index = pos->get_hash_key() % table->max_entries;
+	int index = pos->hash_key % table->max_entries;
 
-	if (table->pTable[index].hash_key == pos->get_hash_key()) {
+	if (table->pTable[index].hash_key == pos->hash_key) {
 		return table->pTable[index].move;
 	}
 
@@ -18,30 +18,30 @@ int probe_PV_move(const Board* pos, const HashTable* table) {
 
 // Returns number of moves in the PV
 int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
-
-	Board* copy = pos->clone();
-
-	int move = probe_PV_move(copy, table);
+	int move = probe_PV_move(pos, table);
 	int count = 0;
 
 	// Try the moves of the stored PV to see if they are legal
 	while (move != NO_MOVE && count < depth) {
-		if (!make_move(copy, move)) {
+		if (!make_move(pos, move)) {
 			break; // Illegal move
 		}
 		else {
-			pos->set_PV_move(count, move);
+			pos->PV_array[count] = move;
 			count++;
 		}
-		move = probe_PV_move(copy, table);
+		move = probe_PV_move(pos, table);
 	}
 
-	delete copy; // Revert to pos
+	while (pos->ply > 0) {
+		take_move(pos);
+	}
+
 	return count;
 }
 
 void clear_hash_table(HashTable* table) {
-	for (int i = 0; i < table->max_entries; ++i) {
+	for (uint32_t i = 0; i < table->max_entries; ++i) {
 		table->pTable[i].hash_key = 0ULL;
 		table->pTable[i].move = NO_MOVE;
 		table->pTable[i].depth = 0;
@@ -78,16 +78,16 @@ void init_hash_table(HashTable* table, const uint16_t MB) {
 
 bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int alpha, int beta, int depth) {
 
-	int index = pos->get_hash_key() % table->max_entries;
+	int index = pos->hash_key % table->max_entries;
 
-	if (table->pTable[index].hash_key == pos->get_hash_key()) {
+	if (table->pTable[index].hash_key == pos->hash_key) {
 		move = table->pTable[index].move;
 		if (table->pTable[index].depth >= depth) {
 			table->hit++;
 
 			score = table->pTable[index].score;
-			if (score > MATE_SCORE)		  score -= pos->get_ply();
-			else if (score < -MATE_SCORE) score += pos->get_ply();
+			if (score > MATE_SCORE)		  score -= pos->ply;
+			else if (score < -MATE_SCORE) score += pos->ply;
 
 			switch (table->pTable[index].flags) {
 			case HFALPHA: if (score <= alpha) {
@@ -110,9 +110,9 @@ bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int a
 	return false;
 }
 
-void store_hash_entry(Board* pos, HashTable* table, const int move, uint32_t score, const uint8_t flags, const uint8_t depth) {
+void store_hash_entry(Board* pos, HashTable* table, const int move, int score, const uint8_t flags, const uint8_t depth) {
 
-	int index = pos->get_hash_key() % table->max_entries;
+	int index = pos->hash_key % table->max_entries;
 	bool replace = false;
 
 	// Check if there is an existing entry at a certain index
@@ -142,14 +142,14 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, uint32_t sco
 
 	int written_score = score;
 	if (score > MATE_SCORE) {
-		written_score += pos->get_ply();
+		written_score += pos->ply;
 	}
 	else if (score < -MATE_SCORE) {
-		written_score -= pos->get_ply();
+		written_score -= pos->ply;
 	}
 
 	table->pTable[index].move = move;
-	table->pTable[index].hash_key = pos->get_hash_key();
+	table->pTable[index].hash_key = pos->hash_key;
 	table->pTable[index].flags = flags;
 	table->pTable[index].score = written_score;
 	table->pTable[index].depth = depth;

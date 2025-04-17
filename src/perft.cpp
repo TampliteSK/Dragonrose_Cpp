@@ -29,7 +29,7 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
         start = get_time_ms();
     }
 
-    for (int move_count = 0; move_count < move_list.size(); ++move_count) {
+    for (int move_count = 0; move_count < (int)move_list.size(); ++move_count) {
 
         // Skip illegal moves
         if (!make_move(pos, move_list.at(move_count).move)) {

@@ -1,41 +1,38 @@
-# Compiler
-# Run "make CXX=<compiler>" and replace <compiler> with either g++ or clang++
-# If left unspecified, g++ is used as default
+# Compiler selection
 CXX ?= g++
 SRCS = $(wildcard src/*.cpp)
-
-# Attaching "EXE=<name>" to the above command allows you to rename the executable to <name>. By default it is "Dragonrose.exe"
 EXE ?= Dragonrose_Cpp
 
+# Cross-compilation settings
+WINDOWS_TARGET ?= 0
+SYSROOT_PATH = /usr/x86_64-w64-mingw32
 
-#
-# COMPILER FLAGS
-#
-
-
-# Default flags
-WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic -Wno-unused-command-line-argument
+# Base flags
+WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic
+STD_FLAGS = -std=c++20
 OPT_FLAGS = -Ofast -march=native -funroll-loops
+MISC_FLAGS ?=
 
-# Custom additional flags like -g
-MISC_FLAGS ?= 
-
-# Detect Clang
-ifeq ($(CXX), clang)
-	OPT_FLAGS = -O3 -ffast-math -flto -march=native -funroll-loops
-	LIB_FLAGS = -lstdc++
+# Windows-specific setup
+ifeq ($(WINDOWS_TARGET),1)
+    ifeq ($(CXX),clang++)
+        TARGET_FLAGS = --target=x86_64-w64-mingw32
+        LINKER_FLAGS = -B$(SYSROOT_PATH)/bin -L$(SYSROOT_PATH)/lib -lstdc++
+        SYSROOT_FLAGS = --sysroot=$(SYSROOT_PATH)
+        EXE := $(EXE).exe
+        
+        # Workaround for Windows headers
+        CXXFLAGS += -D_WIN32_WINNT=0x0601
+    endif
 endif
 
+# Final build flags
+CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(MISC_FLAGS) \
+           $(TARGET_FLAGS) $(SYSROOT_FLAGS) $(LINKER_FLAGS)
 
-#
-# TARGETS
-#
-
-
-# Default target
+# Build target
 all:
-	$(CXX) $(SRCS) -o $(EXE).exe $(OPT_FLAGS) $(MISC_FLAGS) -std=c++20
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(EXE)
 
-# Clean target to remove the executable
 clean:
 	rm -f $(EXE)

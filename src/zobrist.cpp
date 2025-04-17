@@ -30,27 +30,27 @@ void init_hash_keys() {
 
 }
 
-uint64_t generate_hash_key(const Board pos) {
+uint64_t generate_hash_key(const Board *pos) {
 
 	uint64_t final_key = 0ULL;
 
 	// Pieces
 	for (int sq = 0; sq < 64; ++sq) {
-		uint8_t piece = pos.get_piece(sq);
+		uint8_t piece = pos->pieces[sq];
 		if (piece != EMPTY) {
 			final_key ^= piece_keys[piece][sq];
 		}
 	}
 
-	if (pos.get_side() == WHITE) {
+	if (pos->side == WHITE) {
 		final_key ^= side_key;
 	}
 
-	if (pos.get_enpas() != NO_SQ) {
-		final_key ^= piece_keys[EMPTY][pos.get_enpas()];
+	if (pos->enpas != NO_SQ) {
+		final_key ^= piece_keys[EMPTY][pos->enpas];
 	}
 
-	final_key ^= castle_keys[pos.get_castle_perms()];
+	final_key ^= castle_keys[pos->castle_perms];
 
 	return final_key;
 }
