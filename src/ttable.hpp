@@ -20,19 +20,19 @@ typedef struct {
 	int score;
 	uint8_t depth;
 	uint8_t flags;
-	uint16_t age; // indicates how new an entry is
+	uint32_t age; // indicates how new an entry is
 } HashEntry;
 
 // Hash table struct
 typedef struct {
 	HashEntry* pTable;
-	uint32_t max_entries; // maximum entries based on given hash size
-	uint32_t num_entries; // number of entries at any given time
+	uint64_t max_entries; // maximum entries based on given hash size
+	uint64_t num_entries; // number of entries at any given time
 	int new_write;
 	int overwrite;
-	uint32_t hit; // tracks the number of entires probed
+	int hit; // tracks the number of entires probed
 	int cut; // max number of probes allowed before hash table is full (to avoid collision of entries)
-	uint16_t table_age; // increments every move
+	uint32_t table_age; // increments every move
 } HashTable;
 
 // Functions

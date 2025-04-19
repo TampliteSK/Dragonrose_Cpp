@@ -10,6 +10,7 @@ int probe_PV_move(const Board* pos, const HashTable* table) {
 	int index = pos->hash_key % table->max_entries;
 
 	if (table->pTable[index].hash_key == pos->hash_key) {
+		// std::cout << "Probed entry index " << index << " with depth " << (int)table->pTable[index].depth << "\n";
 		return table->pTable[index].move;
 	}
 
@@ -23,12 +24,12 @@ int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 
 	// Try the moves of the stored PV to see if they are legal
 	while (move != NO_MOVE && count < depth) {
-		if (!make_move(pos, move)) {
-			break; // Illegal move
+		if (move_exists(pos, move)) {
+			make_move(pos, move);
+			pos->PV_array[count++] = move;
 		}
 		else {
-			pos->PV_array[count] = move;
-			count++;
+			break;
 		}
 		move = probe_PV_move(pos, table);
 	}
@@ -41,7 +42,7 @@ int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 }
 
 void clear_hash_table(HashTable* table) {
-	for (uint32_t i = 0; i < table->max_entries; ++i) {
+	for (uint64_t i = 0; i < table->max_entries; ++i) {
 		table->pTable[i].hash_key = 0ULL;
 		table->pTable[i].move = NO_MOVE;
 		table->pTable[i].depth = 0;
@@ -123,16 +124,9 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, int score, c
 		replace = true;
 	}
 	else {
-		int entry_age = table->pTable[index].age;
+		uint32_t entry_age = table->pTable[index].age;
 		uint8_t entry_depth = table->pTable[index].depth;
-		
-		// Replacement condition 1: Greater age (newer entry)
-		if (table->table_age > entry_age) {
-			replace = true;
-			table->overwrite++;
-		}
-		// Replacement condition 2: Same age and greater depth
-		else if (entry_age == table->table_age && depth > entry_depth) {
+		if (table->table_age > entry_age || depth >= entry_depth) {
 			replace = true;
 			table->overwrite++;
 		}
@@ -140,18 +134,23 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, int score, c
 
 	if (!replace) return; // No need to overwrite the entry
 
-	int written_score = score;
-	if (score > MATE_SCORE) {
-		written_score += pos->ply;
+	/*
+	if (table->pTable[index].hash_key != 0 && depth >= 4) {
+		std::cout << "Old key: " << std::hex << table->pTable[index].hash_key << " -> New key: " << std::hex << pos->hash_key
+			<< " | Depth: " << (int)table->pTable[index].depth << " -> " << (int)depth
+			<< " | Move: " << print_move(move) << ", Eval: " << std::dec << score
+			<< " | Index: " << std::dec << index << "\n";
 	}
-	else if (score < -MATE_SCORE) {
-		written_score -= pos->ply;
-	}
+	*/
+
+
+	if (score > MATE_SCORE) score -= pos->ply;
+	else if (score < -MATE_SCORE) score += pos->ply;
 
 	table->pTable[index].move = move;
 	table->pTable[index].hash_key = pos->hash_key;
 	table->pTable[index].flags = flags;
-	table->pTable[index].score = written_score;
+	table->pTable[index].score = score;
 	table->pTable[index].depth = depth;
 	table->pTable[index].age = table->table_age;
 }

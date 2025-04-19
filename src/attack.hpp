@@ -7,6 +7,7 @@
 #include "Board.hpp"
 
 bool is_square_attacked(const Board *pos, uint8_t sq, uint8_t side);
+int8_t get_square_control(const Board* pos, uint8_t sq, uint8_t side);
 Bitboard get_piece_attacks(const Board* pos, uint8_t pce, uint8_t sq);
 Bitboard get_all_attacks(const Board* pos, uint8_t side, bool king_included);
 

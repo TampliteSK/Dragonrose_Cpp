@@ -9,6 +9,7 @@
 #include "Board.hpp"
 #include "attack.hpp"
 #include "attackgen.hpp"
+#include "makemove.hpp"
 
 /*
         Most Valuable Victim & Least Valuable Attacker
@@ -322,4 +323,23 @@ void sort_moves(const Board *pos, std::vector<Move>& move_list) {
     std::sort(move_list.begin(), move_list.end(), [](const Move& a, const Move& b) {
         return a.score > b.score;
         });
+}
+
+// Determine is a move is possible in a given position
+bool move_exists(Board* pos, const int move) {
+
+    std::vector<Move> list;
+    generate_moves(pos, list, false);
+
+    for (int i = 0; i < (int)list.size(); ++i) {
+
+        if (!make_move(pos, list[i].move)) {
+            continue;
+        }
+        take_move(pos);
+        if (list[i].move == move) {
+            return true;
+        }
+    }
+    return false;
 }

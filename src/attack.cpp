@@ -26,32 +26,34 @@ bool is_square_attacked(const Board *pos, uint8_t sq, uint8_t side) {
     return false;
 }
 
-// Check if the current square is attacked by a given side
+// Check if the current square is attacked by a given side, weighted by the reciprocal of the piece:
+// Control by a piece = 3 / sqrt(Traditional value of piece) rounded to 1 d.p.
+// Kings are considered as 10 points
 uint8_t count_attacks(const Board *pos, uint8_t sq, uint8_t side) {
-    uint8_t attacks = 0;
+    double attacks = 0;
 
     if (side == WHITE) {
-        attacks += count_bits(pawn_attacks[BLACK][sq] & pos->bitboards[wP]);                        // Pawns
-        attacks += count_bits(knight_attacks[sq] & pos->bitboards[wN]);                             // Knights
-        attacks += count_bits(king_attacks[sq] & pos->bitboards[wK]);                               // Kings
-        attacks += count_bits(get_bishop_attacks(sq, pos->occupancies[BOTH] & pos->bitboards[wB])); // Bishops
-        attacks += count_bits(get_rook_attacks(sq, pos->occupancies[BOTH] & pos->bitboards[wR]));   // Rooks
-        attacks += count_bits(get_queen_attacks(sq, pos->occupancies[BOTH] & pos->bitboards[wQ]));  // Queens
+        attacks += 3 * count_bits(pawn_attacks[BLACK][sq] & pos->bitboards[wP]);                          // Pawns
+        attacks += 1.7 * count_bits(knight_attacks[sq] & pos->bitboards[wN]);                             // Knights
+        attacks += 0.9 * count_bits(king_attacks[sq] & pos->bitboards[wK]);                               // Kings
+        attacks += 1.7 * count_bits(get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[wB]); // Bishops
+        attacks += 1.3 * count_bits(get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[wR]);   // Rooks
+        attacks += 1 * count_bits(get_queen_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[wQ]);    // Queens
     }
     else {
-        attacks += count_bits(pawn_attacks[WHITE][sq] & pos->bitboards[bP]);                         // Pawns
-        attacks += count_bits(knight_attacks[sq] & pos->bitboards[bN]);                              // Knights
-        attacks += count_bits(king_attacks[sq] & pos->bitboards[bK]);                                // Kings
-        attacks += count_bits(get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bB]); // Bishops
-        attacks += count_bits(get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bR]);   // Rooks
-        attacks += count_bits(get_queen_attacks(sq, pos->occupancies[BOTH] & pos->bitboards[bQ]));  // Queens
+        attacks += 3 * count_bits(pawn_attacks[WHITE][sq] & pos->bitboards[bP]);                          // Pawns
+        attacks += 1.7 * count_bits(knight_attacks[sq] & pos->bitboards[bN]);                             // Knights
+        attacks += 0.9 * count_bits(king_attacks[sq] & pos->bitboards[bK]);                               // Kings
+        attacks += 1.7 * count_bits(get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bB]); // Bishops
+        attacks += 1.3 * count_bits(get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bR]);   // Rooks
+        attacks += 1 * count_bits(get_queen_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bQ]);    // Queens
     }
 
-    return attacks;
+    return (uint16_t)attacks;
 }
 
-bool is_square_controlled(const Board *pos, uint8_t sq, uint8_t side) {
-    return count_attacks(pos, sq, side) > count_attacks(pos, sq, side ^ 1);
+int8_t get_square_control(const Board *pos, uint8_t sq, uint8_t side) {
+    return count_attacks(pos, sq, side) - count_attacks(pos, sq, side ^ 1);
 }
 
 Bitboard get_piece_attacks(const Board *pos, uint8_t pce, uint8_t sq) {

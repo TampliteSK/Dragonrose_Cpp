@@ -8,12 +8,14 @@
 
 // Common test positions
 /*
-	Startpos - Depth 6 passed
-	Kiwipete - Depth 4 passed
-	CPW_Pos3 - Depth 6 Passed
-	CPW_Pos4 - Depth 5 passed
-	CPW_Pos5 - Depth 4 passed
-	CPW_Pos6 - Depth 4 passed
+	Startpos - Depth 7 passed
+	Kiwipete - Depth 5 passed
+	CPW_Pos3 - Depth 7 passed
+	CPW_Pos4 - Depth 6 passed
+	CPW_Pos5 - Depth 6 passed (with webperft)
+	CPW_Pos6 - Depth 6 passed
+
+	Big thanks to Analog Hors for her webperft tool
 */
 #define KIWIPETE "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
 #define CPW_POS3 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"

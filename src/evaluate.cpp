@@ -1,6 +1,7 @@
 // evaluate.cpp
 
 #include <algorithm>
+#include <iostream>
 #include "evaluate.hpp"
 #include "datatypes.hpp"
 #include "attack.hpp"
@@ -53,10 +54,18 @@ int evaluate_pos(const Board* pos) {
 	}
 
 	// Tempi
-	// score += count_tempi(pos) * MG_weight(pos); // Towards endgame considering tempi is useless
+	score += count_tempi(pos) * MG_weight(pos); // Towards endgame considering tempi is useless
 
-	// Piece activity
+	/*
+		Piece activity / control
+	*/
 	score += count_activity(pos);
+	
+	// Measure centre control
+	int centre_squares[] = { d4, d5, e4, e5 };
+	for (int sq : centre_squares) {
+		score += get_square_control(pos, sq, WHITE);
+	}
 	
 	// Bishop pair bonus
 	if (pos->piece_num[wB] > 2) score += bishop_pair;
@@ -214,16 +223,18 @@ static inline int16_t count_tempi(const Board* pos) {
 	Bitboard UNDEVELOPED_WHITE_ROOKS = (1ULL << a1) | (1ULL << h1);
 	Bitboard UNDEVELOPED_BLACK_ROOKS = (1ULL << a8) | (1ULL << h8);
 
-	int8_t net_developed_pieces_BB = 0;
-	net_developed_pieces_BB += count_bits((pos->occupancies[WHITE] ^ pos->bitboards[wP]) & DEVELOPMENT_MASK); // wN, wB, wQ
-	net_developed_pieces_BB += count_bits( ~(pos->bitboards[wR] & UNDEVELOPED_WHITE_ROOKS) );               // wR
-	net_developed_pieces_BB += count_bits( ~(pos->bitboards[wP] & bits_between_squares(d2, e2)) );          // wP (centre pawns)
-	net_developed_pieces_BB -= count_bits((pos->occupancies[BLACK] ^ pos->bitboards[bP]) & DEVELOPMENT_MASK); // bN, bB, b
-	net_developed_pieces_BB -= count_bits( ~(pos->bitboards[bR] & UNDEVELOPED_BLACK_ROOKS) );               // bR
-	net_developed_pieces_BB -= count_bits( ~(pos->bitboards[bP] & bits_between_squares(d7, e7)) );          // bP (centre pawns)
+	int8_t net_developed_pieces = 0;
+	Bitboard white_NBQ = pos->bitboards[wN] | pos->bitboards[wB] | pos->bitboards[wQ];
+	Bitboard black_NBQ = pos->bitboards[bN] | pos->bitboards[bB] | pos->bitboards[bQ];
+	net_developed_pieces += count_bits(white_NBQ & DEVELOPMENT_MASK);						// wN, wB, wQ
+	net_developed_pieces += count_bits(~pos->bitboards[wR] & UNDEVELOPED_WHITE_ROOKS);       // wR
+	net_developed_pieces += count_bits(~pos->bitboards[wP] & bits_between_squares(d2, e2) ); // wP (centre pawns)
+	net_developed_pieces -= count_bits(black_NBQ & DEVELOPMENT_MASK);						// bN, bB, b
+	net_developed_pieces -= count_bits(~pos->bitboards[bR] & UNDEVELOPED_BLACK_ROOKS );      // bR
+	net_developed_pieces -= count_bits(~pos->bitboards[bP] & bits_between_squares(d7, e7) ); // bP (centre pawns)
 
 	// Add 1 tempo to account for White's first-move advantage
-	return (1 + net_developed_pieces_BB) * tempo;
+	return (1 + net_developed_pieces / 2) * tempo;
 }
 
 // Use the number of squares attack as a proxy for piece activity / mobility

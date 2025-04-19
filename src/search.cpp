@@ -92,12 +92,12 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			guess = best_score;
 
-			PV_moves = get_PV_line(pos, table, curr_depth);
-			best_move = pos->PV_array[0];
-
 			if (info->stopped) {
 				break;
 			}
+
+			PV_moves = get_PV_line(pos, table, curr_depth);
+			best_move = pos->PV_array[0];
 
 			// Display mate if there's forced mate
 			uint64_t time = get_time_ms() - info->start_time; // in ms
@@ -151,6 +151,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	Main search components
 */
 
+// Quiescence search
 static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) {
 
 	check_time(info); // Check if time is up
@@ -168,12 +169,12 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 	}
 
 	int stand_pat = evaluate_pos(pos);
-	int best_score = stand_pat;
+	int score = stand_pat;
 
 	if (stand_pat >= beta) {
-		return stand_pat;
+		return beta;
 	}
-	if (alpha < stand_pat) {
+	if (stand_pat > alpha) {
 		alpha = stand_pat;
 	}
 	
@@ -193,7 +194,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 		info->nodes++;
 		legal++;
 
-		int score = -quiescence(pos, info, -beta, -alpha);
+		score = -quiescence(pos, info, -beta, -alpha);
 
 		take_move(pos);
 
@@ -201,22 +202,19 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 			return 0;
 		}
 
-		if (score >= beta) {
-			if (legal == 1) {
-				info->fhf++;
-			}
-			info->fh++;
-			return score;
-		}
-		if (score >= best_score) {
-			best_score = score;
-		}
 		if (score > alpha) {
+			if (score >= beta) {
+				if (legal == 1) {
+					info->fhf++;
+				}
+				info->fh++;
+				return beta;
+			}
 			alpha = score;
 		}
 	}
 
-	return best_score;
+	return alpha;
 }
 
 // Negamax Search with Alpha-beta Pruning and Principle Variation Search (PVS)
@@ -260,15 +258,19 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		return score;
 	}
 
+	if (do_null) {
+		make_null_move(pos);
+		take_null_move(pos);
+	}
+
 	/*
 		Null-move Pruning
 	*/
 
-	// uint8_t big_pieces = count_bits(pos->get_occupancy(US)) - count_bits(pos->get_bitboard((US == WHITE) ? wP : bP));
-	bool is_endgame = count_bits(pos->occupancies[BOTH]) < 8;
+	uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-	if (depth >= 4 && !is_endgame) {
-		if (do_null && !in_check && pos->ply) {
+	if (depth >= 4) {
+		if (do_null && !in_check && big_pieces > 1 && pos->ply) {
 			make_null_move(pos);
 			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, false);
 			take_null_move(pos);
@@ -360,19 +362,19 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 					}
 					info->fh++;
 
-					if (get_move_captured(curr_move) == 0) {
+					if (captured == 0) {
 						pos->killer_moves[1][pos->ply] = pos->killer_moves[0][pos->ply];
 						pos->killer_moves[0][pos->ply] = curr_move;
 					}
 
-					store_hash_entry(pos, table, best_move, best_score, HFBETA, depth);
+					store_hash_entry(pos, table, best_move, beta, HFBETA, depth);
 
-					return best_score; // Fail-soft beta-cutoff
+					return beta; // Fail-hard beta-cutoff
 				}
 
 				alpha = score;
 
-				if (get_move_captured(curr_move) == 0) {
+				if (captured == 0) {
 					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
 				}
 			}
@@ -397,7 +399,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
 	}
 
-	return best_score;
+	return alpha;
 }
 
 /*
@@ -443,8 +445,8 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 	info->seldepth = 0;
 	info->stopped = false;
 	info->nodes = 0;
-	info->fh = 0;
-	info->fhf = 0;
+	info->fh = 0.0;
+	info->fhf = 0.0;
 }
 
 void init_searchinfo(SearchInfo* info) {

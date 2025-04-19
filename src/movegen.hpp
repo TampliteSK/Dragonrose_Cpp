@@ -14,6 +14,7 @@ typedef struct {
 // Functions
 void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_only);
 void sort_moves(const Board *pos, std::vector<Move>& move_list);
+bool move_exists(Board* pos, const int move);
 
 /*
           binary move bits                               hexidecimal constants

@@ -12,6 +12,23 @@
 
 #define ENGINE_NAME "Dragonrose 0.29"
 
+/*
+|------------|-----------------------------------------------------------------------|
+|  Commands  | Response. * denotes that the command blocks until no longer searching |
+|------------|-----------------------------------------------------------------------|
+|        uci |           Outputs the engine name, authors, and all available options |
+|    isready | *           Responds with readyok when no longer searching a position |
+| ucinewgame | *  Resets the TT and any Hueristics to ensure determinism in searches |
+|  setoption | *     Sets a given option and reports that the option was set if done |
+|   position | *  Sets the board position via an optional FEN and optional move list |
+|         go | *       Searches the current position with the provided time controls |
+|       stop |            Signals the search threads to finish and report a bestmove |
+|       quit |             Exits the engine and any searches by killing the UCI loop |
+|      perft |            Custom command to compute PERFT(N) of the current position |
+|      print |         Custom command to print an ASCII view of the current position |
+|------------|-----------------------------------------------------------------------|
+*/
+
 // UCI options struct
 typedef struct {
 	uint16_t hash_size; // type spin
