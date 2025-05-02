@@ -11,7 +11,7 @@
 int8_t endgame_noise(uint8_t width) {
 	std::random_device rd; // Random number for seed
 	std::mt19937_64 mt(rd()); // 64-bit Mersenne Twister
-	std::uniform_int_distribution<uint64_t> distribution(-width, width);
+	std::uniform_int_distribution<int> distribution(-width, width);
 	return distribution(mt);
 }
 

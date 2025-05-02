@@ -64,7 +64,7 @@ int evaluate_pos(const Board* pos) {
 	// Measure centre control
 	int centre_squares[] = { d4, d5, e4, e5 };
 	for (int sq : centre_squares) {
-		score += get_square_control(pos, sq, WHITE);
+		score += 2 * get_square_control(pos, sq, WHITE);
 	}
 	
 	// Bishop pair bonus
@@ -138,10 +138,42 @@ static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight
 
 	double score = 0;
 	Bitboard pawns = pos->bitboards[pce];
+	uint8_t enemy_pce = (pce == wP) ? bP : wP;
 
 	while (pawns) {
 		uint8_t sq = pop_ls1b(pawns);
+		uint8_t file = GET_FILE(sq);
+		uint8_t reference_rank = (pce == wP) ? GET_RANK(sq) : (8 - GET_RANK(sq));
 		score += compute_PSQT(pce, sq, weight);
+
+		/*
+			Pawn structure
+		*/
+
+		// Isolated pawn penalties
+		if (file == FILE_A && ((pos->bitboards[pce] & file_masks[FILE_B]) == 0)) {
+			score += isolated_pawn;
+		}
+		else if (file == FILE_H && ((pos->bitboards[pce] & file_masks[FILE_G]) == 0)) {
+			score += isolated_pawn;
+		}
+		else if (((pos->bitboards[pce] & file_masks[file - 1]) == 0) && ((pos->bitboards[pce] & file_masks[file + 1]) == 0)) {
+			score += isolated_pawn;
+			if (file == FILE_D || file == FILE_E) {
+				score += isolated_centre_pawn;
+			}
+		}
+
+		// Passed pawn penalties
+		if (file == FILE_A && ((pos->bitboards[enemy_pce] & (file_masks[FILE_A] | file_masks[FILE_B])) == 0)) {
+			score += passer_bonus[reference_rank];
+		}
+		else if (file == FILE_H && ((pos->bitboards[enemy_pce] & (file_masks[FILE_G] | file_masks[FILE_H])) == 0)) {
+			score += passer_bonus[reference_rank];
+		}
+		else if ((pos->bitboards[enemy_pce] & (file_masks[file - 1] | file_masks[file] | file_masks[file + 1])) == 0) {
+			score += passer_bonus[reference_rank];
+		}
 	}
 
 	return score;
@@ -180,7 +212,21 @@ static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight
 
 	while (rooks) {
 		uint8_t sq = pop_ls1b(rooks);
+		uint8_t file = GET_FILE(sq);
+		uint8_t ally_pawns = (pce == wR) ? wP : bP;
+		uint8_t enemy_pawns = (pce == wR) ? bP : wP;
 		score += compute_PSQT(pce, sq, weight);
+
+		// Bonus for taking semi-open and open files
+		if ((pos->bitboards[ally_pawns] & file_masks[file]) == 0) {
+			Bitboard enemy_pawns_on_file = pos->bitboards[enemy_pawns] & file_masks[file];
+			if (enemy_pawns_on_file == 0) {
+				score += rook_open_file;
+			}
+			else {
+				score += rook_semiopen_file;
+			}
+		}
 	}
 
 	return score;
@@ -193,7 +239,21 @@ static inline double evaluate_queens(const Board* pos, uint8_t pce, double weigh
 
 	while (queens) {
 		uint8_t sq = pop_ls1b(queens);
+		uint8_t file = GET_FILE(sq);
+		uint8_t ally_pawns = (pce == wR) ? wP : bP;
+		uint8_t enemy_pawns = (pce == wR) ? bP : wP;
 		score += compute_PSQT(pce, sq, weight);
+
+		// Bonus for taking semi-open and open files
+		if ((pos->bitboards[ally_pawns] & file_masks[file]) == 0) {
+			Bitboard enemy_pawns_on_file = pos->bitboards[enemy_pawns] & file_masks[file];
+			if (enemy_pawns_on_file == 0) {
+				score += queen_open_file;
+			}
+			else {
+				score += queen_semiopen_file;
+			}
+		}
 	}
 
 	return score;
@@ -219,22 +279,25 @@ static inline double evaluate_kings(const Board* pos, uint8_t pce, double weight
 // e.g. The tempo is used to develop the g knight to f3 => 20 + (PSQT_knight_MG[F3] - PSQT_knight_MG[G1])
 // Only applies to opening / early-middlegame
 static inline int16_t count_tempi(const Board* pos) {
-	uint8_t tempo = 22; // Base value of a tempo
+	uint8_t white_adv = 25; // White's first-move advantage
+	uint8_t tempo = 15; // Value of a typical tempo
 	Bitboard UNDEVELOPED_WHITE_ROOKS = (1ULL << a1) | (1ULL << h1);
 	Bitboard UNDEVELOPED_BLACK_ROOKS = (1ULL << a8) | (1ULL << h8);
 
 	int8_t net_developed_pieces = 0;
+	Bitboard white_DE_pawns = pos->bitboards[wP] & (file_masks[FILE_D] | file_masks[FILE_E]);
 	Bitboard white_NBQ = pos->bitboards[wN] | pos->bitboards[wB] | pos->bitboards[wQ];
+	Bitboard black_DE_pawns = pos->bitboards[bP] & (file_masks[FILE_D] | file_masks[FILE_E]);
 	Bitboard black_NBQ = pos->bitboards[bN] | pos->bitboards[bB] | pos->bitboards[bQ];
-	net_developed_pieces += count_bits(white_NBQ & DEVELOPMENT_MASK);						// wN, wB, wQ
-	net_developed_pieces += count_bits(~pos->bitboards[wR] & UNDEVELOPED_WHITE_ROOKS);       // wR
-	net_developed_pieces += count_bits(~pos->bitboards[wP] & bits_between_squares(d2, e2) ); // wP (centre pawns)
-	net_developed_pieces -= count_bits(black_NBQ & DEVELOPMENT_MASK);						// bN, bB, b
-	net_developed_pieces -= count_bits(~pos->bitboards[bR] & UNDEVELOPED_BLACK_ROOKS );      // bR
-	net_developed_pieces -= count_bits(~pos->bitboards[bP] & bits_between_squares(d7, e7) ); // bP (centre pawns)
+	net_developed_pieces += count_bits(white_NBQ & DEVELOPMENT_MASK);					// wN, wB, wQ
+	net_developed_pieces += count_bits(pos->bitboards[wR] & ~UNDEVELOPED_WHITE_ROOKS);  // wR
+	net_developed_pieces += count_bits(white_DE_pawns & ~bits_between_squares(d2, e2)); // wP (centre pawns)
+	net_developed_pieces -= count_bits(black_NBQ & DEVELOPMENT_MASK);					// bN, bB, b
+	net_developed_pieces -= count_bits(pos->bitboards[bR] & ~UNDEVELOPED_BLACK_ROOKS);  // bR
+	net_developed_pieces -= count_bits(black_DE_pawns & ~bits_between_squares(d7, e7)); // bP (centre pawns)
 
 	// Add 1 tempo to account for White's first-move advantage
-	return (1 + net_developed_pieces / 2) * tempo;
+	return white_adv + net_developed_pieces / 2 * tempo;
 }
 
 // Use the number of squares attack as a proxy for piece activity / mobility

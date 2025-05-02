@@ -7,7 +7,15 @@
 #include "Board.hpp"
 
 // Evaluation constants
-const uint8_t bishop_pair = 20;
+const int8_t isolated_pawn = -10;
+const int8_t isolated_centre_pawn = -10; // Additional penalty
+const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
+
+const uint8_t bishop_pair = 30;
+const uint8_t rook_open_file = 10;
+const uint8_t rook_semiopen_file = 5;
+const uint8_t queen_open_file = 5;
+const uint8_t queen_semiopen_file = 3;
 
 const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL; // B2-G7 set
 

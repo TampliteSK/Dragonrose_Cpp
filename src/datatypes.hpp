@@ -29,6 +29,9 @@ extern bool piece_min[13];
 
 extern int Mirror64[64];
 
+extern Bitboard file_masks[8];
+extern Bitboard rank_masks[8];
+
 const std::string ascii_pieces = ".PNBRQKpnbrqk";
 
 // Board

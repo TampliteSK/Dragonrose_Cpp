@@ -4,10 +4,12 @@
 #define TTABLE_HPP
 
 #include <cstdint>
+#include <vector>
 #include "datatypes.hpp"
 #include "Board.hpp"
 
-constexpr uint32_t MAX_HASH = 65536;
+const uint32_t MAX_HASH = 65536;
+const uint8_t BUCKET_SIZE = 4;
 
 // Hash entry flags
 enum { HFNONE, HFALPHA, HFBETA, HFEXACT };
@@ -23,9 +25,13 @@ typedef struct {
 	uint32_t age; // indicates how new an entry is
 } HashEntry;
 
+typedef struct {
+	HashEntry entries[BUCKET_SIZE];
+} HashBucket;
+
 // Hash table struct
 typedef struct {
-	HashEntry* pTable;
+	HashBucket* pTable;
 	uint64_t max_entries; // maximum entries based on given hash size
 	uint64_t num_entries; // number of entries at any given time
 	int new_write;

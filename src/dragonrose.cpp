@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Position: " << bench_positions[index] << "\n";
                 parse_fen(pos, bench_positions[index]);
                 clear_hash_table(hash_table);
-                uci->parse_go(pos, hash_table, info, "go depth 7");
+                uci->parse_go(pos, hash_table, info, "go depth 5");
                 total_nodes += info->nodes;
             }
 
@@ -82,14 +82,9 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, "QQQQQQBk/Q6B/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - - 0 1");
-            uint64_t start = get_time_ms();
-            for (int i = 0; i < 100000; ++i) {
-                std::vector<Move> list;
-                generate_moves(pos, list, false);
-            }
-            uint64_t end = get_time_ms();
-            std::cout << "Movegen time: " << end - start << "ms\n";
+            parse_fen(pos, "8/8/8/3k4/8/3K4/P1P1P1P1/8 w - - 0 1");
+            int score = evaluate_pos(pos);
+            std::cout << "Score = " << score << "\n";
         }
     }
 

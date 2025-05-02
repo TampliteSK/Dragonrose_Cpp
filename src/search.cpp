@@ -37,10 +37,10 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int PV_moves = 0;
 
 	// Aspiration windows variables
-	uint8_t window_size = 50; // Size for first 6 depths
-	int guess = -INF_BOUND;
-	int alpha = -INF_BOUND;
-	int beta = INF_BOUND;
+	// uint8_t window_size = 50; // Size for first 6 depths
+	// int guess = -INF_BOUND;
+	// int alpha = -INF_BOUND;
+	// int beta = INF_BOUND;
 
 	clear_search_vars(pos, table, info); // Initialise searchHistory and killers
 
@@ -60,6 +60,9 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				Aspiration windows
 			*/
 
+			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
+
+			/*
 			// Do a full search on depth 1
 			if (curr_depth == 1) {
 				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
@@ -91,6 +94,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			guess = best_score;
+			*/
 
 			if (info->stopped) {
 				break;
@@ -116,7 +120,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " score mate " << mate_moves
 					<< " nodes " << info->nodes
 					<< " nps " << nps
-					<< " hashfull " << (uint32_t)(table->num_entries / double(table->max_entries) * 1000)
+					<< " hashfull " << (uint32_t)(table->num_entries / double(table->max_entries * BUCKET_SIZE) * 1000)
 					<< " time " << time
 					<< " pv";
 			}
@@ -126,7 +130,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " score cp " << best_score
 					<< " nodes " << info->nodes
 					<< " nps " << nps
-					<< " hashfull " << (int)(table->num_entries / double(table->max_entries) * 1000)
+					<< " hashfull " << (int)(table->num_entries / double(table->max_entries * BUCKET_SIZE) * 1000)
 					<< " time " << time
 					<< " pv";
 			}
@@ -251,12 +255,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	int best_score = -INF_BOUND;
 	int score = -INF_BOUND;
-	int PV_move = NO_MOVE;
+	// int PV_move = NO_MOVE;
 
+	/*
 	if (probe_hash_entry(pos, table, PV_move, score, alpha, beta, depth)) {
 		table->cut++;
 		return score;
 	}
+	*/
 
 	if (do_null) {
 		make_null_move(pos);
@@ -267,6 +273,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		Null-move Pruning
 	*/
 
+	/*
 	uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
 	if (depth >= 4) {
@@ -285,6 +292,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			}
 		}
 	}
+	*/
 
 	std::vector<Move> list;
 	generate_moves(pos, list, false);
@@ -293,6 +301,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	int old_alpha = alpha;
 	int best_move = NO_MOVE;
 
+	/*
 	// Order PV move as first move (linear search)
 	if (PV_move != NO_MOVE) {
 		for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
@@ -302,6 +311,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			}
 		}
 	}
+	*/
 
 	sort_moves(pos, list);
 
@@ -309,7 +319,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		int curr_move = list.at(move_num).move;
 
 		int captured = get_move_captured(curr_move);
-		bool is_promotion = (bool)get_move_promoted(curr_move);
+		// bool is_promotion = (bool)get_move_promoted(curr_move);
 
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
@@ -326,6 +336,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		int reduced_depth = depth - 1; // We move further into the tree
 
+		/*
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
 		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
@@ -340,6 +351,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				reduced_depth = std::max(reduced_depth - r, 1);
 			}
 		}
+		*/
 
 		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, true);
 		
