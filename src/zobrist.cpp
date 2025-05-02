@@ -11,8 +11,9 @@ uint64_t castle_keys[16] = { 0 };      // random castling keys
 uint64_t side_key = 0ULL;              // random side key, indicating white to move
 
 uint64_t generate_random_U64() {
-    std::random_device rd;    // Random number for seed
-    std::mt19937_64 mt(rd()); // 64-bit Mersenne Twister
+	unsigned int seed = 69420; // Constant seed for deterministic behaviour 
+    // std::random_device rd;    // Random number for seed
+    std::mt19937_64 mt(seed); // 64-bit Mersenne Twister
     std::uniform_int_distribution<uint64_t> distribution(0, UINT64_MAX);
     return distribution(mt);
 }

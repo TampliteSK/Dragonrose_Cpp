@@ -10,6 +10,12 @@ OPT_FLAGS = -Ofast -march=native -funroll-loops
 MISC_FLAGS ?=
 CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(MISC_FLAGS)
 
+# Debug flags
+# Usage: make DEBUG=1
+ifdef DEBUG
+	CXXFLAGS += -g -fsanitize=address -fsanitize=undefined
+endif
+
 # Build target
 all:
 	$(CXX) $(CXXFLAGS) $(SRCS) -o $(EXE).exe

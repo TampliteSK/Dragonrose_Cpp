@@ -427,7 +427,9 @@ static inline void check_time(SearchInfo* info) {
 
 // Check if there's a two-fold repetition (linear search)
 static inline bool check_repetition(const Board* pos) {
-	for (int i = pos->his_ply - pos->fifty_move; i < pos->his_ply - 1; ++i) {
+	const int start = std::max(pos->his_ply - pos->fifty_move, 0);
+	const int end = std::min(pos->his_ply - 1, MAX_GAME_MOVES - 1);
+	for (int i = start; i <= end; ++i) {
 		if (pos->hash_key == pos->move_history[i].hash_key) {
 			return true;
 		}

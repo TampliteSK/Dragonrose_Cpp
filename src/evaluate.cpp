@@ -14,14 +14,14 @@ uint16_t piece_value_MG[13] = { 0, 82, 337, 365, 477, 1025, 30000, 82, 337, 365,
 uint16_t piece_value_EG[13] = { 0, 94, 281, 297, 512,  936, 30000, 94, 281, 297, 512,  936, 30000 };
 
 // Function prototypes
-static inline double MG_weight(const Board* pos);
+static inline uint8_t get_phase(const Board* pos);
 
-static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight); 
-static inline double evaluate_knights(const Board* pos, uint8_t pce, double weight);
-static inline double evaluate_bishops(const Board* pos, uint8_t pce, double weight);
-static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight);
-static inline double evaluate_queens(const Board* pos, uint8_t pce, double weight);
-static inline double evaluate_kings(const Board* pos, uint8_t pce, double weight);
+static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase); 
+static inline int evaluate_knights(const Board* pos, uint8_t pce, int phase);
+static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase);
+static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase);
+static inline int evaluate_queens(const Board* pos, uint8_t pce, int phase);
+static inline int evaluate_kings(const Board* pos, uint8_t pce, int phase);
 
 static inline int16_t count_tempi(const Board* pos);
 static inline int8_t count_activity(const Board* pos);
@@ -37,24 +37,24 @@ int evaluate_pos(const Board* pos) {
 	}
 
 	bool is_endgame = count_bits(pos->occupancies[BOTH]) < 8;
-	double score = 0;
-	double weight = MG_weight(pos);
+	int score = 0;
+	int phase = get_phase(pos);
 
 	score += count_material(pos);
 
 	for (int colour = WHITE; colour <= BLACK; ++colour) {
 		int8_t sign = (colour == WHITE) ? 1 : -1;
 		uint8_t col_offset = (colour == WHITE) ? 0 : 6;
-		score += evaluate_pawns(pos, wP + col_offset, weight) * sign;
-		score += evaluate_knights(pos, wN + col_offset, weight) * sign;
-		score += evaluate_bishops(pos, wB + col_offset, weight) * sign;
-		score += evaluate_rooks(pos, wR + col_offset, weight) * sign;
-		score += evaluate_queens(pos, wQ + col_offset, weight) * sign;
-		score += evaluate_kings(pos, wK + col_offset, weight) * sign;
+		score += evaluate_pawns(pos, wP + col_offset, phase) * sign;
+		score += evaluate_knights(pos, wN + col_offset, phase) * sign;
+		score += evaluate_bishops(pos, wB + col_offset, phase) * sign;
+		score += evaluate_rooks(pos, wR + col_offset, phase) * sign;
+		score += evaluate_queens(pos, wQ + col_offset, phase) * sign;
+		score += evaluate_kings(pos, wK + col_offset, phase) * sign;
 	}
 
 	// Tempi
-	score += count_tempi(pos) * MG_weight(pos); // Towards endgame considering tempi is useless
+	score += count_tempi(pos) * phase / 64; // Towards endgame considering tempi is useless
 
 	/*
 		Piece activity / control
@@ -73,7 +73,7 @@ int evaluate_pos(const Board* pos) {
 	
 	// 50-move rule adjustment
 	if (score < MATE_SCORE) {
-		score = (score * ((100 - pos->fifty_move) / 100.0));
+		score = (score * (100 - pos->fifty_move)) / 100;
 	}
 
 	// Endgame noise adjustment
@@ -90,42 +90,39 @@ int evaluate_pos(const Board* pos) {
 */
 
 // Calculates the middlegame weight for tapered eval.
-static inline double MG_weight(const Board* pos) {
-
-	// Applying game_phase at startpos
-	#define opening_phase 64
-
+// Evaluates to 64 at startpos
+static inline uint8_t get_phase(const Board* pos) {
 	// Caissa game phase formula (0.11e)
 	// Performs about 200 elo better than PesTO's own tapered eval and directly scaling to material
 	uint8_t game_phase = 3 * (pos->piece_num[wN] + pos->piece_num[bN] + pos->piece_num[wB] + pos->piece_num[bB]);
 	game_phase += 5 * (pos->piece_num[wR] + pos->piece_num[bR]);
 	game_phase += 10 * (pos->piece_num[wQ] + pos->piece_num[bQ]);
-	game_phase = std::min((int)game_phase, opening_phase); // Capped in case of early promotion
+	game_phase = std::min((int)game_phase, 64); // Capped in case of early promotion
 
-	return game_phase / (double)opening_phase;
+	return game_phase;
 }
 
 // Calculates the material from White's perspective
 int count_material(const Board* pos) {
-	double sum = 0;
-	double weight = MG_weight(pos);
+	int sum = 0;
+	int phase = get_phase(pos);
 
 	for (int pce = wP; pce <= bK; ++pce) {
-		double value = pos->piece_num[pce] * ( piece_value_MG[pce] * weight + piece_value_EG[pce] * (1 - weight) );
+		int value = pos->piece_num[pce] * ( piece_value_MG[pce] * phase / 64 + piece_value_EG[pce] * (64 - phase) / 64 );
 		sum += value * ((piece_col[pce] == WHITE) ? 1 : -1);
 	}
 
-	return (int)sum;
+	return sum;
 }
 
-static inline double compute_PSQT(uint8_t pce, uint8_t sq, double weight) {
-	double score = 0;
+static inline int compute_PSQT(uint8_t pce, uint8_t sq, int phase) {
+	int score = 0;
 	uint8_t col = piece_col[pce];
 	if (col == WHITE) {
-		score += PSQT_MG[piece_type[pce] - 1][sq] * weight + PSQT_EG[piece_type[pce] - 1][sq] * (1 - weight);
+		score += PSQT_MG[piece_type[pce] - 1][sq] * phase / 64 + PSQT_EG[piece_type[pce] - 1][sq] * (64 - phase) / 64;
 	}
 	else {
-		score += PSQT_MG[piece_type[pce] - 1][Mirror64[sq]] * weight + PSQT_EG[piece_type[pce] - 1][Mirror64[sq]] * (1 - weight);
+		score += PSQT_MG[piece_type[pce] - 1][Mirror64[sq]] * phase / 64 + PSQT_EG[piece_type[pce] - 1][Mirror64[sq]] * (64 - phase) / 64;
 	}
 	return score;
 }
@@ -134,9 +131,8 @@ static inline double compute_PSQT(uint8_t pce, uint8_t sq, double weight) {
 	Piece evaluation
 */
 
-static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight) {
-
-	double score = 0;
+static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
+	int score = 0;
 	Bitboard pawns = pos->bitboards[pce];
 	uint8_t enemy_pce = (pce == wP) ? bP : wP;
 
@@ -144,18 +140,22 @@ static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight
 		uint8_t sq = pop_ls1b(pawns);
 		uint8_t file = GET_FILE(sq);
 		uint8_t reference_rank = (pce == wP) ? GET_RANK(sq) : (8 - GET_RANK(sq));
-		score += compute_PSQT(pce, sq, weight);
+		score += compute_PSQT(pce, sq, phase);
 
 		/*
 			Pawn structure
 		*/
 
 		// Isolated pawn penalties
-		if (file == FILE_A && ((pos->bitboards[pce] & file_masks[FILE_B]) == 0)) {
-			score += isolated_pawn;
+		if (file == FILE_A) {
+			if (((pos->bitboards[pce] & file_masks[FILE_B]) == 0)) {
+				score += isolated_pawn;
+			}
 		}
-		else if (file == FILE_H && ((pos->bitboards[pce] & file_masks[FILE_G]) == 0)) {
-			score += isolated_pawn;
+		else if (file == FILE_H) {
+			if (((pos->bitboards[pce] & file_masks[FILE_G]) == 0)) {
+				score += isolated_pawn;
+			}
 		}
 		else if (((pos->bitboards[pce] & file_masks[file - 1]) == 0) && ((pos->bitboards[pce] & file_masks[file + 1]) == 0)) {
 			score += isolated_pawn;
@@ -165,11 +165,15 @@ static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight
 		}
 
 		// Passed pawn penalties
-		if (file == FILE_A && ((pos->bitboards[enemy_pce] & (file_masks[FILE_A] | file_masks[FILE_B])) == 0)) {
-			score += passer_bonus[reference_rank];
+		if (file == FILE_A) {
+			if (((pos->bitboards[enemy_pce] & (file_masks[FILE_A] | file_masks[FILE_B])) == 0)) {
+				score += passer_bonus[reference_rank];
+			}
 		}
-		else if (file == FILE_H && ((pos->bitboards[enemy_pce] & (file_masks[FILE_G] | file_masks[FILE_H])) == 0)) {
-			score += passer_bonus[reference_rank];
+		else if (file == FILE_H) {
+			if (((pos->bitboards[enemy_pce] & (file_masks[FILE_G] | file_masks[FILE_H])) == 0)) {
+				score += passer_bonus[reference_rank];
+			}
 		}
 		else if ((pos->bitboards[enemy_pce] & (file_masks[file - 1] | file_masks[file] | file_masks[file + 1])) == 0) {
 			score += passer_bonus[reference_rank];
@@ -179,35 +183,35 @@ static inline double evaluate_pawns(const Board* pos, uint8_t pce, double weight
 	return score;
 }
 
-static inline double evaluate_knights(const Board* pos, uint8_t pce, double weight) {
+static inline int evaluate_knights(const Board* pos, uint8_t pce, int phase) {
 
-	double score = 0;
+	int score = 0;
 	Bitboard knights = pos->bitboards[pce];
 
 	while (knights) {
 		uint8_t sq = pop_ls1b(knights);
-		score += compute_PSQT(pce, sq, weight);
+		score += compute_PSQT(pce, sq, phase);
 	}
 
 	return score;
 }
 
-static inline double evaluate_bishops(const Board* pos, uint8_t pce, double weight) {
+static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase) {
 
-	double score = 0;
+	int score = 0;
 	Bitboard bishops = pos->bitboards[pce];
 
 	while (bishops) {
 		uint8_t sq = pop_ls1b(bishops);
-		score += compute_PSQT(pce, sq, weight);
+		score += compute_PSQT(pce, sq, phase);
 	}
 
 	return score;
 }
 
-static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight) {
+static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase) {
 
-	double score = 0;
+	int score = 0;
 	Bitboard rooks = pos->bitboards[pce];
 
 	while (rooks) {
@@ -215,7 +219,7 @@ static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight
 		uint8_t file = GET_FILE(sq);
 		uint8_t ally_pawns = (pce == wR) ? wP : bP;
 		uint8_t enemy_pawns = (pce == wR) ? bP : wP;
-		score += compute_PSQT(pce, sq, weight);
+		score += compute_PSQT(pce, sq, phase);
 
 		// Bonus for taking semi-open and open files
 		if ((pos->bitboards[ally_pawns] & file_masks[file]) == 0) {
@@ -232,9 +236,9 @@ static inline double evaluate_rooks(const Board* pos, uint8_t pce, double weight
 	return score;
 }
 
-static inline double evaluate_queens(const Board* pos, uint8_t pce, double weight) {
+static inline int evaluate_queens(const Board* pos, uint8_t pce, int phase) {
 
-	double score = 0;
+	int score = 0;
 	Bitboard queens = pos->bitboards[pce];
 
 	while (queens) {
@@ -242,7 +246,7 @@ static inline double evaluate_queens(const Board* pos, uint8_t pce, double weigh
 		uint8_t file = GET_FILE(sq);
 		uint8_t ally_pawns = (pce == wR) ? wP : bP;
 		uint8_t enemy_pawns = (pce == wR) ? bP : wP;
-		score += compute_PSQT(pce, sq, weight);
+		score += compute_PSQT(pce, sq, phase);
 
 		// Bonus for taking semi-open and open files
 		if ((pos->bitboards[ally_pawns] & file_masks[file]) == 0) {
@@ -259,13 +263,10 @@ static inline double evaluate_queens(const Board* pos, uint8_t pce, double weigh
 	return score;
 }
 
-static inline double evaluate_kings(const Board* pos, uint8_t pce, double weight) {
-
-	double score = 0;
-	
+static inline int evaluate_kings(const Board* pos, uint8_t pce, int phase) {
+	int score = 0;
 	uint8_t sq = pos->king_sq[piece_col[pce]];
-	score += compute_PSQT(pce, sq, weight);
-
+	score += compute_PSQT(pce, sq, phase);
 	return score;
 }
 
