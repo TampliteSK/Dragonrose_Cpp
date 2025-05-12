@@ -11,6 +11,7 @@
 #include "moveio.hpp"
 #include "bitboard.hpp"
 #include "attackgen.hpp"
+#include "evaluate.hpp"
 
 uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
 

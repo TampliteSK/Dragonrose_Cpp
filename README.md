@@ -12,7 +12,7 @@ Through the rewrite, the code quality is expected to increase, and my knowledge 
 You are free to borrow and modify my code if you so wish, as long as you give credit. <br>
 To use the engine, either grab the binary from releases, or build the project locally. In the future I will consider releasing Linux builds. <br>
 
-## Inspirations
+## Inspirations and Acknowledgments
 
 Dragonrose is greatly inspired by [VICE chess engine](https://github.com/bluefeversoft/vice/tree/main/Vice11/src), developed by by Richard Allbert (Bluefever Software), 
 which is a didactic chess engine aimed to introduce beginners to the world of chess programming. Huge credits to him for creating the [YouTube series](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg) explaining the engine in great detail. <br>
@@ -22,6 +22,8 @@ Aside from VICE, Dragonrose also draws inspiration from other engines such as
 - [Weiss](https://github.com/TerjeKir/weiss) by Terje Kirstihagen (TerjeKir) et al.
 - [BBC](https://github.com/maksimKorzh/bbc/tree/master) by Maksim Korzh (Code Monkey King), and
 - [Caissa](https://github.com/Witek902/Caissa) by Michal Witanowski (Witek902) et al.
+
+I would also like to thank [Adam Kulju](https://github.com/Adam-Kulju), developer of Willow and Patricia, for helping out with my code.
 
 ## How to Use
 

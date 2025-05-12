@@ -11,7 +11,7 @@ MISC_FLAGS ?=
 CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(MISC_FLAGS)
 
 # Debug flags
-# Usage: make DEBUG=1
+# Usage: make DEBUG=1 (-fsanitize not supported by MinGW)
 ifdef DEBUG
 	CXXFLAGS += -g -fsanitize=address -fsanitize=undefined
 endif

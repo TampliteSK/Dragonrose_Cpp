@@ -44,13 +44,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 	clear_search_vars(pos, table, info); // Initialise searchHistory and killers
 
-	/*
-	// Get moves from opening book
-	if (EngineOptions->UseBook == TRUE) {
-		bestMove = GetBookMove(pos);
-	}
-	*/
-
 	// No book move available. Find best move via search.
 	if (best_move == NO_MOVE) {
 
@@ -120,9 +113,10 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " score mate " << mate_moves
 					<< " nodes " << info->nodes
 					<< " nps " << nps
-					<< " hashfull " << (uint32_t)(table->num_entries / double(table->max_entries * BUCKET_SIZE) * 1000)
+					<< " hashfull " << table->num_entries * 1000 / table->max_entries
 					<< " time " << time
 					<< " pv";
+				std::cout << std::flush; // Make sure it outputs depth-by-depth in GUI
 			}
 			else {
 				std::cout << "info depth " << curr_depth
@@ -130,9 +124,10 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " score cp " << best_score
 					<< " nodes " << info->nodes
 					<< " nps " << nps
-					<< " hashfull " << (int)(table->num_entries / double(table->max_entries * BUCKET_SIZE) * 1000)
+					<< " hashfull " << table->num_entries * 1000 / table->max_entries
 					<< " time " << time
 					<< " pv";
+				std::cout << std::flush;
 			}
 
 			// Print PV
@@ -143,7 +138,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			// Exit search if mate at current depth is found, in order to save time
 			if (mate_found && (curr_depth > (abs(mate_moves) + 1))) {
-				break; // Buggy if insufficient search is performed before pruning immediately
+				break; // Buggy if insufficient search is performed before pruning
 			}
 		}
 	}
@@ -253,16 +248,13 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		depth++;
 	}
 
-	int best_score = -INF_BOUND;
 	int score = -INF_BOUND;
-	// int PV_move = NO_MOVE;
+	int PV_move = NO_MOVE;
 
-	/*
 	if (probe_hash_entry(pos, table, PV_move, score, alpha, beta, depth)) {
 		table->cut++;
 		return score;
 	}
-	*/
 
 	if (do_null) {
 		make_null_move(pos);
@@ -300,8 +292,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	int legal = 0;
 	int old_alpha = alpha;
 	int best_move = NO_MOVE;
+	int best_score = -INF_BOUND;
 
-	/*
 	// Order PV move as first move (linear search)
 	if (PV_move != NO_MOVE) {
 		for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
@@ -311,9 +303,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			}
 		}
 	}
-	*/
 
 	sort_moves(pos, list);
+	print_move_list_compact(list);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int curr_move = list.at(move_num).move;
