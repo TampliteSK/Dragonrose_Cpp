@@ -46,7 +46,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 	// No book move available. Find best move via search.
 	if (best_move == NO_MOVE) {
-
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
 
 			/*
@@ -305,7 +304,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	sort_moves(pos, list);
-	print_move_list_compact(list);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int curr_move = list.at(move_num).move;

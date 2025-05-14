@@ -152,6 +152,7 @@ bool make_move(Board* pos, int move) {
 
 	UndoBox box = { 0, 0, 0, 0, 0 };
 	box.hash_key = pos->hash_key;
+	uint64_t old_key = pos->hash_key;
 
 	if (get_move_enpassant(move)) {
 		// Clear the captured pawn
@@ -247,6 +248,10 @@ bool make_move(Board* pos, int move) {
 	if (is_square_attacked(pos, pos->king_sq[side], pos->side)) {
 		take_move(pos);
 		return false; // Illegal move
+	}
+
+	if (old_key == pos->hash_key) {
+		std::cout << "Warning. Hash key remains unchanged after make_move.\n";
 	}
 
 	return true;

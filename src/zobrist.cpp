@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <random>
+#include <iostream>
 #include "zobrist.hpp"
 #include "Board.hpp"
 
@@ -10,23 +11,23 @@ uint64_t piece_keys[13][64] = { {0} }; // random piece keys [piece][square]
 uint64_t castle_keys[16] = { 0 };      // random castling keys
 uint64_t side_key = 0ULL;              // random side key, indicating white to move
 
-uint64_t generate_random_U64() {
-	unsigned int seed = 69420; // Constant seed for deterministic behaviour 
-    // std::random_device rd;    // Random number for seed
+uint64_t generate_random_U64(unsigned int seed) {
     std::mt19937_64 mt(seed); // 64-bit Mersenne Twister
     std::uniform_int_distribution<uint64_t> distribution(0, UINT64_MAX);
     return distribution(mt);
 }
 
 void init_hash_keys() {
+	// Space out seeds to avoid collisions (0, 10000, 20000)
 	for (int pce = 0; pce < 13; ++pce) {
 		for (int sq = 0; sq < 64; ++sq) {
-			piece_keys[pce][sq] = generate_random_U64();
+			unsigned int seed = pce * 64 + sq; // Deterministic seed for each piece and square
+			piece_keys[pce][sq] = generate_random_U64(seed);
 		}
 	}
-	side_key = generate_random_U64();
+	side_key = generate_random_U64(10000);
 	for (int index = 0; index < 16; ++index) {
-		castle_keys[index] = generate_random_U64();
+		castle_keys[index] = generate_random_U64(20000 + index); // Seed based on index
 	}
 
 }

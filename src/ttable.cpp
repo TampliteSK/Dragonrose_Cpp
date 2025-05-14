@@ -13,7 +13,7 @@ int probe_PV_move(const Board* pos, const HashTable* table) {
 	int index = pos->hash_key % table->max_entries;
 
 	if (table->pTable[index].hash_key == pos->hash_key) {
-		std::cout << "Probed entry index " << index << " with depth " << (int)table->pTable[index].depth << "\n";
+		// std::cout << "Probed entry index " << index << " with depth " << (int)table->pTable[index].depth << "\n";
 		return table->pTable[index].move;
 	}
 
@@ -146,6 +146,7 @@ void store_hash_entry(Board* pos, HashTable* table, const int move, int score, c
 	entry->score = score;
 	entry->depth = depth;
 	entry->age = table->table_age;
+	// std::cout << "Storing move | Index: " << index << " Move: " << print_move(entry->move) << " Score: " << entry->score << " Depth: " << (int)entry->depth << "\n";
 }
 
 
