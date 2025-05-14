@@ -93,8 +93,9 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			// Search exited early as hash move found
+			int PV_moves = 0;
 			if (info->nodes == 0) {
-				get_PV_line(pos, table, curr_depth); // Get PV from TT
+				PV_moves = get_PV_line(pos, table, curr_depth); // Get PV from TT
 			}
 			best_move = pos->PV_array[0];
 
@@ -133,7 +134,14 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			// Print PV
-			for (int i = 0; i < curr_depth; ++i) {
+			int limit = 0;
+			if (PV_moves == 0) {
+				limit = curr_depth; // PV from search
+			}
+			else {
+				limit = PV_moves; // PV from hash table
+			}
+			for (int i = 0; i < limit; ++i) {
 				std::cout << " " << print_move(pos->PV_array[i]);
 			}
 			std::cout << "\n";
