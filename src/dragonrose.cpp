@@ -45,7 +45,6 @@ int main(int argc, char* argv[]) {
                 info->nodes = 0;
                 std::cout << "Position: " << bench_positions[index] << "\n";
                 parse_fen(pos, bench_positions[index]);
-                clear_hash_table(hash_table);
                 uci->parse_go(pos, hash_table, info, "go depth 5");
                 total_nodes += info->nodes;
             }

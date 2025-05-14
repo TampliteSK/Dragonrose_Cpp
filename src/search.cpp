@@ -23,8 +23,9 @@ int LMR_reduction_table[MAX_DEPTH][280];
 static inline void check_time(SearchInfo* info);
 static inline bool check_repetition(const Board* pos);
 static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
+void movcpy(int* pTarget, const int* pSource, int n);
 
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, bool do_null);
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, int PV_index, bool do_null);
 
 /*
 	Iterative deepening loop
@@ -34,7 +35,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 	int best_score = -INF_BOUND;
 	int best_move = NO_MOVE;
-	int PV_moves = 0;
 
 	// Aspiration windows variables
 	// uint8_t window_size = 50; // Size for first 6 depths
@@ -52,7 +52,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				Aspiration windows
 			*/
 
-			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
+			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, 0, true);
 
 			/*
 			// Do a full search on depth 1
@@ -92,7 +92,10 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				break;
 			}
 
-			PV_moves = get_PV_line(pos, table, curr_depth);
+			// Search exited early as hash move found
+			if (info->nodes == 0) {
+				get_PV_line(pos, table, curr_depth); // Get PV from TT
+			}
 			best_move = pos->PV_array[0];
 
 			// Display mate if there's forced mate
@@ -130,7 +133,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			// Print PV
-			for (int i = 0; i < PV_moves; ++i) {
+			for (int i = 0; i < curr_depth; ++i) {
 				std::cout << " " << print_move(pos->PV_array[i]);
 			}
 			std::cout << "\n";
@@ -216,7 +219,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 }
 
 // Negamax Search with Alpha-beta Pruning and Principle Variation Search (PVS)
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, bool do_null) {
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, int PV_index, bool do_null) {
 
 	if (depth <= 0) {
 		return quiescence(pos, info, alpha, beta);
@@ -238,6 +241,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		info->seldepth = pos->ply;
 	}
 
+	pos->PV_array[PV_index] = NO_MOVE;
+	int next_PV_index = PV_index + 64 - depth;
 	uint8_t US = pos->side;
 	uint8_t THEM = US ^ 1;
 
@@ -343,7 +348,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 		*/
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, next_PV_index, true);
 		
 		take_move(pos);
 
@@ -375,6 +380,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				}
 
 				alpha = score;
+				pos->PV_array[PV_index] = curr_move;
+				movcpy(pos->PV_array + PV_index + 1, pos->PV_array + next_PV_index, MAX_DEPTH - depth - 1);
 
 				if (captured == 0) {
 					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
@@ -475,5 +482,12 @@ void init_LMR_table() {
 		for (int move_num = 4; move_num < 280; ++move_num) {
 			LMR_reduction_table[depth][move_num] = int(1 + log(depth) * log(move_num) / 2.75);
 		}
+	}
+}
+
+// Copies the moves from pSource to pTarget, given the number of moves n
+void movcpy(int* pTarget, const int* pSource, int n) {
+	for (int i = 0; i < n; ++i) {
+		pTarget[i] = pSource[i];
 	}
 }

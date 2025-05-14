@@ -42,7 +42,7 @@ typedef struct {
 
 	int killer_moves[2][64]; // killer moves [id][ply]
 	int history_moves[13][64]; // history moves [piece][square]
-	int PV_array[64];
+	int PV_array[64 * (64 + 1) / 2]; // triangular PV-table
 } Board;
 
 // Board functions
