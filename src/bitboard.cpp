@@ -67,6 +67,59 @@ Bitboard bits_between_squares(uint8_t sq1, uint8_t sq2) {
     return mask;
 }
 
+Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col) {
+
+    /*
+    --------
+    --------
+    --------
+    --------
+    -----xxx
+    -----xxx
+    -----xxx
+    ------K-
+    */
+
+    Bitboard shield_zone = 0ULL;
+    uint8_t king_file = GET_FILE(king_sq);
+    uint8_t king_rank = GET_RANK(king_sq);
+
+    uint8_t start_sq = 0, end_sq = 0;
+    if (col == WHITE) {
+        if (king_rank <= RANK_5) {
+            return 0ULL; // King shield is useless when you're on the other side of the board
+        }
+
+        start_sq = FR2SQ(king_file - 1, king_rank - 1);
+        end_sq = FR2SQ(king_file + 1, king_rank - 3);
+        if (king_file == FILE_A) {
+            start_sq = FR2SQ(king_file, king_rank - 1);
+        }
+        if (king_file == FILE_H) {
+            end_sq = FR2SQ(king_file, king_rank - 3);
+        }
+    }
+    else {
+        if (king_rank >= RANK_4) {
+            return 0ULL;
+        }
+
+        start_sq = FR2SQ(king_file - 1, king_rank + 1);
+        end_sq = FR2SQ(king_file + 1, king_rank + 3);
+        if (king_file == FILE_A) {
+            start_sq = FR2SQ(king_file, king_rank + 1);
+        }
+        if (king_file == FILE_H) {
+            end_sq = FR2SQ(king_file, king_rank + 3);
+        }
+    }
+    
+    shield_zone = bits_between_squares(start_sq, end_sq);
+
+    return shield_zone;
+}
+
+
 /*
     Misc
 */

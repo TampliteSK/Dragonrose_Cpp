@@ -37,27 +37,25 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int best_move = NO_MOVE;
 
 	// Aspiration windows variables
-	// uint8_t window_size = 50; // Size for first 6 depths
-	// int guess = -INF_BOUND;
-	// int alpha = -INF_BOUND;
-	// int beta = INF_BOUND;
+	uint8_t window_size = 50; // Size for first 6 depths
+	int guess = -INF_BOUND;
+	int alpha = -INF_BOUND;
+	int beta = INF_BOUND;
 
 	clear_search_vars(pos, table, info); // Initialise searchHistory and killers
 
 	// No book move available. Find best move via search.
 	if (best_move == NO_MOVE) {
+
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
 
 			/*
 				Aspiration windows
 			*/
 
-			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, 0, true);
-
-			/*
 			// Do a full search on depth 1
 			if (curr_depth == 1) {
-				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
+				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, 0, true);
 			}
 			else {
 				if (curr_depth > 6) {
@@ -69,7 +67,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 				bool reSearch = true;
 				while (reSearch) {
-					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, true);
+					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, 0, true);
 
 					// Re-search with a wider window on the side that fails
 					if (best_score <= alpha) {
@@ -86,7 +84,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			guess = best_score;
-			*/
 
 			if (info->stopped) {
 				break;

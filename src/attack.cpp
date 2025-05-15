@@ -72,15 +72,17 @@ bool is_move_attack(const Board *pos, int move) {
 }
 
 // Replace with incremental version in board
-Bitboard get_all_attacks(const Board *pos, uint8_t side, bool king_included) {
+void get_all_attacks(const Board *pos, uint8_t side, Bitboard* list, int* attackers, bool king_included) {
     Bitboard copy = pos->occupancies[side];
-    Bitboard attacks = 0ULL;
+    int count = 0;
+
     while (copy) {
         uint8_t sq = pop_ls1b(copy);
         uint8_t pce = pos->pieces[sq];
         if (king_included || piece_type[pce] != KING) {
-            attacks |= get_piece_attacks(pos, pce, sq);
+            list[count] = get_piece_attacks(pos, pce, sq);
+            attackers[count] = pce;
+            count++;
         }
     }
-    return attacks;
 }

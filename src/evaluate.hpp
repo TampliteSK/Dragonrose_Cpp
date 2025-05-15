@@ -7,11 +7,13 @@
 #include "Board.hpp"
 
 // Evaluation constants
+const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
 const int8_t isolated_pawn = -10;
 const int8_t isolated_centre_pawn = -10; // Additional penalty
-const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
+const int8_t stacked_pawn = -10; // multipled by n-1, where n is no. of stacked pawns
 
 const uint8_t bishop_pair = 30;
+const int8_t bishop_blocks_ctrpawn = -10;
 const uint8_t rook_open_file = 10;
 const uint8_t rook_semiopen_file = 5;
 const uint8_t queen_open_file = 5;
@@ -22,6 +24,20 @@ const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL; // B2-G7 set
 // Functions
 int evaluate_pos(const Board* pos);
 int count_material(const Board* pos);
+
+// Attack units table from Stockfish, rescaled to centipawns
+const int safety_table[100] = {
+    0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+  18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+  68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+ 140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+ 260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+ 377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+ 494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+};
 
 /*
     PesTO Material and PSQT Evaluation
