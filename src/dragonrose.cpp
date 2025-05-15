@@ -6,13 +6,13 @@
 #include <cstring> // For strncmp
 #include <cstdlib> // For exit
 
+#include "attack.hpp"
 #include "Board.hpp"
 #include "bitboard.hpp"
 #include "dragonrose.hpp" // Bench positions
 #include "evaluate.hpp"
 #include "init.hpp"
 #include "makemove.hpp"
-#include "movegen.hpp"
 #include "moveio.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
@@ -80,9 +80,8 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, "8/8/8/3k4/8/3K4/P1P1P1P1/8 w - - 0 1");
-            int score = evaluate_pos(pos);
-            std::cout << "Score = " << score << "\n";
+            parse_fen(pos, START_POS);
+            evaluate_pos(pos);
         }
     }
 
