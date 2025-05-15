@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cstdlib> // atoi()
+#include "movegen.hpp"
 #include "Board.hpp"
 #include "bitboard.hpp"
 #include "zobrist.hpp"
@@ -44,7 +45,7 @@ void reset_board(Board* pos) {
 			pos->history_moves[pce][sq] = 0;
 		}
 	}
-	for (int ply = 0; ply < MAX_DEPTH; ++ply) {
+	for (int ply = 0; ply < MAX_DEPTH * (MAX_DEPTH + 1) / 2; ++ply) {
 		pos->PV_array[ply] = 0; // NO_MOVE
 	}
 	for (UndoBox& box : pos->move_history) {

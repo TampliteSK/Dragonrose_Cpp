@@ -142,6 +142,9 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				limit = PV_moves; // PV from hash table
 			}
 			for (int i = 0; i < limit; ++i) {
+				if (pos->PV_array[i] == NO_MOVE) {
+					break; // A PV is cut short due to two-fold repetition. Output valid moves only.
+				}
 				std::cout << " " << print_move(pos->PV_array[i]);
 			}
 			std::cout << "\n";
@@ -250,7 +253,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	pos->PV_array[PV_index] = NO_MOVE;
-	int next_PV_index = PV_index + 64 - depth;
+	int next_PV_index = PV_index + 64 - (depth - 1);
 	uint8_t US = pos->side;
 	uint8_t THEM = US ^ 1;
 
@@ -389,7 +392,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				alpha = score;
 				pos->PV_array[PV_index] = curr_move;
-				movcpy(pos->PV_array + PV_index + 1, pos->PV_array + next_PV_index, MAX_DEPTH - depth - 1);
+				movcpy(pos->PV_array + PV_index + 1, pos->PV_array + next_PV_index, MAX_DEPTH - (depth - 1) - 1);
 
 				if (captured == 0) {
 					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;

@@ -32,7 +32,7 @@ int evaluate_pos(const Board* pos) {
 	bool is_TB_endgame = count_bits(pos->occupancies[BOTH]) - pos->piece_num[wP] - pos->piece_num[bP] < 8;
 	if (is_TB_endgame && count_bits(pawns) == 0) {
 		if (check_material_draw(pos)) {
-			return endgame_noise(3);
+			return endgame_noise(pos->hash_key % UINT32_MAX, 3);
 		}
 	}
 
@@ -82,7 +82,7 @@ int evaluate_pos(const Board* pos) {
 
 	// Endgame noise adjustment
 	if (is_endgame) {
-		score += /*check_material_win(pos) +*/ endgame_noise(3);
+		score += /*check_material_win(pos) +*/ endgame_noise(pos->hash_key % UINT32_MAX, 3);
 	}
 
 	// Perspective adjustment

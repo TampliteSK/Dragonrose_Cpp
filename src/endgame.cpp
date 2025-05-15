@@ -8,8 +8,7 @@
 
 // Returns an integer between -width ~ width cp as a draw score
 // Prevents getting stuck at local minima in winning endgames, and pruning all lines in drawn endgames
-int8_t endgame_noise(uint8_t width) {
-	unsigned int seed = 69420;
+int8_t endgame_noise(unsigned int seed, uint8_t width) {
 	std::mt19937_64 mt(seed); // 64-bit Mersenne Twister
 	std::uniform_int_distribution<int> distribution(-width, width);
 	return distribution(mt);
