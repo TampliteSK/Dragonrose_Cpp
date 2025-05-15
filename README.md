@@ -43,7 +43,7 @@ I would also like to thank [Adam Kulju](https://github.com/Adam-Kulju), develope
 ## Main Features
 
 Search:
-- Negamax alpha-beta search (fail-soft)
+- Negamax alpha-beta search (fail-hard)
   - PV-search
   - Null-move pruning
   - Futility pruning (TODO)

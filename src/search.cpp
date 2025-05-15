@@ -119,7 +119,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " hashfull " << table->num_entries * 1000 / table->max_entries
 					<< " time " << time
 					<< " pv";
-				std::cout << std::flush; // Make sure it outputs depth-by-depth in GUI
 			}
 			else {
 				std::cout << "info depth " << curr_depth
@@ -130,7 +129,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " hashfull " << table->num_entries * 1000 / table->max_entries
 					<< " time " << time
 					<< " pv";
-				std::cout << std::flush;
 			}
 
 			// Print PV
@@ -143,11 +141,18 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 			for (int i = 0; i < limit; ++i) {
 				if (pos->PV_array[i] == NO_MOVE) {
+					std::cout << " "; // Add a space to allow easier parsing
 					break; // A PV is cut short due to two-fold repetition. Output valid moves only.
 				}
 				std::cout << " " << print_move(pos->PV_array[i]);
 			}
-			std::cout << "\n";
+			std::cout << "\n" << std::flush; // Make sure it outputs depth-by-depth to GUI
+
+			// Second check to make sure it doesn't hang in low time and flag
+			check_time(info);
+			if (info->stopped) {
+				break;
+			}
 
 			// Exit search if mate at current depth is found, in order to save time
 			if (mate_found && (curr_depth > (abs(mate_moves) + 1))) {
@@ -156,7 +161,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 		}
 	}
 
-	std::cout << "bestmove " << print_move(best_move) << "\n";
+	std::cout << "bestmove " << print_move(best_move) << "\n" << std::flush;
 }
 
 /*
@@ -181,6 +186,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 	}
 
 	int stand_pat = evaluate_pos(pos);
+	int best_score = stand_pat;
 	int score = stand_pat;
 
 	if (stand_pat >= beta) {
@@ -213,20 +219,23 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 		if (info->stopped) {
 			return 0;
 		}
-
+		
+		if (score > best_score) {
+			best_score = score;
+		}
 		if (score > alpha) {
 			if (score >= beta) {
 				if (legal == 1) {
 					info->fhf++;
 				}
 				info->fh++;
-				return beta;
+				return score;
 			}
 			alpha = score;
 		}
 	}
 
-	return alpha;
+	return best_score;
 }
 
 // Negamax Search with Alpha-beta Pruning and Principle Variation Search (PVS)
@@ -271,22 +280,16 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		return score;
 	}
 
-	if (do_null) {
-		make_null_move(pos);
-		take_null_move(pos);
-	}
-
 	/*
 		Null-move Pruning
 	*/
 
-	/*
 	uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
 	if (depth >= 4) {
 		if (do_null && !in_check && big_pieces > 1 && pos->ply) {
 			make_null_move(pos);
-			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, false);
+			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, PV_index, false);
 			take_null_move(pos);
 
 			if (info->stopped) {
@@ -299,7 +302,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			}
 		}
 	}
-	*/
 
 	std::vector<Move> list;
 	generate_moves(pos, list, false);
@@ -380,6 +382,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 					}
 					info->fh++;
 
+					// If the move that caused the beta cutoff is quiet we have a killer move
 					if (captured == 0) {
 						pos->killer_moves[1][pos->ply] = pos->killer_moves[0][pos->ply];
 						pos->killer_moves[0][pos->ply] = curr_move;
@@ -426,7 +429,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	Helper functions
 */
 
-// Check if the time is up, if there's an interrupt from GUI
+// Check if the time is up
 static inline void check_time(SearchInfo* info) {
 	if (info->timeset && (get_time_ms() > info->stop_time)) {
 		info->stopped = true;
