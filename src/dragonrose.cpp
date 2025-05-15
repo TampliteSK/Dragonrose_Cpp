@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, START_POS);
+            parse_fen(pos, "4r3/4rpk1/p1P1p1pp/2q5/3R4/2B1P1PP/3Q2B1/6K1 b - - 0 1");
             evaluate_pos(pos);
         }
     }

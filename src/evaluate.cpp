@@ -47,6 +47,7 @@ int evaluate_pos(const Board* pos) {
 	int phase = get_phase(pos);
 
 	score += count_material(pos);
+	// std::cout << "Material: " << count_material(pos) << "\n";
 
 	// Get easily-accessible attacks in one-go to save time
 	get_all_attacks(pos, WHITE, piece_attacks_white, white_attackers, true);
@@ -62,20 +63,26 @@ int evaluate_pos(const Board* pos) {
 		score += evaluate_queens(pos, wQ + col_offset, phase) * sign;
 		score += evaluate_kings(pos, wK + col_offset, phase) * sign;
 	}
+	// std::cout << "PSQT and co.: " << score - count_material(pos) << "\n";
 
 	// Tempi
 	score += count_tempi(pos) * phase / 64; // Towards endgame considering tempi is useless
+	// std::cout << "Tempi: " << count_tempi(pos) * phase / 64 << "\n";
 
 	/*
 		Piece activity / control
 	*/
 	score += count_activity();
+	// std::cout << "Activity: " << count_activity() << "\n";
 	
 	// Measure centre control
+	int control = 0;
 	int centre_squares[] = { d4, d5, e4, e5 };
 	for (int sq : centre_squares) {
-		score += get_square_control(pos, sq, WHITE);
+		control += get_square_control(pos, sq, WHITE);
 	}
+	score += control / 2;
+	// std::cout << "Centre control: " << control / 2 << "\n";
 	
 	// Bishop pair bonus
 	if (pos->piece_num[wB] > 2) score += bishop_pair;
@@ -96,6 +103,7 @@ int evaluate_pos(const Board* pos) {
 	}
 
 	// Perspective adjustment
+	// std::cout << "Final eval: " << score * ((pos->side == WHITE) ? 1 : -1) << "\n\n";
 	return score * ((pos->side == WHITE) ? 1 : -1);
 }
 
@@ -153,7 +161,7 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 	while (pawns) {
 		uint8_t sq = pop_ls1b(pawns);
 		uint8_t file = GET_FILE(sq);
-		uint8_t reference_rank = (pce == wP) ? GET_RANK(sq) : (8 - GET_RANK(sq));
+		uint8_t reference_rank = (pce == wP) ? (8 - GET_RANK(sq)) : (GET_RANK(sq));
 		score += compute_PSQT(pce, sq, phase);
 
 		/*
@@ -161,19 +169,21 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		*/
 
 		// Passed pawn bonuses
+		int passers = 0;
 		if (file == FILE_A) {
 			if (((pos->bitboards[enemy_pce] & (file_masks[FILE_A] | file_masks[FILE_B])) == 0)) {
-				score += passer_bonus[reference_rank];
+				passers += passer_bonus[reference_rank];
 			}
 		}
 		else if (file == FILE_H) {
 			if (((pos->bitboards[enemy_pce] & (file_masks[FILE_G] | file_masks[FILE_H])) == 0)) {
-				score += passer_bonus[reference_rank];
+				passers += passer_bonus[reference_rank];
 			}
 		}
 		else if ((pos->bitboards[enemy_pce] & (file_masks[file - 1] | file_masks[file] | file_masks[file + 1])) == 0) {
-			score += passer_bonus[reference_rank];
+			passers += passer_bonus[reference_rank];
 		}
+		score += passers;
 
 		// Isolated pawn penalties
 		if (file == FILE_A) {
@@ -400,7 +410,7 @@ static inline int evaluate_kings(const Board* pos, uint8_t pce, int phase) {
 // Only applies to opening / early-middlegame
 static inline int16_t count_tempi(const Board* pos) {
 	uint8_t white_adv = 20; // White's first-move advantage
-	uint8_t tempo = 13;		// Value of a typical tempo
+	uint8_t tempo = 8;		// Value of a typical tempo
 	Bitboard UNDEVELOPED_WHITE_ROOKS = (1ULL << a1) | (1ULL << h1);
 	Bitboard UNDEVELOPED_BLACK_ROOKS = (1ULL << a8) | (1ULL << h8);
 
@@ -417,7 +427,7 @@ static inline int16_t count_tempi(const Board* pos) {
 	net_developed_pieces -= count_bits(pos->bitboards[bR] & ~UNDEVELOPED_BLACK_ROOKS);  // bR
 	net_developed_pieces -= count_bits(black_DE_pawns & ~bits_between_squares(d7, e7)); // bP (centre pawns)
 
-	return white_adv + net_developed_pieces / 2 * tempo;
+	return ((pos->side == WHITE) ? white_adv : 0) + net_developed_pieces * tempo;
 }
 
 // Use the number of squares attack as a proxy for piece activity / mobility
@@ -440,5 +450,5 @@ static inline int16_t count_activity() {
 		black_activity += count_bits(piece_attacks_black[i]) + count_bits(piece_attacks_black[i] & BOTTOM_HALF);
 	}
 
-	return (white_activity - black_activity) * 2;
+	return (white_activity - black_activity) * 3 / 2;
 }
