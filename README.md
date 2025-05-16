@@ -37,8 +37,7 @@ I would also like to thank [Adam Kulju](https://github.com/Adam-Kulju), develope
 | Name  |      Type       | Default |  Valid values  | Description                                                                                             |
 |:-----:|:---------------:|:-------:|:--------------:|:-------------------------------------------------------------------------------------------------------:|
 | Hash  | integer (spin)  |    64   |   [1, 65536]   | Size of the transposition table in megabytes. 16 - 512 MB is recommended.                               |
-| Book  | boolean (check) |  TRUE   |  TRUE / FALSE  | Whether to use the internal book (VICEbook.bin). The book and the binary must be in the same directory. |
-| Bench |  CLI Argument   |    -    |        -       | Run `./Dragonrose bench` from a CLI to check nodes and NPS based on a 50-position suite (from [Heimdall](https://git.nocturn9x.space/nocturn9x/heimdall)). As it stands the node count is inconsistent even with the same version.|
+| Bench |  CLI Argument   |    -    |        -       | Run `./Dragonrose_Cpp bench` (or whatever you named the binary) from a CLI to check nodes and NPS based on a 50-position suite (from [Heimdall](https://git.nocturn9x.space/nocturn9x/heimdall)).|
 
 ## Main Features
 
