@@ -259,7 +259,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	pos->PV_array[PV_index] = NO_MOVE;
-	int next_PV_index = PV_index + 64 - (depth - 1);
+	int next_PV_index = PV_index + MAX_DEPTH - (depth - 1);
 	uint8_t US = pos->side;
 	uint8_t THEM = US ^ 1;
 
@@ -324,7 +324,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		int curr_move = list.at(move_num).move;
 
 		int captured = get_move_captured(curr_move);
-		// bool is_promotion = (bool)get_move_promoted(curr_move);
+		bool is_promotion = (bool)get_move_promoted(curr_move);
 
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
@@ -340,8 +340,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		// We calculate less promising moves at lower depths
 
 		int reduced_depth = depth - 1; // We move further into the tree
+		int LMR_PV_index = next_PV_index;
 
-		/*
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
 		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
@@ -354,11 +354,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
 				reduced_depth = std::max(reduced_depth - r, 1);
+				LMR_PV_index = (depth * (2 * MAX_DEPTH + 1 - depth)) / 2;
 			}
 		}
-		*/
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, next_PV_index, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, LMR_PV_index, true);
 		
 		take_move(pos);
 
