@@ -37,27 +37,25 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int best_move = NO_MOVE;
 
 	// Aspiration windows variables
-	// uint8_t window_size = 50; // Size for first 6 depths
-	// int guess = -INF_BOUND;
-	// int alpha = -INF_BOUND;
-	// int beta = INF_BOUND;
+	uint8_t window_size = 50; // Size for first 6 depths
+	int guess = -INF_BOUND;
+	int alpha = -INF_BOUND;
+	int beta = INF_BOUND;
 
 	clear_search_vars(pos, table, info); // Initialise searchHistory and killers
 
 	// No book move available. Find best move via search.
 	if (best_move == NO_MOVE) {
+
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
 
 			/*
 				Aspiration windows
 			*/
 
-			best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, 0, true);
-
-			/*
 			// Do a full search on depth 1
 			if (curr_depth == 1) {
-				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, true);
+				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, 0, true);
 			}
 			else {
 				if (curr_depth > 6) {
@@ -69,7 +67,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 				bool reSearch = true;
 				while (reSearch) {
-					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, true);
+					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, 0, true);
 
 					// Re-search with a wider window on the side that fails
 					if (best_score <= alpha) {
@@ -86,7 +84,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			guess = best_score;
-			*/
 
 			if (info->stopped) {
 				break;
@@ -262,7 +259,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	pos->PV_array[PV_index] = NO_MOVE;
-	int next_PV_index = PV_index + 64 - (depth - 1);
+	int next_PV_index = PV_index + MAX_DEPTH - (depth - 1);
 	uint8_t US = pos->side;
 	uint8_t THEM = US ^ 1;
 
@@ -327,7 +324,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		int curr_move = list.at(move_num).move;
 
 		int captured = get_move_captured(curr_move);
-		// bool is_promotion = (bool)get_move_promoted(curr_move);
+		bool is_promotion = (bool)get_move_promoted(curr_move);
 
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
@@ -343,8 +340,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		// We calculate less promising moves at lower depths
 
 		int reduced_depth = depth - 1; // We move further into the tree
+		int LMR_PV_index = next_PV_index;
 
-		/*
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
 		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
@@ -357,11 +354,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
 				reduced_depth = std::max(reduced_depth - r, 1);
+				LMR_PV_index = (depth * (2 * MAX_DEPTH + 1 - depth)) / 2;
 			}
 		}
-		*/
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, next_PV_index, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, LMR_PV_index, true);
 		
 		take_move(pos);
 

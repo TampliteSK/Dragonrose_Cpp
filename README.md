@@ -52,20 +52,22 @@ Search:
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Iterative deepening
 - Transposition table using "age"
-- Polyglot opening books
 
 Evaluation (Hand-crafted evaluation, or HCE):
 - Tapered eval
   - Material
   - Piece-square table bonuses
-- TODO:
-- King safety: customised king tropism, pawn shield, king open files penalty, king in centre penalty
-- Piece bonuses: Rook/queen open-file bonuses
-- Pawn bonuses / penalties: Passed pawns, isolated pawns, stacked pawns
-- Endgame knowledge: Drawn endgame detection (7-man equivalent), 50-move rule adjustment
+- King safety
+  - Pawn shield
+  - Attack units
+- Piece bounses / penalties
+  - Passed pawns bonus
+  - Isolated pawns penalty (extra penalty for isolated d/e pawns)
+  - Stacked pawns penalty
+- Basic endgaeme knowledge	 
 
 ## Playing Strength
-- Latest version is about 2350 CCRL in strength. At the moment it is quite inconsistent in tests, so the estimate may not be accurate.
+- C version is about 2350 CCRL in strength, while C++ version is about 2150 CCRL in strength at the moment. Below are statistics from the C version.
 - The Chesscom rating is estimated based on its games against human players (1800 - 2500). However it suffers greatly from small sample size, so take it with a grain of salt.
 
 | Metric | Rapid | Blitz | Bullet |
@@ -85,19 +87,11 @@ Evaluation (Hand-crafted evaluation, or HCE):
 0.29 (dev): Completely rewritten from scratch. Using fail-soft for Quiescence Search and Negamax Alpha-beta Search
 
 ## To-do list
-- Optimise attackgen (magic bitboard)
-- Add draw score variation
-- Add seldepth
 - Tune LMR, Add RFP
-- Improve king safety
-- Rename all poorly-named functions / variables for consistency
-- Add TT move ordering
+- Add FP, EFP
+- Other search / eval enhancements
 - Add SEE
-- Pawn / bishop interaction
 - Search thread / LazySMP
 
 ## Bugs to fix:
 - May blunder threefold in a winning position due to how threefold is implemented
-- Fix perft command freeze
-- ID loop needs to only exit when it has a legal move (i.e done depth 1 at least)
-- Obscure illegal move bug that occurs once every 100-200 games. Not replicable just with FEN.

@@ -22,6 +22,7 @@ const Bitboard TOP_HALF = 0xFFFFFFFF00000000ULL; // A5 ~ H8 set
 uint8_t pop_ls1b(Bitboard& bb);
 uint8_t count_bits(Bitboard bb);
 Bitboard bits_between_squares(uint8_t sq1, uint8_t sq2);
+Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col);
 void print_bitboard(Bitboard board);
 uint8_t dist_between_squares(uint8_t sq1, uint8_t sq2);
 
