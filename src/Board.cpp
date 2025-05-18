@@ -45,9 +45,13 @@ void reset_board(Board* pos) {
 			pos->history_moves[pce][sq] = 0;
 		}
 	}
-	for (int ply = 0; ply < MAX_DEPTH * (MAX_DEPTH + 1) / 2; ++ply) {
-		pos->PV_array[ply] = 0; // NO_MOVE
+
+	pos->PV_array.length = 0;
+	pos->PV_array.score = -INF_BOUND;
+	for (int i = 0; i < MAX_DEPTH; ++i) {
+		pos->PV_array.moves[i] = 0; // NO_MOVE
 	}
+
 	for (UndoBox& box : pos->move_history) {
 		box.castle_perms = 0;
 		box.enpas = 0;

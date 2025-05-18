@@ -62,4 +62,10 @@ enum { RANK_8, RANK_7, RANK_6, RANK_5, RANK_4, RANK_3, RANK_2, RANK_1 };
 
 enum { WKCA = 1, WQCA = 2, BKCA = 4, BQCA = 8 };
 
+typedef struct {
+    int length;
+    int score;
+    int moves[MAX_DEPTH];
+} PVLine; // Candidate / best principal variation line
+
 #endif // DATATYPES_HPP

@@ -48,12 +48,11 @@ static int mvv_lva[12][12] = {
     Promotion (Queen) *                                          5,000,000
     Captures (inc. enpas) + MVV-LVA                              2,000,000 - 2,000,606
     Killers (moves that lead to beta cut-off but not captures)     900,000 / 950,000
-    O-O, O-O-O                                                     750,000
-    Checks *                                                     ( 500,000 )                     
+    O-O, O-O-O                                                     750,000         
     Promotion (Knight) *                                           300,000
     Promotion (Rook) *                                             200,000
     Promotion (Bishop) *                                           100,000
-    Pawn move (non-capture, non-promo) *                            50,000
+  ( Checks                                                          50,000 )
     HistoryScore                                                  >=35,000
     no_score                                                        35,000
 
@@ -101,11 +100,11 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
                         }
                         else {
                             // one square ahead pawn move
-                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0), 50'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0), 0);
 
                             // two squares ahead pawn move
                             if (source_square >= a2 && source_square <= h2 && !GET_BIT(pos->occupancies[BOTH], target_square - 8)) {
-                                add_move(move_list, encode_move(source_square, target_square - 8, piece, 0, 0, 1, 0, 0), 50'000);
+                                add_move(move_list, encode_move(source_square, target_square - 8, piece, 0, 0, 1, 0, 0), 0);
                             }
                         }
                     }
@@ -162,11 +161,11 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
                         }
                         else {
                             // one square ahead pawn move
-                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0), 50'000);
+                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0), 0);
 
                             // two squares ahead pawn move
                             if (source_square >= a7 && source_square <= h7 && !GET_BIT(pos->occupancies[BOTH], target_square + 8)) {
-                                add_move(move_list, encode_move(source_square, target_square + 8, piece, 0, 0, 1, 0, 0), 50'000);
+                                add_move(move_list, encode_move(source_square, target_square + 8, piece, 0, 0, 1, 0, 0), 0);
                             }
 
                         }
@@ -286,9 +285,6 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 // score moves
 static inline int score_move(const Board *pos, int move) {
 
-    // Score PV moves
-    // ...
-
     // Score capture move
     int captured = get_move_captured(move);
     if (captured) {
@@ -296,20 +292,12 @@ static inline int score_move(const Board *pos, int move) {
     }
 
     // Score quiet move
-    else {
-        // score 1st killer move
-        if (pos->killer_moves[0][pos->ply] == move) {
-            return 950'000;
-        }
-        // score 2nd killer move
-        else if (pos->killer_moves[1][pos->ply] == move) {
-            return 900'000;
-        }
-        // score history move
-        else {
-            return pos->history_moves[get_move_piece(move)][get_move_target(move)];
-        }
-    }
+
+    if (pos->killer_moves[0][pos->ply] == move) return 950'000; // Score 1st killer move
+    if (pos->killer_moves[1][pos->ply] == move) return 900'000; // Score 2nd killer move
+
+    int history_score = pos->history_moves[get_move_piece(move)][get_move_target(move)];
+    return history_score;
 }
 
 // Sort moves in descending order

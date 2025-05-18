@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
             uint64_t end = get_time_ms();
             uint64_t time = end - start;
             std::cout << "\n-#-#- Benchmark results -#-#-\n";
+            std::cout << "Execution time: " << time / 1000.0 << "s \n";
             std::cout << total_nodes << " nodes " << int(total_nodes / (double)time * 1000) << " nps\n";
 
             // Quit after benching is finished

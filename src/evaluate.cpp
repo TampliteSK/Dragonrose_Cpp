@@ -188,18 +188,18 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		// Isolated pawn penalties
 		if (file == FILE_A) {
 			if (((pos->bitboards[pce] & file_masks[FILE_B]) == 0)) {
-				score += isolated_pawn;
+				score -= isolated_pawn;
 			}
 		}
 		else if (file == FILE_H) {
 			if (((pos->bitboards[pce] & file_masks[FILE_G]) == 0)) {
-				score += isolated_pawn;
+				score -= isolated_pawn;
 			}
 		}
 		else if (((pos->bitboards[pce] & file_masks[file - 1]) == 0) && ((pos->bitboards[pce] & file_masks[file + 1]) == 0)) {
 			score += isolated_pawn;
 			if (file == FILE_D || file == FILE_E) {
-				score += isolated_centre_pawn;
+				score -= isolated_centre_pawn;
 			}
 		}
 
@@ -207,7 +207,7 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		uint64_t stacked_mask = pos->bitboards[pce] & file_masks[file];
 		uint8_t stacked_count = count_bits(stacked_mask);
 		if (stacked_count > 1) {
-			score += stacked_pawn * (stacked_count - 1); // Scales with the number of pawns stacked
+			score -= stacked_pawn * (stacked_count - 1); // Scales with the number of pawns stacked
 		}
 
 	}
@@ -244,7 +244,7 @@ static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase) {
 			uint8_t pawn_sq = pop_ls1b(pawn_mask);
 			int8_t sign = (piece_col[pce] == WHITE) ? -1 : 1;
 			if (sq - pawn_sq == sign * 8) {
-				score += bishop_blocks_ctrpawn;
+				score -= bishop_blocks_ctrpawn;
 			}
 		}
 	}

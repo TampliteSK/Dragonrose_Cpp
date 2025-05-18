@@ -29,7 +29,7 @@ int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 	while (move != NO_MOVE && count < depth) {
 		if (move_exists(pos, move)) {
 			make_move(pos, move);
-			pos->PV_array[count++] = move;
+			pos->PV_array.moves[count++] = move;
 		}
 		else {
 			break;

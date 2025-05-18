@@ -8,12 +8,12 @@
 
 // Evaluation constants
 const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
-const int8_t isolated_pawn = -10;
-const int8_t isolated_centre_pawn = -10; // Additional penalty
-const int8_t stacked_pawn = -10; // multipled by n-1, where n is no. of stacked pawns
+const uint8_t isolated_pawn = 10;
+const uint8_t isolated_centre_pawn = 10; // Additional penalty
+const uint8_t stacked_pawn = 10; // multipled by n-1, where n is no. of stacked pawns
 
 const uint8_t bishop_pair = 30;
-const int8_t bishop_blocks_ctrpawn = -10;
+const uint8_t bishop_blocks_ctrpawn = 15;
 const uint8_t rook_open_file = 10;
 const uint8_t rook_semiopen_file = 5;
 const uint8_t queen_open_file = 5;

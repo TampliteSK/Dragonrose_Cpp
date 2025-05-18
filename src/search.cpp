@@ -23,9 +23,12 @@ int LMR_reduction_table[MAX_DEPTH][280];
 static inline void check_time(SearchInfo* info);
 static inline bool check_repetition(const Board* pos);
 static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
-void movcpy(int* pTarget, const int* pSource, int n);
 
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, int PV_index, bool do_null);
+static inline void init_PVLine(PVLine* line);
+static inline void movcpy(int* pTarget, const int* pSource, int n);
+static inline void update_best_line(Board* pos, PVLine* pv);
+
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null);
 
 /*
 	Iterative deepening loop
@@ -37,7 +40,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	int best_move = NO_MOVE;
 
 	// Aspiration windows variables
-	uint8_t window_size = 50; // Size for first 6 depths
+	uint8_t window_size = 33;
 	int guess = -INF_BOUND;
 	int alpha = -INF_BOUND;
 	int beta = INF_BOUND;
@@ -49,40 +52,49 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
 
+			PVLine* pv = new PVLine; // Stores the best PV in the search depth so far. Merges with PV of child nodes if it's good
+			init_PVLine(pv);
+
 			/*
 				Aspiration windows
 			*/
 
-			// Do a full search on depth 1
-			if (curr_depth == 1) {
-				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, 0, true);
+			// Do a full search first 3 depths as they are unstable
+			if (curr_depth == 3) {
+				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv, true);
 			}
 			else {
-				if (curr_depth > 6) {
-					// Window size decreases linearly with depth, with a minimum value of 25
-					window_size = std::max(-2.5 * curr_depth + 65, 25.0);
-				}
-				alpha = guess - window_size;
-				beta = guess + window_size;
+				alpha = std::max(-INF_BOUND, guess - window_size);
+				beta = std::min(guess + window_size, INF_BOUND);
+				int delta = window_size;
 
+				// Aspiration windows algorithm adapted from Ethereal by Andrew Grant
 				bool reSearch = true;
 				while (reSearch) {
-					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, 0, true);
+					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true);
 
 					// Re-search with a wider window on the side that fails
 					if (best_score <= alpha) {
-						alpha = -INF_BOUND;
+						// Slide the window down
+						alpha = std::max(-INF_BOUND, alpha - delta);
+						beta = (alpha + beta) / 2;
 					}
 					else if (best_score >= beta) {
-						beta = INF_BOUND;
+						// Slide the window up
+						alpha = (alpha + beta) / 2;
+						beta = std::min(beta + delta, INF_BOUND);
 					}
 					else {
 						// Successful search, exit re-search loop
 						reSearch = false;
 					}
+
+					delta = delta + delta / 2; // Expand the search window
 				}
 			}
 
+			update_best_line(pos, pv);
+			delete pv;
 			guess = best_score;
 
 			if (info->stopped) {
@@ -94,7 +106,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			if (info->nodes == 0) {
 				PV_moves = get_PV_line(pos, table, curr_depth); // Get PV from TT
 			}
-			best_move = pos->PV_array[0];
+			best_move = pos->PV_array.moves[0];
 
 			// Display mate if there's forced mate
 			uint64_t time = get_time_ms() - info->start_time; // in ms
@@ -131,17 +143,14 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			// Print PV
 			int limit = 0;
 			if (PV_moves == 0) {
-				limit = curr_depth; // PV from search
+				limit = pos->PV_array.length; // PV from search
 			}
 			else {
 				limit = PV_moves; // PV from hash table
 			}
+
 			for (int i = 0; i < limit; ++i) {
-				if (pos->PV_array[i] == NO_MOVE) {
-					std::cout << " "; // Add a space to allow easier parsing
-					break; // A PV is cut short due to two-fold repetition. Output valid moves only.
-				}
-				std::cout << " " << print_move(pos->PV_array[i]);
+				std::cout << " " << print_move(pos->PV_array.moves[i]);
 			}
 			std::cout << "\n" << std::flush; // Make sure it outputs depth-by-depth to GUI
 
@@ -235,8 +244,8 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 	return best_score;
 }
 
-// Negamax Search with Alpha-beta Pruning and Principle Variation Search (PVS)
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, int PV_index, bool do_null) {
+// Negamax Search with Alpha-beta Pruning
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null) {
 
 	if (depth <= 0) {
 		return quiescence(pos, info, alpha, beta);
@@ -258,8 +267,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		info->seldepth = pos->ply;
 	}
 
-	pos->PV_array[PV_index] = NO_MOVE;
-	int next_PV_index = PV_index + MAX_DEPTH - (depth - 1);
+	PVLine* candidate_PV = new PVLine;
+	init_PVLine(candidate_PV);
+
 	uint8_t US = pos->side;
 	uint8_t THEM = US ^ 1;
 
@@ -286,7 +296,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	if (depth >= 4) {
 		if (do_null && !in_check && big_pieces > 1 && pos->ply) {
 			make_null_move(pos);
-			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, PV_index, false);
+			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, candidate_PV, false);
 			take_null_move(pos);
 
 			if (info->stopped) {
@@ -312,7 +322,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	if (PV_move != NO_MOVE) {
 		for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 			if (list.at(move_num).move == PV_move) {
-				list.at(move_num).score = 10'000'000;
+				list.at(move_num).score += 10'000'000;
 				break;
 			}
 		}
@@ -340,25 +350,24 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		// We calculate less promising moves at lower depths
 
 		int reduced_depth = depth - 1; // We move further into the tree
-		int LMR_PV_index = next_PV_index;
 
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
 		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
 			uint8_t moving_pce = get_move_piece(curr_move);
-			// uint8_t self_king_sq = pos->king_sq[US];
-			// uint8_t target_sq = get_move_target(curr_move);
-			// uint8_t MoveIsAttack = IsAttack(moving_pce, target_sq, pos);
-			// uint8_t target_sq_within_king_zone = dist_between_squares(self_king_sq, target_sq) <= 3; // Checks if a move's target square is within 3 king moves
-			
+
 			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
 				reduced_depth = std::max(reduced_depth - r, 1);
-				LMR_PV_index = (depth * (2 * MAX_DEPTH + 1 - depth)) / 2;
 			}
 		}
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, LMR_PV_index, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
+
+		// Re-search with full depth if it beats alpha (make sure it's not a fluke)
+		if (score > alpha) {
+			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, depth - 1, candidate_PV, true);
+		}
 		
 		take_move(pos);
 
@@ -391,9 +400,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				}
 
 				alpha = score;
-				pos->PV_array[PV_index] = curr_move;
-				movcpy(pos->PV_array + PV_index + 1, pos->PV_array + next_PV_index, MAX_DEPTH - (depth - 1) - 1);
 
+				// Copy child's PV and prepend the current move
+				line->score = score;
+				line->length = 1 + candidate_PV->length;
+				line->moves[0] = curr_move;
+				movcpy(line->moves + 1, candidate_PV->moves, candidate_PV->length);
+
+				// Store the move that beats alpha if it's quiet
 				if (captured == 0) {
 					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
 				}
@@ -458,6 +472,11 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 		}
 	}
 
+	// Clear PV table
+	for (int i = 0; i < MAX_DEPTH; ++i) {
+		pos->PV_array.moves[i] = 0; // NO_MOVE
+	}
+
 	table->overwrite = 0;
 	table->hit = 0;
 	table->cut = 0;
@@ -496,9 +515,28 @@ void init_LMR_table() {
 	}
 }
 
+/*
+	PV management
+*/
+
+static inline void init_PVLine(PVLine* line) {
+	line->length = 0;
+	line->score = -INF_BOUND;
+	for (int i = 0; i < MAX_DEPTH; ++i) {
+		line->moves[i] = NO_MOVE;
+	}
+}
+
 // Copies the moves from pSource to pTarget, given the number of moves n
-void movcpy(int* pTarget, const int* pSource, int n) {
+static inline void movcpy(int* pTarget, const int* pSource, int n) {
 	for (int i = 0; i < n; ++i) {
 		pTarget[i] = pSource[i];
+	}
+}
+
+static inline void update_best_line(Board* pos, PVLine* pv) {
+	if (pv->score > pos->PV_array.score) {
+		pos->PV_array.length = pv->length;
+		movcpy(pos->PV_array.moves, pv->moves, pv->length);
 	}
 }
