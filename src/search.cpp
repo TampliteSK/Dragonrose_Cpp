@@ -76,16 +76,16 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					// Re-search with a wider window on the side that fails
 					if (best_score <= alpha) {
 						// Slide the window down
-						alpha = std::max(-INF_BOUND, alpha - delta);
 						beta = (alpha + beta) / 2;
+						alpha = std::max(-INF_BOUND, alpha - delta);
 					}
 					else if (best_score >= beta) {
 						// Slide the window up
 						alpha = (alpha + beta) / 2;
 						beta = std::min(beta + delta, INF_BOUND);
 					}
+					// Search falls within expected bounds
 					else {
-						// Successful search, exit re-search loop
 						reSearch = false;
 					}
 
@@ -122,7 +122,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * copysign(1.0, best_score);
 				std::cout << "info depth " << curr_depth
 					<< " seldepth " << (int)info->seldepth
-					<< " score mate " << mate_moves
+					<< " score mate " << (int)mate_moves
 					<< " nodes " << info->nodes
 					<< " nps " << nps
 					<< " hashfull " << table->num_entries * 1000 / table->max_entries
@@ -336,6 +336,21 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		int captured = get_move_captured(curr_move);
 		bool is_promotion = (bool)get_move_promoted(curr_move);
 
+		/*
+			Futility pruning
+		*/
+
+		if (abs(score) < MATE_SCORE && depth == 1 && !in_check && captured == 0 && !is_promotion) {
+			constexpr uint16_t futility_margin = 300; // Depth 1 margin. ~minor piece
+			// constexpr uint8_t ext_futility_margin = 475; // Depth 2 margin. ~rook
+			// Depth 1 margin: ~minor piece
+			int static_eval = evaluate_pos(pos);
+
+			if (static_eval + futility_margin < alpha) {
+				continue; // Discard moves with no potential of raising alpha
+			}
+		}
+
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
 		if (!make_move(pos, curr_move)) {
@@ -358,7 +373,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
-				reduced_depth = std::max(reduced_depth - r, 1);
+				reduced_depth = std::max(reduced_depth - r - 1, 1);
 			}
 		}
 
@@ -510,7 +525,7 @@ void init_searchinfo(SearchInfo* info) {
 void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
 		for (int move_num = 4; move_num < 280; ++move_num) {
-			LMR_reduction_table[depth][move_num] = int(1 + log(depth) * log(move_num) / 2.75);
+			LMR_reduction_table[depth][move_num] = int(0.25 + log(depth) * log(move_num) / 2.25);
 		}
 	}
 }

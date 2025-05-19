@@ -160,8 +160,10 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 
 	while (pawns) {
 		uint8_t sq = pop_ls1b(pawns);
+		uint8_t col = piece_col[pce];
 		uint8_t file = GET_FILE(sq);
 		uint8_t reference_rank = (pce == wP) ? (8 - GET_RANK(sq)) : (GET_RANK(sq));
+		uint8_t reference_sq = (pce == wP) ? (sq - 8) : (sq + 8);
 		score += compute_PSQT(pce, sq, phase);
 
 		/*
@@ -185,29 +187,44 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		}
 		score += passers;
 
-		// Isolated pawn penalties
-		if (file == FILE_A) {
-			if (((pos->bitboards[pce] & file_masks[FILE_B]) == 0)) {
-				score -= isolated_pawn;
+		// Isolated and backwards pawn penalties
+		// Backwards pawn: No neighbouring pawns or they are further advanced, and square in front is attacked by an opponent's pawn 
+		bool is_isolated = (pos->bitboards[pce] & adjacent_files[file]) == 0;
+		bool is_stopped = pos->bitboards[enemy_pce] & pawn_attacks[col][reference_sq];
+		bool is_backwards = false;
+		if (is_stopped) {
+			if (is_isolated) {
+				is_backwards = true;
+			}
+			else {
+				// There exists neighbouring pawns. Check if they are further advanced.
+				bool advanced_neighbours = false;
+				Bitboard pawn_mask = pos->bitboards[pce] & adjacent_files[file];
+				while (pawn_mask) {
+					uint8_t neighbour = pop_ls1b(pawn_mask);
+					if ((col == WHITE && GET_RANK(neighbour) >= GET_RANK(sq)) ||
+						(col == BLACK && GET_RANK(neighbour) <= GET_RANK(sq)) ) {
+						advanced_neighbours = true; // There is at least 1 neighbour less or equally advanced. Not a backwards pawn.
+					}
+				}
+				if (!advanced_neighbours) {
+					is_backwards = true;
+				}
+			}
+			
+			if (is_backwards) {
+				score -= backwards_pawn;
 			}
 		}
-		else if (file == FILE_H) {
-			if (((pos->bitboards[pce] & file_masks[FILE_G]) == 0)) {
-				score -= isolated_pawn;
-			}
-		}
-		else if (((pos->bitboards[pce] & file_masks[file - 1]) == 0) && ((pos->bitboards[pce] & file_masks[file + 1]) == 0)) {
-			score += isolated_pawn;
-			if (file == FILE_D || file == FILE_E) {
-				score -= isolated_centre_pawn;
-			}
+		else if (is_isolated) {
+			score -= isolated_pawn;
 		}
 
 		// Stacked pawn penalties
 		uint64_t stacked_mask = pos->bitboards[pce] & file_masks[file];
 		uint8_t stacked_count = count_bits(stacked_mask);
 		if (stacked_count > 1) {
-			score -= stacked_pawn * (stacked_count - 1); // Scales with the number of pawns stacked
+			score -= stacked_pawn * (stacked_count - 1) / stacked_count; // Scales with the number of pawns stacked. Division to make sure it's not overcounted.
 		}
 
 	}

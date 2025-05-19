@@ -11,6 +11,7 @@ const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
 const uint8_t isolated_pawn = 10;
 const uint8_t isolated_centre_pawn = 10; // Additional penalty
 const uint8_t stacked_pawn = 10; // multipled by n-1, where n is no. of stacked pawns
+const uint8_t backwards_pawn = 15;
 
 const uint8_t bishop_pair = 30;
 const uint8_t bishop_blocks_ctrpawn = 15;

@@ -81,8 +81,10 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, "4r3/4rpk1/p1P1p1pp/2q5/3R4/2B1P1PP/3Q2B1/6K1 b - - 0 1");
-            evaluate_pos(pos);
+            parse_fen(pos, "3k4/8/4p3/4P3/5PP1/8/8/3K4 w - - 0 1");
+            print_board(pos);
+            int score = evaluate_pos(pos);
+            std::cout << "Evaluation: " << score / 100.0 << "\n";
         }
     }
 

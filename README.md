@@ -46,7 +46,7 @@ Search:
   - PV-search (TODO)
   - Null-move pruning
   - Futility pruning (TODO)
-  - Late move pruning (TODO)
+  - Late move pruning
 - Quiesence search (fail-soft)
   - Delta pruning (TODO)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
