@@ -26,6 +26,10 @@ const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL; // B2-G7 set
 int evaluate_pos(const Board* pos);
 int count_material(const Board* pos);
 
+// PesTO Material
+extern uint16_t piece_value_MG[13];
+extern uint16_t piece_value_EG[13];
+
 // Attack units table from Stockfish, rescaled to centipawns
 const int safety_table[100] = {
     0,  0,   1,   2,   3,   5,   7,   9,  12,  15,

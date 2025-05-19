@@ -15,7 +15,6 @@ Bitboard piece_attacks_black[32] = { 0ULL };
 int white_attackers[32] = { 0 }; // The pieces corresponding to each attack bitboard in piece_attacks
 int black_attackers[32] = { 0 };
 
-// PesTO Material
 uint16_t piece_value_MG[13] = { 0, 82, 337, 365, 477, 1025, 30000, 82, 337, 365, 477, 1025, 30000 };
 uint16_t piece_value_EG[13] = { 0, 94, 281, 297, 512,  936, 30000, 94, 281, 297, 512,  936, 30000 };
 

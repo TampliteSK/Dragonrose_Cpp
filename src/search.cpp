@@ -199,12 +199,23 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 	int score = stand_pat;
 
 	if (stand_pat >= beta) {
+		delete candidate_PV;
 		return beta;
 	}
+
 	if (stand_pat > alpha) {
 		alpha = stand_pat;
 	}
 	
+	/*
+		Delta pruning (dead lost scenario)
+	*/
+	constexpr uint16_t big_delta = 936; // Queen eg value
+	if (stand_pat + big_delta < alpha) {
+		delete candidate_PV;
+		return alpha; // We are dead lost, no point searching for improvements
+	}
+
 	std::vector<Move> list;
 	generate_moves(pos, list, true);
 
@@ -215,6 +226,18 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 
 		int curr_move = list[move_num].move;
+
+		// Delta pruning (general case)
+		int captured = get_move_captured(curr_move);
+		int promoted = get_move_promoted(curr_move);
+		int delta1 = piece_value_MG[captured];
+		int delta2 = piece_value_MG[promoted];
+		constexpr uint16_t delta_buffer = 180;
+		// We skip the move if the gain from capturing or promoting a piece is too low
+		if (delta1 + delta_buffer <= alpha && delta2 + delta_buffer <= alpha) {
+			delete candidate_PV;
+			return alpha;
+		}
 
 		// Check if it's a legal move
 		if (!make_move(pos, curr_move)) {
@@ -228,6 +251,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		take_move(pos);
 
 		if (info->stopped) {
+			delete candidate_PV;
 			return 0;
 		}
 		
@@ -240,6 +264,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 					info->fhf++;
 				}
 				info->fh++;
+				delete candidate_PV;
 				return score;
 			}
 
@@ -253,6 +278,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		}
 	}
 
+	delete candidate_PV;
 	return best_score;
 }
 
@@ -296,6 +322,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	if (probe_hash_entry(pos, table, PV_move, score, alpha, beta, depth)) {
 		table->cut++;
+		delete candidate_PV;
 		return score;
 	}
 
@@ -312,11 +339,13 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			take_null_move(pos);
 
 			if (info->stopped) {
+				delete candidate_PV;
 				return 0;
 			}
 
 			if (score >= beta && abs(score) < MATE_SCORE) {
 				info->null_cut++;
+				delete candidate_PV;
 				return score;
 			}
 		}
@@ -400,6 +429,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		take_move(pos);
 
 		if (info->stopped) {
+			delete candidate_PV;
 			return 0;
 		}
 
@@ -424,6 +454,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 					store_hash_entry(pos, table, best_move, beta, HFBETA, depth);
 
+					delete candidate_PV;
 					return beta; // Fail-hard beta-cutoff
 				}
 
@@ -446,10 +477,12 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	if (legal == 0) {
 		if (in_check) {
 			// Checkmate
+			delete candidate_PV;
 			return -INF_BOUND + pos->ply; 
 		}
 		else {
 			// Stalemate
+			delete candidate_PV;
 			return 0;
 		}
 	}
