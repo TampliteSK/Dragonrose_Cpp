@@ -175,7 +175,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 */
 
 // Quiescence search
-static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) {
+static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, PVLine* line) {
 
 	check_time(info); // Check if time is up
 
@@ -190,6 +190,9 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 	if (pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
 	}
+
+	PVLine* candidate_PV = new PVLine;
+	init_PVLine(candidate_PV);
 
 	int stand_pat = evaluate_pos(pos);
 	int best_score = stand_pat;
@@ -211,14 +214,16 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 
+		int curr_move = list[move_num].move;
+
 		// Check if it's a legal move
-		if (!make_move(pos, list.at(move_num).move)) {
+		if (!make_move(pos, curr_move)) {
 			continue;
 		}
 		info->nodes++;
 		legal++;
 
-		score = -quiescence(pos, info, -beta, -alpha);
+		score = -quiescence(pos, info, -beta, -alpha, line);
 
 		take_move(pos);
 
@@ -237,7 +242,14 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 				info->fh++;
 				return score;
 			}
+
 			alpha = score;
+
+			// Copy child's PV and prepend the current move
+			line->score = score;
+			line->length = 1 + candidate_PV->length;
+			line->moves[0] = curr_move;
+			movcpy(line->moves + 1, candidate_PV->moves, candidate_PV->length);
 		}
 	}
 
@@ -248,7 +260,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta) 
 static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null) {
 
 	if (depth <= 0) {
-		return quiescence(pos, info, alpha, beta);
+		return quiescence(pos, info, alpha, beta, line);
 	}
 
 	check_time(info); // Check if time is up
@@ -449,6 +461,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
 	}
 
+	delete candidate_PV;
 	return alpha;
 }
 
