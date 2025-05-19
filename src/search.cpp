@@ -340,14 +340,15 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			Futility pruning
 		*/
 
-		if (abs(score) < MATE_SCORE && depth == 1 && !in_check && captured == 0 && !is_promotion) {
-			constexpr uint16_t futility_margin = 300; // Depth 1 margin. ~minor piece
+		// Don't skip PV move, captures and killers
+		if (depth <= 2 && move_num >= 4 && !in_check && captured == 0 && !is_promotion && abs(score) < MATE_SCORE) {
+			// constexpr uint16_t futility_margin = 300; // Depth 1 margin. ~minor piece
 			// constexpr uint8_t ext_futility_margin = 475; // Depth 2 margin. ~rook
-			// Depth 1 margin: ~minor piece
+			int futility_margin = 150 * depth; // Scale margin with depth
 			int static_eval = evaluate_pos(pos);
 
-			if (static_eval + futility_margin < alpha) {
-				continue; // Discard moves with no potential of raising alpha
+			if (static_eval + futility_margin <= alpha) {
+				continue; // Discard moves with no potential to raise alpha
 			}
 		}
 
@@ -368,7 +369,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
-		if (abs(score) < MATE_SCORE && depth >= 4 && move_num >= 4) {
+		if (depth >= 4 && move_num >= 4 && abs(score) < MATE_SCORE) {
 			uint8_t moving_pce = get_move_piece(curr_move);
 
 			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
