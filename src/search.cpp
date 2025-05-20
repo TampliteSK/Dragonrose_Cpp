@@ -80,8 +80,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 						alpha = std::max(-INF_BOUND, alpha - delta);
 					}
 					else if (best_score >= beta) {
-						// Slide the window up
-						alpha = (alpha + beta) / 2;
+						// Increase beta and not touch alpha
 						beta = std::min(beta + delta, INF_BOUND);
 					}
 					// Search falls within expected bounds
