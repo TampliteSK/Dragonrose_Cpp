@@ -26,34 +26,6 @@ bool is_square_attacked(const Board *pos, uint8_t sq, uint8_t side) {
     return false;
 }
 
-// Check if the current square is attacked by a given side, with a weight that's inversely related to value
-int count_attacks(const Board *pos, uint8_t sq, uint8_t side) {
-    int attacks = 0;
-
-    if (side == WHITE) {
-        attacks += 7 * count_bits(pawn_attacks[BLACK][sq] & pos->bitboards[wP]);                        // Pawns
-        attacks += 3 * count_bits(knight_attacks[sq] & pos->bitboards[wN]);                             // Knights
-        attacks += 3 * count_bits(get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[wB]); // Bishops
-        attacks += 2 * count_bits(get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[wR]);   // Rooks
-        attacks += 1 * count_bits(get_queen_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[wQ]);     // Queens
-        attacks += 1 * count_bits(king_attacks[sq] & pos->bitboards[wK]);                               // Kings
-    }
-    else {
-        attacks += 7 * count_bits(pawn_attacks[WHITE][sq] & pos->bitboards[bP]);                        // Pawns
-        attacks += 3 * count_bits(knight_attacks[sq] & pos->bitboards[bN]);                             // Knights
-        attacks += 3 * count_bits(get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bB]); // Bishops
-        attacks += 2 * count_bits(get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bR]);   // Rooks
-        attacks += 1 * count_bits(get_queen_attacks(sq, pos->occupancies[BOTH]) & pos->bitboards[bQ]);     // Queens
-        attacks += 1 * count_bits(king_attacks[sq] & pos->bitboards[bK]);                               // Kings
-    }
-
-    return attacks;
-}
-
-int get_square_control(const Board *pos, uint8_t sq, uint8_t side) {
-    return count_attacks(pos, sq, side) - count_attacks(pos, sq, side ^ 1);
-}
-
 Bitboard get_piece_attacks(const Board *pos, uint8_t pce, uint8_t sq) {
     if (piece_type[pce] ==   PAWN) return pawn_attacks[piece_col[pce]][sq];
     if (piece_type[pce] == KNIGHT) return knight_attacks[sq];

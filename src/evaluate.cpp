@@ -74,15 +74,6 @@ int evaluate_pos(const Board* pos) {
 	score += count_activity();
 	// std::cout << "Activity: " << count_activity() << "\n";
 	
-	// Measure centre control
-	int control = 0;
-	int centre_squares[] = { d4, d5, e4, e5 };
-	for (int sq : centre_squares) {
-		control += get_square_control(pos, sq, WHITE);
-	}
-	score += control / 2;
-	// std::cout << "Centre control: " << control / 2 << "\n";
-	
 	// Bishop pair bonus
 	if (pos->piece_num[wB] > 2) score += bishop_pair;
 	if (pos->piece_num[bB] > 2) score -= bishop_pair;

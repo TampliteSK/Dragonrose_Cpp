@@ -226,18 +226,20 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 
 		int curr_move = list[move_num].move;
 
+		/*
 		// Delta pruning (general case)
 		int captured = get_move_captured(curr_move);
 		int promoted = get_move_promoted(curr_move);
 		int delta1 = piece_value_MG[captured];
 		int delta2 = piece_value_MG[promoted];
-		constexpr uint16_t delta_buffer = 180;
+		constexpr uint16_t delta_margin = 300;
 		bool is_late_endgame = count_bits(pos->occupancies[BOTH]) <= 8;
 		// We skip the move if the gain from capturing or promoting a piece is too low
-		if (!is_late_endgame && delta1 + delta_buffer <= alpha && delta2 + delta_buffer <= alpha) {
+		if (!is_late_endgame && delta1 + delta_margin <= alpha && delta2 + delta_margin <= alpha) {
 			delete candidate_PV;
 			return alpha;
 		}
+		*/
 
 		// Check if it's a legal move
 		if (!make_move(pos, curr_move)) {
