@@ -232,8 +232,9 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		int delta1 = piece_value_MG[captured];
 		int delta2 = piece_value_MG[promoted];
 		constexpr uint16_t delta_buffer = 180;
+		bool is_late_endgame = count_bits(pos->occupancies[BOTH]) <= 8;
 		// We skip the move if the gain from capturing or promoting a piece is too low
-		if (delta1 + delta_buffer <= alpha && delta2 + delta_buffer <= alpha) {
+		if (!is_late_endgame && delta1 + delta_buffer <= alpha && delta2 + delta_buffer <= alpha) {
 			delete candidate_PV;
 			return alpha;
 		}
@@ -503,6 +504,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 // Check if the time is up
 static inline void check_time(SearchInfo* info) {
+	// Check if time is up
 	if (info->timeset && (get_time_ms() > info->stop_time)) {
 		info->stopped = true;
 	}

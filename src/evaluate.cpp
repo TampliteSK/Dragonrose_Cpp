@@ -407,11 +407,34 @@ static inline int evaluate_king_safety(const Board* pos, uint8_t pce, uint8_t ki
 	return score * phase / 64; // Importance of king safety decreases with less material on the board
 }
 
+// Rewarding active kings and punishing immobile kings to assist mates
+static inline int16_t king_mobility(const Board* pos, uint8_t pce, uint8_t king_sq, int phase) {
+
+	const int mobility_bonus[9] = { -75, -50, -33, -25, 0, 5, 10, 11, 12 };
+
+	Bitboard attacks = king_attacks[king_sq];
+	uint8_t attacker = piece_col[pce] ^ 1;
+	uint8_t mobile_squares = 0;
+
+	while (attacks) {
+		uint8_t sq = pop_ls1b(attacks);
+		if (!is_square_attacked(pos, sq, attacker)) {
+			mobile_squares++;
+		}
+	}
+
+	return mobility_bonus[mobile_squares] * (64 - phase) / 64;
+}
+
+
 static inline int evaluate_kings(const Board* pos, uint8_t pce, int phase) {
 	int score = 0;
 	uint8_t sq = pos->king_sq[piece_col[pce]];
 	score += compute_PSQT(pce, sq, phase);
 	score += evaluate_king_safety(pos, pce, sq, phase);
+	if (phase <= 16) {
+		score += king_mobility(pos, pce, sq, phase);
+	}
 	return score;
 }
 
