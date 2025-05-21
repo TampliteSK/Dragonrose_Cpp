@@ -65,14 +65,16 @@ int evaluate_pos(const Board* pos) {
 	// std::cout << "PSQT and co.: " << score - count_material(pos) << "\n";
 
 	// Tempi
-	score += count_tempi(pos) * phase / 64; // Towards endgame considering tempi is useless
-	// std::cout << "Tempi: " << count_tempi(pos) * phase / 64 << "\n";
+	if (!is_endgame) {
+		score += count_tempi(pos) * phase / 64; // Towards endgame considering tempi is useless
+		// std::cout << "Tempi: " << count_tempi(pos) * phase / 64 << "\n";
+	}
 
 	/*
 		Piece activity / control
 	*/
-	score += count_activity();
-	// std::cout << "Activity: " << count_activity() << "\n";
+	score += count_activity() * 3 / 2;
+	// std::cout << "Activity: " << count_activity() * 2 << "\n";
 	
 	// Bishop pair bonus
 	if (pos->piece_num[wB] > 2) score += bishop_pair;
@@ -390,16 +392,16 @@ static inline int evaluate_pawn_shield(const Board* pos, uint8_t pce, uint8_t ki
 	return score;
 }
 
-static inline int evaluate_king_safety(const Board* pos, uint8_t pce, uint8_t king_sq, int phase) {
+static inline int evaluate_king_safety(const Board* pos, uint8_t pce, uint8_t king_sq, int var_phase) {
 
 	int score = 0;
-	score += evaluate_king_attacks(pos, pce, king_sq);
+	score += evaluate_king_attacks(pos, pce, king_sq) * 3 / 2;
 	score += evaluate_pawn_shield(pos, pce, king_sq);
-	return score * phase / 64; // Importance of king safety decreases with less material on the board
+	return score * var_phase / 16; // Importance of king safety decreases with less material on the board
 }
 
 // Rewarding active kings and punishing immobile kings to assist mates
-static inline int16_t king_mobility(const Board* pos, uint8_t pce, uint8_t king_sq, int phase) {
+static inline int16_t king_mobility(const Board* pos, uint8_t pce, uint8_t king_sq, int var_phase) {
 
 	const int mobility_bonus[9] = { -75, -50, -33, -25, 0, 5, 10, 11, 12 };
 
@@ -414,7 +416,7 @@ static inline int16_t king_mobility(const Board* pos, uint8_t pce, uint8_t king_
 		}
 	}
 
-	return mobility_bonus[mobile_squares] * (64 - phase) / 64;
+	return mobility_bonus[mobile_squares] * (20 - var_phase) / 16;
 }
 
 
@@ -422,9 +424,10 @@ static inline int evaluate_kings(const Board* pos, uint8_t pce, int phase) {
 	int score = 0;
 	uint8_t sq = pos->king_sq[piece_col[pce]];
 	score += compute_PSQT(pce, sq, phase);
-	score += evaluate_king_safety(pos, pce, sq, phase);
-	if (phase <= 16) {
-		score += king_mobility(pos, pce, sq, phase);
+	int var_phase = count_bits(pos->occupancies[BOTH] & ~(pos->bitboards[wP] | pos->bitboards[bP])); // Better phasing formula in this case than one for PSQT
+	score += evaluate_king_safety(pos, pce, sq, var_phase);
+	if (var_phase <= 12) {
+		score += king_mobility(pos, pce, sq, var_phase);
 	}
 	return score;
 }
@@ -464,21 +467,27 @@ static inline int16_t count_tempi(const Board* pos) {
 // Based on jk_182's Lichess article: https://lichess.org/@/jk_182/blog/calculating-piece-activity/FAOY6Ii7
 static inline int16_t count_activity() {
 
-	int white_activity = 0;
-	int black_activity = 0;
+	uint8_t activity_weight[13] = { 0, 5, 3, 3, 2, 1, 1, 5, 3, 3, 2, 1, 1 };
+	int white_activity = 0, white_weight_count = 0;
+	int black_activity = 0, black_weight_count = 0;
 
 	for (int i = 0; i < 32; ++i) {
 		if (white_attackers[i] == EMPTY) {
 			break; // End of attacks
 		}
-		white_activity += count_bits(piece_attacks_white[i]) + count_bits(piece_attacks_white[i] & TOP_HALF);
+		white_weight_count += activity_weight[white_attackers[i]];
+		// Double count ones in enemy's side of the board to encourage more forward movement
+		white_activity += (count_bits(piece_attacks_white[i]) + count_bits(piece_attacks_white[i] & TOP_HALF)) * activity_weight[white_attackers[i]];
 	}
+	white_activity /= white_weight_count;
 	for (int i = 0; i < 32; ++i) {
 		if (black_attackers[i] == EMPTY) {
-			break; // End of attacks
+			break;
 		}
-		black_activity += count_bits(piece_attacks_black[i]) + count_bits(piece_attacks_black[i] & BOTTOM_HALF);
+		black_weight_count += activity_weight[white_attackers[i]];
+		black_activity += (count_bits(piece_attacks_black[i]) + count_bits(piece_attacks_black[i] & BOTTOM_HALF)) * activity_weight[white_attackers[i]];
 	}
+	black_activity /= black_weight_count;
 
-	return (white_activity - black_activity) * 3 / 2;
+	return white_activity - black_activity;
 }

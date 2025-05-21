@@ -14,7 +14,7 @@ const uint8_t stacked_pawn = 10; // multipled by n-1, where n is no. of stacked 
 const uint8_t backwards_pawn = 15;
 
 const uint8_t bishop_pair = 30;
-const uint8_t bishop_blocks_ctrpawn = 15;
+const uint8_t bishop_blocks_ctrpawn = 20;
 const uint8_t rook_open_file = 10;
 const uint8_t rook_semiopen_file = 5;
 const uint8_t queen_open_file = 5;
