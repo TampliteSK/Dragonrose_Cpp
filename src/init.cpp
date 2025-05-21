@@ -9,6 +9,7 @@
 Bitboard file_masks[8];
 Bitboard rank_masks[8];
 Bitboard adjacent_files[8];
+Bitboard passer_masks[8];
 
 // Function prototypes
 void init_file_rank_masks();
@@ -32,12 +33,15 @@ void init_file_rank_masks() {
 	for (int file = FILE_A; file <= FILE_H; ++file) {
 		if (file == FILE_A) {
 			adjacent_files[file] = file_masks[FILE_B];
+			passer_masks[file] = file_masks[FILE_A] | file_masks[FILE_B];
 		}
 		else if (file == FILE_H) {
 			adjacent_files[file] = file_masks[FILE_G];
+			passer_masks[file] = file_masks[FILE_G] | file_masks[FILE_H];
 		}
 		else {
 			adjacent_files[file] = file_masks[file - 1] | file_masks[file + 1];
+			passer_masks[file] = file_masks[file - 1] | file_masks[file] | file_masks[file + 1];
 		}
 	}
 	for (int rank = RANK_8; rank <= RANK_1; ++rank) {

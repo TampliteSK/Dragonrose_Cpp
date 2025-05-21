@@ -21,7 +21,7 @@ uint16_t piece_value_EG[13] = { 0, 94, 281, 297, 512,  936, 30000, 94, 281, 297,
 // Function prototypes
 static inline int get_phase(const Board* pos);
 
-static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase); 
+static inline int evaluate_pawns(const Board* pos, bool passers[], uint8_t pce, int phase); 
 static inline int evaluate_knights(const Board* pos, uint8_t pce, int phase);
 static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase);
 static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase);
@@ -53,9 +53,16 @@ int evaluate_pos(const Board* pos) {
 	get_all_attacks(pos, BLACK, piece_attacks_black, black_attackers, true);
 
 	for (int colour = WHITE; colour <= BLACK; ++colour) {
+		bool passers[8] = { false };
 		int8_t sign = (colour == WHITE) ? 1 : -1;
 		uint8_t col_offset = (colour == WHITE) ? 0 : 6;
-		score += evaluate_pawns(pos, wP + col_offset, phase) * sign;
+
+		score += evaluate_pawns(pos, passers, wP + col_offset, phase) * sign;
+		for (int file = FILE_B; file <= FILE_H; ++file) {
+			if (passers[file - 1] && passers[file]) {
+				score += connected_passers * sign;
+			}
+		}
 		score += evaluate_knights(pos, wN + col_offset, phase) * sign;
 		score += evaluate_bishops(pos, wB + col_offset, phase) * sign;
 		score += evaluate_rooks(pos, wR + col_offset, phase) * sign;
@@ -64,17 +71,20 @@ int evaluate_pos(const Board* pos) {
 	}
 	// std::cout << "PSQT and co.: " << score - count_material(pos) << "\n";
 
+	// Alternate phase formula for the rest of the function. Works better than one used for PSQT in such cases
+	int var_phase = count_bits(pos->occupancies[BOTH] & ~(pos->bitboards[wP] | pos->bitboards[bP])); // Values: [0, 16]
+
 	// Tempi
 	if (!is_endgame) {
-		score += count_tempi(pos) * phase / 64; // Towards endgame considering tempi is useless
-		// std::cout << "Tempi: " << count_tempi(pos) * phase / 64 << "\n";
+		score += count_tempi(pos) * var_phase / 16; // Towards endgame considering tempi is useless
+		// std::cout << "Tempi: " << count_tempi(pos) * var_phase / 16 << "\n";
 	}
 
 	/*
 		Piece activity / control
 	*/
 	score += count_activity() * 3 / 2;
-	// std::cout << "Activity: " << count_activity() * 2 << "\n";
+	// std::cout << "Activity: " << count_activity() * 3 / 2 << "\n";
 	
 	// Bishop pair bonus
 	if (pos->piece_num[wB] > 2) score += bishop_pair;
@@ -145,7 +155,7 @@ static inline int compute_PSQT(uint8_t pce, uint8_t sq, int phase) {
 	Piece evaluation
 */
 
-static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
+static inline int evaluate_pawns(const Board* pos, bool passers[], uint8_t pce, int phase) {
 	int score = 0;
 	Bitboard pawns = pos->bitboards[pce];
 	uint8_t enemy_pce = (pce == wP) ? bP : wP;
@@ -154,7 +164,7 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		uint8_t sq = pop_ls1b(pawns);
 		uint8_t col = piece_col[pce];
 		uint8_t file = GET_FILE(sq);
-		uint8_t reference_rank = (pce == wP) ? (8 - GET_RANK(sq)) : (GET_RANK(sq));
+		uint8_t reference_rank = (pce == wP) ? (8 - GET_RANK(sq)) : GET_RANK(sq);
 		uint8_t reference_sq = (pce == wP) ? (sq - 8) : (sq + 8);
 		score += compute_PSQT(pce, sq, phase);
 
@@ -163,21 +173,37 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		*/
 
 		// Passed pawn bonuses
-		int passers = 0;
-		if (file == FILE_A) {
-			if (((pos->bitboards[enemy_pce] & (file_masks[FILE_A] | file_masks[FILE_B])) == 0)) {
-				passers += passer_bonus[reference_rank];
+		// 1) There are no enemy pawns on the same or adjacent file(s)
+		// 2) The pawn on the same or adjacent file(s) are behind the pawn
+		int passer_score = 0;
+		bool is_passer = false;
+		if ((pos->bitboards[enemy_pce] & passer_masks[file]) == 0) {
+			is_passer = true;
+		}
+		else {
+			// There exists enemy pawns same or adjacent file(s). Check if they are further advanced.
+			bool possible_blocker = false;
+			Bitboard pawn_mask = pos->bitboards[enemy_pce] & passer_masks[file];
+			while (pawn_mask) {
+				uint8_t blocker_pawn = pop_ls1b(pawn_mask);
+				if ((col == WHITE && GET_RANK(blocker_pawn) < GET_RANK(sq)) ||
+					(col == BLACK && GET_RANK(blocker_pawn) > GET_RANK(sq))) {
+					possible_blocker = true; // The pawn is actually in front of the pawn. Not a passer
+				}
+			}
+			if (!possible_blocker) {
+				is_passer = true;
 			}
 		}
-		else if (file == FILE_H) {
-			if (((pos->bitboards[enemy_pce] & (file_masks[FILE_G] | file_masks[FILE_H])) == 0)) {
-				passers += passer_bonus[reference_rank];
+		if (is_passer) {
+			passers[file] = true;
+			if (file == FILE_A || file == FILE_H) {
+				passer_score += outside_passer;
 			}
+			passer_score += passer_bonus[reference_rank];
 		}
-		else if ((pos->bitboards[enemy_pce] & (file_masks[file - 1] | file_masks[file] | file_masks[file + 1])) == 0) {
-			passers += passer_bonus[reference_rank];
-		}
-		score += passers;
+		// std::cout << "	Passers subscore: " << passer_score * ((pce == wP) ? 1 : -1) << " (" << ascii_pieces[pce] << " " << ascii_squares[sq] << ")\n";
+		score += passer_score;
 
 		// Isolated and backwards pawn penalties
 		// Backwards pawn: No neighbouring pawns or they are further advanced, and square in front is attacked by an opponent's pawn 
@@ -194,8 +220,8 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 				Bitboard pawn_mask = pos->bitboards[pce] & adjacent_files[file];
 				while (pawn_mask) {
 					uint8_t neighbour = pop_ls1b(pawn_mask);
-					if ((col == WHITE && GET_RANK(neighbour) >= GET_RANK(sq)) ||
-						(col == BLACK && GET_RANK(neighbour) <= GET_RANK(sq)) ) {
+					if ((col == WHITE && GET_RANK(neighbour) <= GET_RANK(sq)) ||
+						(col == BLACK && GET_RANK(neighbour) >= GET_RANK(sq)) ) {
 						advanced_neighbours = true; // There is at least 1 neighbour less or equally advanced. Not a backwards pawn.
 					}
 				}

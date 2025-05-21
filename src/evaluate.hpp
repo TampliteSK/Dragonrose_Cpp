@@ -8,6 +8,8 @@
 
 // Evaluation constants
 const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
+const uint8_t connected_passers = 100;
+const uint8_t outside_passer = 33;
 const uint8_t isolated_pawn = 10;
 const uint8_t isolated_centre_pawn = 10; // Additional penalty
 const uint8_t stacked_pawn = 10; // multipled by n-1, where n is no. of stacked pawns
