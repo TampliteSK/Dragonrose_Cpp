@@ -429,11 +429,33 @@ static inline int evaluate_pawn_shield(const Board* pos, uint8_t pce, uint8_t ki
 	return score;
 }
 
+static inline int16_t punish_king_open_files(const Board* pos, uint8_t king_sq) {
+
+	const uint8_t king_open_file[3] = { 60, 70, 60 };
+	uint8_t king_file = GET_FILE(king_sq);
+	int16_t score = 0;
+
+	for (int file = king_file - 1; file <= king_file + 1; ++file) {
+		if (file >= FILE_A && file <= FILE_H) {
+			Bitboard mask = (pos->bitboards[wP] | pos->bitboards[bP]) & file_masks[file];
+			if (mask == 0) {
+				// There is an open file to attack our king
+				score -= king_open_file[file - king_file + 1];
+			}
+		}
+
+	}
+
+	return score;
+}
+
+
 static inline int evaluate_king_safety(const Board* pos, uint8_t pce, uint8_t king_sq, Bitboard attacks[], int attackers[], int var_phase) {
 
 	int score = 0;
 	score += evaluate_king_attacks(pos, king_sq, attacks, attackers);
 	score += evaluate_pawn_shield(pos, pce, king_sq);
+	score += punish_king_open_files(pos, king_sq) / 2;
 	return score * var_phase / 16; // Importance of king safety decreases with less material on the board
 }
 
