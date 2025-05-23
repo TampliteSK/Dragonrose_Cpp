@@ -73,29 +73,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     // Time Management
     if (time != -1) {
         info->timeset = true;
-        double time_allocated = time;
-        uint8_t phase_moves = 0;
-
-        if (time < 30000) { // 30s
-            time_allocated /= 80;
-        }
-        else {
-            if (pos->his_ply <= 30) {
-                time_allocated *= 0.1;
-                phase_moves = round((30 - pos->his_ply + ((pos->side == BLACK) ? 0 : 1)) / 2.0);
-                time_allocated /= phase_moves;
-            }
-            else if (pos->his_ply <= 70) {
-                time_allocated *= 0.45;
-                phase_moves = round((70 - pos->his_ply + ((pos->side == BLACK) ? 0 : 1)) / 2.0);
-                time_allocated /= phase_moves;
-            }
-            else {
-                time_allocated /= 35;
-            }
-        }
-
-        time_allocated += 100; // Buffer
+        double time_allocated = allocate_time(pos, time);
         info->stop_time = uint64_t(info->start_time + time_allocated + inc / 2);
     }
     else {
