@@ -380,14 +380,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		bool is_promotion = (bool)get_move_promoted(curr_move);
 		bool is_quiet = !is_capture && !is_promotion;
 
-		// Check if it's a legal move
-		// The move will be made for the rest of the code if it is
-		if (!make_move(pos, curr_move)) {
-			continue;
-		}
-		legal++;
-		info->nodes++;
-
 		/*
 			Futility pruning
 		*/
@@ -398,10 +390,17 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			int static_eval = evaluate_pos(pos);
 
 			if (static_eval + futility_margin <= alpha) {
-				take_move(pos);
 				continue; // Discard moves with no potential to raise alpha
 			}
 		}
+
+		// Check if it's a legal move
+		// The move will be made for the rest of the code if it is
+		if (!make_move(pos, curr_move)) {
+			continue;
+		}
+		legal++;
+		info->nodes++;
 
 		/*
 			Late Move Reductions
