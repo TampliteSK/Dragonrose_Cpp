@@ -376,22 +376,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int curr_move = list.at(move_num).move;
 
-		int captured = get_move_captured(curr_move);
+		bool is_capture = (bool)get_move_captured(curr_move);
 		bool is_promotion = (bool)get_move_promoted(curr_move);
-
-		/*
-			Futility pruning
-		*/
-
-		// Don't skip PV move, captures and killers
-		if (depth <= 2 && move_num >= 4 && !in_check && captured == 0 && !is_promotion && abs(score) < MATE_SCORE) {
-			int futility_margin = 150 * depth; // Scale margin with depth
-			int static_eval = evaluate_pos(pos);
-
-			if (static_eval + futility_margin <= alpha) {
-				continue; // Discard moves with no potential to raise alpha
-			}
-		}
+		bool is_quiet = !is_capture && !is_promotion;
 
 		// Check if it's a legal move
 		// The move will be made for the rest of the code if it is
@@ -400,6 +387,21 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 		legal++;
 		info->nodes++;
+
+		/*
+			Futility pruning
+		*/
+
+		// Don't skip PV move, captures and killers
+		if (depth <= 2 && move_num >= 4 && is_quiet && !in_check && abs(score) < MATE_SCORE) {
+			int futility_margin = 150 * depth; // Scale margin with depth
+			int static_eval = evaluate_pos(pos);
+
+			if (static_eval + futility_margin <= alpha) {
+				take_move(pos);
+				continue; // Discard moves with no potential to raise alpha
+			}
+		}
 
 		/*
 			Late Move Reductions
@@ -413,7 +415,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (depth >= 4 && move_num >= 4 && abs(score) < MATE_SCORE) {
 			uint8_t moving_pce = get_move_piece(curr_move);
 
-			if (!in_check && captured == 0 && !is_promotion && piece_type[moving_pce] != PAWN) {
+			if (is_quiet && !in_check && piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
 				reduced_depth = std::max(reduced_depth - r - 1, 1);
 			}
@@ -447,7 +449,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 					info->fh++;
 
 					// If the move that caused the beta cutoff is quiet we have a killer move
-					if (captured == 0) {
+					if (!is_capture) {
 						pos->killer_moves[1][pos->ply] = pos->killer_moves[0][pos->ply];
 						pos->killer_moves[0][pos->ply] = curr_move;
 					}
@@ -467,7 +469,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				movcpy(line->moves + 1, candidate_PV->moves, candidate_PV->length);
 
 				// Store the move that beats alpha if it's quiet
-				if (captured == 0) {
+				if (!is_capture) {
 					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
 				}
 			}

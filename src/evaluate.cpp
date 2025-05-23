@@ -113,7 +113,7 @@ int evaluate_pos(const Board* pos) {
 
 	// Endgame noise adjustment
 	if (is_endgame) {
-		score += /*check_material_win(pos) +*/ endgame_noise(pos->hash_key % UINT32_MAX, 3);
+		score += /*check_material_win(pos) +*/ endgame_noise(pos->hash_key % UINT32_MAX, 2);
 	}
 
 	// Perspective adjustment
@@ -462,7 +462,7 @@ static inline int evaluate_king_safety(const Board* pos, uint8_t pce, uint8_t ki
 // Rewarding active kings and punishing immobile kings to assist mates
 static inline int16_t king_mobility(const Board* pos, uint8_t pce, uint8_t king_sq, int var_phase) {
 
-	const int mobility_bonus[9] = { -75, -50, -33, -25, 0, 5, 10, 11, 12 };
+	const int mobility_bonus[9] = { -75, -50, -33, -25, 0, 5, 10, 12, 14 };
 
 	Bitboard attacks = king_attacks[king_sq];
 	uint8_t attacker = piece_col[pce] ^ 1;
@@ -486,7 +486,7 @@ static inline int evaluate_kings(const Board* pos, uint8_t pce, Bitboard attacks
 	int var_phase = count_bits(pos->occupancies[BOTH] & ~(pos->bitboards[wP] | pos->bitboards[bP])); // Better phasing formula in this case than one for PSQT
 	score += evaluate_king_safety(pos, pce, sq, attacks, attackers, var_phase);
 	if (var_phase <= 12) {
-		score += king_mobility(pos, pce, sq, var_phase);
+		score += king_mobility(pos, pce, sq, var_phase) * 3 / 2;
 	}
 	return score;
 }
