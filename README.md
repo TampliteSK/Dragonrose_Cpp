@@ -36,8 +36,8 @@ I would also like to thank [Adam Kulju](https://github.com/Adam-Kulju), develope
 
 | Name  |      Type       | Default |  Valid values  | Description                                                                                             |
 |:-----:|:---------------:|:-------:|:--------------:|:-------------------------------------------------------------------------------------------------------:|
-| Hash  | integer (spin)  |    64   |   [1, 65536]   | Size of the transposition table in megabytes. 16 - 512 MB is recommended.                               |
-| Bench |  CLI Argument   |    -    |        -       | Run `./Dragonrose_Cpp bench` (or whatever you named the binary) from a CLI to check nodes and NPS based on a 50-position suite (from [Heimdall](https://git.nocturn9x.space/nocturn9x/heimdall)).|
+| Hash  | integer (spin)  |    64   |   [1, 65536]   | Size of the transposition table in megabytes (MB). 16 - 512 MB is recommended.                               |
+| Bench |  CLI Argument   |    -    |        -       | Run `./Dragonrose_Cpp bench` (or whatever you named the binary) from a CLI to check nodes and NPS, based on a 50-position suite (from [Heimdall](https://git.nocturn9x.space/nocturn9x/heimdall)).|
 
 ## Main Features
 
@@ -49,20 +49,27 @@ Search:
   - Late move pruning
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
-- Iterative deepening
 - Transposition table using "age"
+- Iterative deepening + Aspiration windows
 
 Evaluation (Hand-crafted evaluation, or HCE):
 - Tapered eval
   - Material
   - Piece-square table bonuses
+  - Piece activity	
+  - Tempi
 - King safety
-  - Pawn shield
   - Attack units
-- Piece bounses / penalties
+  - Pawn shield
+  - Penalty for open lines to king
+  - King mobility (in endgames)
+- Pawn structure
   - Passed pawns bonus
   - Isolated pawns penalty (extra penalty for isolated d/e pawns)
   - Stacked pawns penalty
+  - Backwards pawns penalty
+- Piece bounses / penalties
+  - Penalty for bishops blocking centre pawns
 - Basic endgaeme knowledge	 
 
 ## Playing Strength
@@ -83,7 +90,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 
 ## Changelogs <br>
 ### 0.x: <br>
-0.29 (dev): Completely rewritten from scratch. Using more aggressive LMR and FP/EFP, as well as more evaluation terms.
+0.29 (dev): Completely rewritten from scratch, on par with 0.28. Using more aggressive LMR and FP/EFP, as well as more evaluation terms.
 
 ## To-do list
 - Other search / eval enhancements
