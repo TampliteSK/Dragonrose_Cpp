@@ -77,11 +77,9 @@ int main(int argc, char* argv[]) {
             if (info->quit == true) break;
             continue;
         }
-        else if (line.substr(0, 4) == "quit") {
-            break;
-        }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, "3rr1k1/5p1p/p1R1p1p1/4P3/8/5P1P/PPPb4/1K1R4 w - - 0 28");
+            parse_fen(pos, "4k3/8/8/8/8/8/3NN3/4K3 w - - 0 1");
+            print_board(pos);
             int score = evaluate_pos(pos);
             std::cout << "Evaluation (white's perpsective): " << score / 100.0 << "\n\n";
             /*
@@ -89,6 +87,9 @@ int main(int argc, char* argv[]) {
             score = evaluate_pos(pos);
             std::cout << "Evaluation (black's perspective): " << score / 100.0 << "\n\n";
             */
+            break;
+        }
+        else if (line.substr(0, 4) == "quit") {
             break;
         }
     }
