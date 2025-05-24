@@ -376,6 +376,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int curr_move = list.at(move_num).move;
 
+		// bool is_PVnode = curr_move == PV_move;
 		bool is_capture = (bool)get_move_captured(curr_move);
 		bool is_promotion = (bool)get_move_promoted(curr_move);
 		bool is_quiet = !is_capture && !is_promotion;
@@ -461,7 +462,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				alpha = score;
 
-				// Copy child's PV and prepend the current move
+				// Copy child's PV and prepend the current move (extraction idea from Ethereal)
 				line->score = score;
 				line->length = 1 + candidate_PV->length;
 				line->moves[0] = curr_move;

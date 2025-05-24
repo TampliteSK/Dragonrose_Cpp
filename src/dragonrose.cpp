@@ -81,12 +81,14 @@ int main(int argc, char* argv[]) {
             break;
         }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, "r3k2r/p4pb1/1pb1p1pp/8/2P1P3/2NBBP1q/3Q1P1P/3R1RK1 b kq - 1 19");
+            parse_fen(pos, "3rr1k1/5p1p/p1R1p1p1/4P3/8/5P1P/PPPb4/1K1R4 w - - 0 28");
             int score = evaluate_pos(pos);
-            std::cout << "Evaluation (black's perpsective): " << score / 100.0 << "\n\n";
+            std::cout << "Evaluation (white's perpsective): " << score / 100.0 << "\n\n";
+            /*
             parse_fen(pos, "3rk2r/p7/1pb1p1pp/8/2P1P3/3BB1Pq/3Q1P2/3RR1K1 b k - 0 24");
             score = evaluate_pos(pos);
             std::cout << "Evaluation (black's perspective): " << score / 100.0 << "\n\n";
+            */
             break;
         }
     }
