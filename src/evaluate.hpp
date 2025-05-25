@@ -24,6 +24,7 @@ const uint8_t rook_attacks_piece = 5;
 const uint8_t queen_open_file = 5;
 const uint8_t queen_semiopen_file = 3;
 const uint8_t queen_attacks_piece = 3;
+const uint8_t battery = 10; // B+Q, R+R, Q+R
 
 const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL; // B2-G7 set
 

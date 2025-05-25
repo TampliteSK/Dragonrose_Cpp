@@ -16,7 +16,7 @@ uint16_t piece_value_EG[13] = { 0, 94, 281, 297, 512,  936, 30000, 94, 281, 297,
 // Function prototypes
 static inline int get_phase(const Board* pos);
 
-static inline int evaluate_pawns(const Board* pos, bool passers[], uint8_t pce, int phase); 
+static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase); 
 static inline int evaluate_knights(const Board* pos, uint8_t pce, int phase);
 static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase);
 static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase);
@@ -53,17 +53,11 @@ int evaluate_pos(const Board* pos) {
 	get_all_attacks(pos, BLACK, black_attacks, black_attackers, true);
 
 	for (int colour = WHITE; colour <= BLACK; ++colour) {
-		bool passers[8] = { false };
 		int8_t sign = (colour == WHITE) ? 1 : -1;
 		uint8_t col_offset = (colour == WHITE) ? 0 : 6;
 
-		score += evaluate_pawns(pos, passers, wP + col_offset, phase) * sign;
+		score += evaluate_pawns(pos, wP + col_offset, phase) * sign;
 		// std::cout << "    " << ascii_pieces[wP + col_offset] << ": " << evaluate_pawns(pos, passers, wP + col_offset, phase) * sign << "\n";
-		for (int file = FILE_B; file <= FILE_H; ++file) {
-			if (passers[file - 1] && passers[file]) {
-				score += connected_passers * sign;
-			}
-		}
 		score += evaluate_knights(pos, wN + col_offset, phase) * sign;
 		// std::cout << "    " << ascii_pieces[wN + col_offset] << ": " << evaluate_knights(pos, wN + col_offset, phase) * sign << "\n";
 		score += evaluate_bishops(pos, wB + col_offset, phase) * sign;
@@ -168,10 +162,12 @@ static inline int compute_PSQT(uint8_t pce, uint8_t sq, int phase) {
 	Piece evaluation
 */
 
-static inline int evaluate_pawns(const Board* pos, bool passers[], uint8_t pce, int phase) {
+static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
+
 	int score = 0;
 	Bitboard pawns = pos->bitboards[pce];
 	uint8_t enemy_pce = (pce == wP) ? bP : wP;
+	bool passers[8] = { false };
 
 	while (pawns) {
 		uint8_t sq = pop_ls1b(pawns);
@@ -260,6 +256,12 @@ static inline int evaluate_pawns(const Board* pos, bool passers[], uint8_t pce, 
 
 	}
 
+	for (int file = FILE_B; file <= FILE_H; ++file) {
+		if (passers[file - 1] && passers[file]) {
+			score += connected_passers;
+		}
+	}
+
 	return score;
 }
 
@@ -300,6 +302,13 @@ static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase) {
 		// Bonus for pressuring enemy pieces
 		Bitboard mask = get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
 		score += count_bits(mask) * bishop_attacks_piece;
+
+		// Bonus for forming a battery with a queen
+		uint8_t ally_queen = (col == WHITE) ? wQ : bQ;
+		Bitboard queen_mask = pos->bitboards[ally_queen] & get_bishop_attacks(sq, pos->occupancies[BOTH]);
+		if (queen_mask) {
+			score += battery;
+		}
 	}
 
 	return score;
@@ -310,6 +319,7 @@ static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase) {
 	int score = 0;
 	Bitboard rooks = pos->bitboards[pce];
 	uint8_t col = piece_col[pce];
+	bool stacked_rooks = false;
 
 	while (rooks) {
 		uint8_t sq = pop_ls1b(rooks);
@@ -332,6 +342,21 @@ static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase) {
 		// Bonus for pressuring enemy pieces
 		Bitboard mask = get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
 		score += count_bits(mask) * rook_attacks_piece;
+
+		// Bonus for forming a battery with a queen or another rook
+		uint8_t ally_queen = (col == WHITE) ? wQ : bQ;
+		Bitboard queen_mask = pos->bitboards[ally_queen] & get_rook_attacks(sq, pos->occupancies[BOTH]);
+		if (queen_mask) {
+			score += battery;
+		}
+
+		if (!stacked_rooks) {
+			Bitboard rook_mask = pos->bitboards[pce] & file_masks[file];
+			if (count_bits(rook_mask) > 2) {
+				score += battery * (count_bits(rook_mask) - 1);
+				stacked_rooks = true; // Prevent overcounting
+			}
+		}
 	}
 
 	return score;

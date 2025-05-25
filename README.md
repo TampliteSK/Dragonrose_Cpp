@@ -71,10 +71,11 @@ Evaluation (Hand-crafted evaluation, or HCE):
   - Penalty for bishops blocking centre pawns
   - Bonus for semi-open and open files for rooks and queens
   - Bonus for sliders to target enemy pieces
+  - Bonus for batteries (bishop + queen, rook + queen, rook + rook)
 - Basic endgaeme knowledge	 
 
 ## Playing Strength
-- C version is about 2350 CCRL in strength, while C++ version is about 2250 CCRL in strength at the moment. Below are statistics from the C version.
+- C version is about 2300 CCRL in strength, while C++ version is about 2200 CCRL in strength at the moment. Below are statistics from the C version.
 - The Chesscom rating is estimated based on its games against human players (1800 - 2500). However it suffers greatly from small sample size, so take it with a grain of salt.
 
 | Metric | Rapid | Blitz | Bullet |
@@ -95,12 +96,11 @@ Evaluation (Hand-crafted evaluation, or HCE):
 
 ## To-do list
 - Other search / eval enhancements
-- Add bonus to batteries
-- Tweak TM
 - Add mate distance pruning
 - Release
 - ...
 - Search thread / LazySMP
+- Add Chess960 support
 
 ## Bugs to fix:
 - May blunder threefold in a winning position due to how threefold is implemented

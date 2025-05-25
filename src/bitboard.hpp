@@ -13,10 +13,14 @@
 #define IS_LIGHT_SQ(sq) (bool)( (1ULL << (sq)) & LIGHT_SQUARES )
 #define IS_DARK_SQ(sq) !(bool)( (1ULL << (sq)) & LIGHT_SQUARES )
 
+#define SAME_DIAGONAL(sq1, sq2) ((diagonals[(sq1)] == diagonals[(sq2)]) || (anti_diagonals[(sq1)] == anti_diagonals[(sq2)]))
+
 const Bitboard LIGHT_SQUARES = 0xAA55AA55AA55AA55ULL; // Bits corresponding to light squares are set
 const Bitboard BOTTOM_HALF = 0x00000000FFFFFFFFULL; // A1 ~ H4 set
 const Bitboard TOP_HALF = 0xFFFFFFFF00000000ULL; // A5 ~ H8 set
 
+extern const int diagonals[64];
+extern const int anti_diagonals[64];
 
 // Bitboard functions
 uint8_t pop_ls1b(Bitboard& bb);
