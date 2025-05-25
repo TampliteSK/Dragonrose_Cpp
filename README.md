@@ -45,7 +45,7 @@ Search:
 - Negamax alpha-beta search (fail-hard)
   - PV-search (TODO)
   - Null-move pruning
-  - Futility pruning / Extended futility pruning
+  - Futility pruning (extended to depth 3)
   - Late move pruning
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
