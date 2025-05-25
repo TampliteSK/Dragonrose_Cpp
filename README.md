@@ -61,7 +61,6 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - King safety
   - Attack units
   - Pawn shield
-  - Penalty for open lines to king
   - King mobility (in endgames)
 - Pawn structure
   - Passed pawns bonus
@@ -70,6 +69,8 @@ Evaluation (Hand-crafted evaluation, or HCE):
   - Backwards pawns penalty
 - Piece bounses / penalties
   - Penalty for bishops blocking centre pawns
+  - Bonus for semi-open and open files for rooks and queens
+  - Bonus for sliders to target enemy pieces
 - Basic endgaeme knowledge	 
 
 ## Playing Strength

@@ -410,6 +410,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		int reduced_depth = depth - 1; // We move further into the tree
 
+		/*
 		// Do not reduce if it's completely winning / near mating position
 		// Check if it's a "late move"
 		if (depth >= 4 && move_num >= 4 && abs(score) < MATE_SCORE) {
@@ -420,13 +421,16 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				reduced_depth = std::max(reduced_depth - r - 1, 1);
 			}
 		}
+		*/
 
 		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
 
 		// Re-search with full depth if it beats alpha (make sure it's not a fluke)
+		/*
 		if (score > alpha) {
 			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, depth - 1, candidate_PV, true);
 		}
+		*/
 		
 		take_move(pos);
 

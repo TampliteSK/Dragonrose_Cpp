@@ -280,6 +280,7 @@ static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase) {
 
 	int score = 0;
 	Bitboard bishops = pos->bitboards[pce];
+	uint8_t col = piece_col[pce];
 
 	while (bishops) {
 		uint8_t sq = pop_ls1b(bishops);
@@ -295,6 +296,10 @@ static inline int evaluate_bishops(const Board* pos, uint8_t pce, int phase) {
 				score -= bishop_blocks_ctrpawn;
 			}
 		}
+
+		// Bonus for pressuring enemy pieces
+		Bitboard mask = get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
+		score += count_bits(mask) * bishop_attacks_piece;
 	}
 
 	return score;
@@ -304,6 +309,7 @@ static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase) {
 
 	int score = 0;
 	Bitboard rooks = pos->bitboards[pce];
+	uint8_t col = piece_col[pce];
 
 	while (rooks) {
 		uint8_t sq = pop_ls1b(rooks);
@@ -322,6 +328,10 @@ static inline int evaluate_rooks(const Board* pos, uint8_t pce, int phase) {
 				score += rook_semiopen_file;
 			}
 		}
+
+		// Bonus for pressuring enemy pieces
+		Bitboard mask = get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
+		score += count_bits(mask) * rook_attacks_piece;
 	}
 
 	return score;
@@ -331,6 +341,7 @@ static inline int evaluate_queens(const Board* pos, uint8_t pce, int phase) {
 
 	int score = 0;
 	Bitboard queens = pos->bitboards[pce];
+	uint8_t col = piece_col[pce];
 
 	while (queens) {
 		uint8_t sq = pop_ls1b(queens);
@@ -349,6 +360,10 @@ static inline int evaluate_queens(const Board* pos, uint8_t pce, int phase) {
 				score += queen_semiopen_file;
 			}
 		}
+
+		// Bonus for pressuring enemy pieces
+		Bitboard mask = get_queen_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
+		score += count_bits(mask) * queen_attacks_piece;
 	}
 
 	return score;
@@ -391,7 +406,6 @@ static inline int evaluate_pawn_shield(const Board* pos, uint8_t pce, uint8_t ki
 	uint8_t king_rank = GET_RANK(king_sq);
 	uint8_t king_colour = piece_col[pce];
 
-	int score = 0;
 	// Criteria for uncastled king: on a central file OR too far advanced
 	bool uncastled_king = king_file == FILE_D || king_file == FILE_E;
 	if (king_colour == WHITE) {
@@ -400,6 +414,8 @@ static inline int evaluate_pawn_shield(const Board* pos, uint8_t pce, uint8_t ki
 	else {
 		uncastled_king |= king_rank >= RANK_5;
 	}
+
+	int score = 0;
 
 	// Pawn shield only applies if the king is castled
 	if (!uncastled_king) {
@@ -431,40 +447,19 @@ static inline int evaluate_pawn_shield(const Board* pos, uint8_t pce, uint8_t ki
 	return score;
 }
 
-static inline int16_t punish_king_open_files(const Board* pos, uint8_t king_sq) {
-
-	const uint8_t king_open_file[3] = { 60, 70, 60 };
-	uint8_t king_file = GET_FILE(king_sq);
-	int16_t score = 0;
-
-	for (int file = king_file - 1; file <= king_file + 1; ++file) {
-		if (file >= FILE_A && file <= FILE_H) {
-			Bitboard mask = (pos->bitboards[wP] | pos->bitboards[bP]) & file_masks[file];
-			if (mask == 0) {
-				// There is an open file to attack our king
-				score -= king_open_file[file - king_file + 1];
-			}
-		}
-
-	}
-
-	return score;
-}
-
 
 static inline int evaluate_king_safety(const Board* pos, uint8_t pce, uint8_t king_sq, Bitboard attacks[], int attackers[], int var_phase) {
 
 	int score = 0;
 	score += evaluate_king_attacks(pos, king_sq, attacks, attackers);
 	score += evaluate_pawn_shield(pos, pce, king_sq);
-	score += punish_king_open_files(pos, king_sq) / 2;
 	return score * var_phase / 16; // Importance of king safety decreases with less material on the board
 }
 
 // Rewarding active kings and punishing immobile kings to assist mates
 static inline int16_t king_mobility(const Board* pos, uint8_t pce, uint8_t king_sq, int var_phase) {
 
-	const int mobility_bonus[9] = { -75, -50, -33, -25, 0, 5, 10, 11, 112 };
+	const int mobility_bonus[9] = { -75, -50, -33, -25, 0, 5, 10, 11, 12 };
 
 	Bitboard attacks = king_attacks[king_sq];
 	uint8_t attacker = piece_col[pce] ^ 1;
