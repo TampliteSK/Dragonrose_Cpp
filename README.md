@@ -75,13 +75,13 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Basic endgaeme knowledge	 
 
 ## Playing Strength
-- C version is about 2300 CCRL in strength, while C++ version is about 2200 CCRL in strength at the moment. Below are statistics from the C version.
+- C version is about 2300 CCRL in strength, while C++ version is about 2250 CCRL in strength at the moment. Below are statistics from the C version.
 - The Chesscom rating is estimated based on its games against human players (1800 - 2500). However it suffers greatly from small sample size, so take it with a grain of salt.
 
 | Metric | Rapid | Blitz | Bullet |
 | --- | --- | --- | --- |
 | CCRL | 2350? | N/A | 2350? |
-| Lichess (BOT) | 2221 ± 57 | 2074 ± 51 | 2104 ± 54 |
+| Lichess (BOT) | 2208 ± 66 | 2019 ± 52 | 2102 ± 60 |
 | Chesscom (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
 
 ## Useful Reesources
