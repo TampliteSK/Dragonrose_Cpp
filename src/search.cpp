@@ -287,11 +287,15 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 // Negamax Search with Alpha-beta Pruning
 static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null) {
 
+	check_time(info); // Check if time is up
+
+	if (depth == 0 && pos->ply > info->seldepth) {
+		info->seldepth = pos->ply;
+	}
+
 	if (depth <= 0) {
 		return quiescence(pos, info, alpha, beta, line);
 	}
-
-	check_time(info); // Check if time is up
 
 	// Check draw
 	if ((check_repetition(pos) || pos->fifty_move >= 100) && pos->ply) {
@@ -303,9 +307,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		return evaluate_pos(pos);
 	}
 
-	if (pos->ply > info->seldepth) {
-		info->seldepth = pos->ply;
+	// Mate distance pruning
+	/*
+	alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
+	beta = std::min(beta, MATE_SCORE - (int)pos->ply - 1);
+	if (alpha >= beta) {
+		return alpha;
 	}
+	*/
 
 	PVLine* candidate_PV = new PVLine;
 	init_PVLine(candidate_PV);
@@ -474,7 +483,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// Store the move that beats alpha if it's quiet
 				if (!is_capture) {
-					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
+					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += 300 * depth - 250; // Formula from Serendipity
 				}
 			}
 		}

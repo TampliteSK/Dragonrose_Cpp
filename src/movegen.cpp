@@ -53,8 +53,8 @@ static int mvv_lva[12][12] = {
     Promotion (Rook) *                                             200,000
     Promotion (Bishop) *                                           100,000
   ( Checks                                                          50,000 )
-    HistoryScore                                                  >=35,000
-    no_score                                                        35,000
+    HistoryScore                                                         0 - 16,384
+    no_score                                                             0
 
 *: Requires gainer tests
 */
