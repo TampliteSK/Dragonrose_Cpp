@@ -21,7 +21,7 @@ int LMR_reduction_table[MAX_DEPTH][280];
 
 // Function prototypes
 static inline void check_time(SearchInfo* info);
-static inline bool check_repetition(const Board* pos);
+static inline int check_draw(const Board* pos, bool qsearch);
 static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
 
 static inline void init_PVLine(PVLine* line);
@@ -178,8 +178,9 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 
 	check_time(info); // Check if time is up
 
-	if (check_repetition(pos) || pos->fifty_move >= 100) {
-		return 0;
+	int flag = check_draw(pos, true);
+	if (flag != -1) {
+		return flag;
 	}
 
 	if (pos->ply >= MAX_DEPTH) {
@@ -298,8 +299,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	// Check draw
-	if ((check_repetition(pos) || pos->fifty_move >= 100) && pos->ply) {
-		return 0;
+	int flag = check_draw(pos, false);
+	if (flag != -1) {
+		return flag;
 	}
 
 	// Max depth reached
@@ -535,6 +537,30 @@ static inline bool check_repetition(const Board* pos) {
 		}
 	}
 	return false;
+}
+
+// Returns 0 if there is a draw, unless there is a mate at the end of 50-move rule
+// Otherwise, returns -1
+static inline int check_draw(const Board* pos, bool qsearch) {
+	if (check_repetition(pos) && (qsearch || pos->ply)) {
+		return 0;
+	}
+	if (pos->fifty_move >= 100) {
+		// Make sure there isn't a checkmate on or before the 100th half-move
+		if (is_square_attacked(pos, pos->king_sq[pos->side], pos->side ^ 1)) {
+			std::vector<Move> list;
+			generate_moves(pos, list, false);
+			if (list.size() == 0) {
+				return -INF_BOUND + pos->ply;
+			}
+		}
+		// Otherwise 50-move rule holds and it's a draw
+		if (qsearch || pos->ply) {
+			return 0;
+		}
+	}
+	
+	return -1; // Continue normal search
 }
 
 static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info) {

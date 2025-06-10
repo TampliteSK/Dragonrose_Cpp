@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
         else if (line.substr(0, 4) == "test") {
-            parse_fen(pos, "4k3/8/8/8/8/8/3NN3/4K3 w - - 0 1");
+            parse_fen(pos, "4k3/P7/8/8/8/8/8/4K3 w - - 0 1");
             print_board(pos);
             int score = evaluate_pos(pos);
             std::cout << "Evaluation (white's perpsective): " << score / 100.0 << "\n\n";

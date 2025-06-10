@@ -173,7 +173,7 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		uint8_t sq = pop_ls1b(pawns);
 		uint8_t col = piece_col[pce];
 		uint8_t file = GET_FILE(sq);
-		uint8_t reference_rank = (pce == wP) ? (8 - GET_RANK(sq)) : GET_RANK(sq);
+		uint8_t reference_rank = (pce == wP) ? (7 - GET_RANK(sq)) : GET_RANK(sq);
 		uint8_t reference_sq = (pce == wP) ? (sq - 8) : (sq + 8);
 		score += compute_PSQT(pce, sq, phase);
 
@@ -206,9 +206,6 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		}
 		if (is_passer) {
 			passers[file] = true;
-			if (file == FILE_A || file == FILE_H) {
-				passer_score += outside_passer;
-			}
 			passer_score += passer_bonus[reference_rank];
 		}
 		// std::cout << "	Passers subscore: " << passer_score * ((pce == wP) ? 1 : -1) << " (" << ascii_pieces[pce] << " " << ascii_squares[sq] << ")\n";
@@ -254,6 +251,13 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 			score -= stacked_pawn * (stacked_count - 1) / stacked_count; // Scales with the number of pawns stacked. Division to make sure it's not overcounted.
 		}
 
+		// Space advantage. Check if the pawn is controlled by an ally piece
+		/*
+		if (is_square_attacked(pos, sq, col)) {
+			uint8_t space_bonus = reference_rank * 2;
+			score += space_bonus;
+		}
+		*/
 	}
 
 	for (int file = FILE_B; file <= FILE_H; ++file) {

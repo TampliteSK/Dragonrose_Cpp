@@ -7,9 +7,11 @@
 #include "Board.hpp"
 
 // Evaluation constants
+// indicies:  0  1  2  3  4  5  6  7
+// ranks:    r8 r7 r6 r5 r4 r3 r2 r1
+// 7-ranks:  r1 r2 r3 r4 r5 r6 r7 r8
 const int passer_bonus[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
 const uint8_t connected_passers = 50;
-const uint8_t outside_passer = 20;
 const uint8_t isolated_pawn = 10;
 const uint8_t isolated_centre_pawn = 10; // Additional penalty
 const uint8_t stacked_pawn = 10; // multipled by n-1, where n is no. of stacked pawns

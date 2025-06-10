@@ -1,19 +1,20 @@
 # Dragonrose_Cpp Chess Engine
 
 ## Overview
-
-**A rewrite of the original [Dragonrose](https://github.com/TampliteSK/dragonrose) in C++.** <br>
+Dragonrose is a [UCI](https://en.wikipedia.org/wiki/Universal_Chess_Interface)-compliant chess engine written in C++. <br>
+Dragonrose is a command-line interface (CLI). It is highly recommended to use Dragonrose via a graphic-user interface (GUI)
+that supports UCI, such as [En Croissant](https://encroissant.org/), [Arena](http://www.playwitharena.de/) or [Banksia](https://banksiagui.com/), in order to have a better user experience.
+This repository is a **rewrite of the original [C Dragonrose](https://github.com/TampliteSK/dragonrose)**. <br>
 Notable differences with older repo: <br>
-- Uses magic bitboards to generate attacks, as well as pre-generated attack tables
-- Custom movegen 
+- Uses magic bitboards to generate attacks, storing them in pre-generated attack tables for lookups later
+- No longer uses the built-in opening book that comes with VICE
 - Consistent naming convention, data types and parameter ordering
-- Taking inspiration from more engines
-Through the rewrite, the code quality is expected to increase, and my knowledge of C++ can be improved. <br>
-You are free to borrow and modify my code if you so wish, as long as you give credit. <br>
+- Takes inspiration from more engines
+
+You are free to borrow and/or modify my code if you so wish, as long as you give credit. <br>
 To use the engine, either grab the binary from releases, or build the project locally. In the future I will consider releasing Linux builds. <br>
 
 ## Inspirations and Acknowledgments
-
 Dragonrose is greatly inspired by [VICE chess engine](https://github.com/bluefeversoft/vice/tree/main/Vice11/src), developed by by Richard Allbert (Bluefever Software), 
 which is a didactic chess engine aimed to introduce beginners to the world of chess programming. Huge credits to him for creating the [YouTube series](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg) explaining the engine in great detail. <br>
 
@@ -75,14 +76,16 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Basic endgaeme knowledge	 
 
 ## Playing Strength
-- C version is about 2300 CCRL in strength, while C++ version is about 2250 CCRL in strength at the moment. Below are statistics from the C version.
-- The Chesscom rating is estimated based on its games against human players (1800 - 2500). However it suffers greatly from small sample size, so take it with a grain of salt.
+- The current C++ dev version, as well as the strongest C version (0.25) are about 2100 CCRL, benched against Stash v17 (2295 CCRL 2+1).
+- Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
+- Below are some other statistics about the engine:
 | Metric | Rapid | Blitz | Bullet |
 | --- | --- | --- | --- |
-| CCRL | 2350? | N/A | 2350? |
+| CCRL | ? | ? | 2116? |
 | Lichess (BOT) | 2208 ± 66 | 2019 ± 52 | 2102 ± 60 |
-| Chesscom (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
+| Chesscom* (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
+*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
 
 ## Useful Reesources
 - VICE video playlist (as linked above)
@@ -92,7 +95,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 
 ## Changelogs <br>
 ### 0.x: <br>
-0.29 (dev): Completely rewritten from scratch, on par with 0.28. Using more aggressive LMR and FP/EFP, as well as more evaluation terms.
+0.29 (dev): Completely rewritten from scratch, on par with 0.28 and 0.25. Using more aggressive FP/EFP, as well as more evaluation terms.
 
 ## To-do list
 - Other search / eval enhancements

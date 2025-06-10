@@ -194,7 +194,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
                 MB = CLAMP(new_MB, 4, (int)MAX_HASH);
                 options->hash_size = MB;
                 init_hash_table(table, MB);
-                std::cout << "Set Hash to " << MB << " MB" << std::endl;
+                std::cout << "info string Set Hash to " << MB << " MB" << std::endl;
             }
             else {
                 std::cout << "Invalid Hash value" << std::endl;
