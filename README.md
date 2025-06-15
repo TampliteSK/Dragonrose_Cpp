@@ -1,5 +1,7 @@
 # Dragonrose_Cpp Chess Engine
 
+![Build Status](https://github.com/TampliteSK/Dragonrose_Cpp/actions/workflows/build.yml/badge.svg)
+
 ## Overview
 Dragonrose is a [UCI](https://en.wikipedia.org/wiki/Universal_Chess_Interface)-compliant chess engine written in C++. <br>
 Dragonrose is a command-line interface (CLI). It is highly recommended to use Dragonrose via a graphic-user interface (GUI)
