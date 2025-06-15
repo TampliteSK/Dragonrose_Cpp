@@ -87,7 +87,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - CCRL rating estimates are obtained from tests against Stash v17 (rated 2295 CCRL 2+1).
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
-- Below are some other metrics:
+Below are some other metrics:
 |       Metric      |    Rapid   |   Blitz    |   Bullet   |
 |:-----------------:|:----------:|:----------:|:----------:|
 |   Lichess (BOT)   | 2208 ± 66  | 2019 ± 52  | 2102 ± 60  |
