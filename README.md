@@ -45,9 +45,10 @@ I would also like to thank [Adam Kulju](https://github.com/Adam-Kulju), develope
 Search:
 - Negamax alpha-beta search (fail-hard)
   - PV-search (TODO)
-  - Null-move pruning
+  - Reverse futility pruning (RFP)
+  - Null-move pruning (NMP)
   - Futility pruning (extended to depth 3)
-  - Late move pruning
+  - Late move reductions (LMR) (TODO)
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Transposition table using "age"
@@ -95,7 +96,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 
 ## Changelogs <br>
 ### 0.x: <br>
-0.29 (dev): Completely rewritten from scratch, on par with 0.28 and 0.25. Using more aggressive FP/EFP, as well as more evaluation terms.
+0.29 (dev): Completely rewritten from scratch, on par with 0.28 and 0.25. Using more aggressive FP/EFP, as well as more evaluation terms. Added reverse futility pruning.
 
 ## To-do list
 - Other search / eval enhancements
