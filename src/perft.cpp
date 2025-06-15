@@ -108,7 +108,7 @@ uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
         
         uint64_t new_nodes = nodes - old_nodes;
 
-        delete copy; // Essentially "take move“
+        delete copy; // Essentially "take move"
 
         // Print move if root level
         if (print_info) {
