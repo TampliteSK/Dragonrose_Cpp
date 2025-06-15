@@ -3,10 +3,11 @@
 ![Build Status](https://github.com/TampliteSK/Dragonrose_Cpp/actions/workflows/build.yml/badge.svg)
 
 ## Overview
-Dragonrose is a [UCI](https://en.wikipedia.org/wiki/Universal_Chess_Interface)-compliant chess engine written in C++. <br>
-Dragonrose is a command-line interface (CLI). It is highly recommended to use Dragonrose via a graphic-user interface (GUI)
-that supports UCI, such as [En Croissant](https://encroissant.org/), [Arena](http://www.playwitharena.de/) or [Banksia](https://banksiagui.com/), in order to have a better user experience.
+Dragonrose is a [UCI](https://en.wikipedia.org/wiki/Universal_Chess_Interface)-compliant chess engine written in C++. 
+The engine is a command-line interface (CLI), therefore it is highly recommended to use Dragonrose via a graphic-user interface (GUI) that supports UCI, 
+such as [En Croissant](https://encroissant.org/), [Arena](http://www.playwitharena.de/) or [Banksia](https://banksiagui.com/), in order to have a better user experience. <br>
 This repository is a **rewrite of the original [C Dragonrose](https://github.com/TampliteSK/dragonrose)**. <br>
+
 Notable differences with older repo: <br>
 - Uses magic bitboards to generate attacks, storing them in pre-generated attack tables for lookups later
 - No longer uses the built-in opening book that comes with VICE
@@ -79,13 +80,14 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Basic endgaeme knowledge	 
 
 ## Playing Strength
-- The current C++ dev version, as well as the strongest C version (0.25) are about 2100 CCRL, benched against Stash v17 (2295 CCRL 2+1).
+| Metric | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
+| v0.29 (dev) | ~2184 | --- |
+| v0.25 | ~2136 | 2157 |
+- CCRL rating estimates are obtained from tests against Stash v17 (rated 2295 CCRL 2+1).
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
-- Below are some other statistics about the engine:
+- Below are some other metrics:
 | Metric | Rapid | Blitz | Bullet |
-| --- | --- | --- | --- |
-| CCRL | ? | ? | 2116? |
 | Lichess (BOT) | 2208 ± 66 | 2019 ± 52 | 2102 ± 60 |
 | Chesscom* (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
 *: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
