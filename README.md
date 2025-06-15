@@ -88,9 +88,9 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
 - Below are some other metrics:
-| Metric | Rapid | Blitz | Bullet |
-|:-----------:|:-------------:|:-----:|
-| Lichess (BOT) | 2208 ± 66 | 2019 ± 52 | 2102 ± 60 |
+|      Metric      |    Rapid   |   Blitz    |   Bullet   |
+|:----------------:|:----------:|:----------:|:----------:|
+|   Lichess (BOT)  | 2208 ± 66  | 2019 ± 52  | 2102 ± 60  |
 | Chesscom* (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
 *: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
 
