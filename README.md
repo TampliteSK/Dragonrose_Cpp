@@ -80,14 +80,16 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Basic endgaeme knowledge	 
 
 ## Playing Strength
-| Metric | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
-| v0.29 (dev) | ~2184 | --- |
-| v0.25 | ~2136 | 2157 |
+|   Metric    | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
+|:-----------:|:-------------:|:-----:|
+| v0.29 (dev) |     ~2184     |   -   |
+|    v0.25    |     ~2136     | 2157  |
 - CCRL rating estimates are obtained from tests against Stash v17 (rated 2295 CCRL 2+1).
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
 - Below are some other metrics:
 | Metric | Rapid | Blitz | Bullet |
+|:-----------:|:-------------:|:-----:|
 | Lichess (BOT) | 2208 ± 66 | 2019 ± 52 | 2102 ± 60 |
 | Chesscom* (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
 *: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
