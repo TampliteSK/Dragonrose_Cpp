@@ -339,31 +339,48 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		return score;
 	}
 
-	/*
-		Null-move Pruning
-	*/
+	// Whole node pruning
+	if (!in_check) {
 
-	uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
-	// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-	if (depth >= 4) {
-		if (do_null && !in_check && big_pieces > 1 && pos->ply) {
-			make_null_move(pos);
-			score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, candidate_PV, false);
-			take_null_move(pos);
+		/*
+			Reverse futility pruning
+		*/
+		// We prune branches that are too good for us (i.e. too bad for the opponent). The opponent will likely avoid these branches entirely.
+		// If the static eval is significantly better than beta, then it is likely below alpha for the opponent.
+		// Although this is only an apporximation of actual search, static eval is usually a good enough estimate.
 
-			if (info->stopped) {
-				delete candidate_PV;
-				return 0;
-			}
+		int static_eval = evaluate_pos(pos);
+		int RFP_margin = beta + 80 * depth;
+		if (depth <= 4 && static_eval >= RFP_margin) {
+			return static_eval;
+		}
 
-			if (score >= beta && abs(score) < MATE_SCORE) {
-				info->null_cut++;
-				delete candidate_PV;
-				return score;
+		/*
+			Null-move Pruning
+		*/
+
+		uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
+		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
+		if (depth >= 4) {
+			if (do_null && !in_check && big_pieces > 1 && pos->ply) {
+				make_null_move(pos);
+				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, candidate_PV, false);
+				take_null_move(pos);
+
+				if (info->stopped) {
+					delete candidate_PV;
+					return 0;
+				}
+
+				if (score >= beta && abs(score) < MATE_SCORE) {
+					info->null_cut++;
+					delete candidate_PV;
+					return score;
+				}
 			}
 		}
 	}
-
+	
 	std::vector<Move> list;
 	generate_moves(pos, list, false);
 
@@ -485,7 +502,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// Store the move that beats alpha if it's quiet
 				if (!is_capture) {
-					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += 300 * depth - 250; // Formula from Serendipity
+					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
 				}
 			}
 		}
