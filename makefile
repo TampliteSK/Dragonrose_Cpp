@@ -3,6 +3,7 @@ CXX ?= g++
 SRCS = $(wildcard src/*.cpp)
 EXE ?= Dragonrose_Cpp
 
+
 # Compiler flags
 STD_FLAGS = -std=c++20
 WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic
@@ -16,9 +17,15 @@ ifdef DEBUG
 	CXXFLAGS += -g -fsanitize=address -fsanitize=undefined
 endif
 
+# Add .exe if Windows
+ifeq ($(OS),Windows_NT)
+    EXE := $(EXE).exe
+endif
+
+
 # Build target
 all:
-	$(CXX) $(CXXFLAGS) $(SRCS) -o $(EXE).exe
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(EXE)
 
 clean:
 	rm -f $(EXE)
