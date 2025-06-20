@@ -290,7 +290,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	check_time(info); // Check if time is up
 
-	// const int PV_node = (alpha != beta - 1);
+	const int PV_node = (alpha != beta - 1);
 
 	if (depth == 0 && pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
@@ -453,7 +453,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 		*/
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
+		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
 
 		// Re-search with full depth if it beats alpha (make sure it's not a fluke)
 		/*
@@ -462,17 +462,20 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 		*/
 
-		/*
 		// Principal variation search
 		bool do_full_search = !PV_node || legal > 1;
 		if (do_full_search) {
 			// Perform zero-window search (ZWS) on non-PV nodes
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, candidate_PV, true);
+			
+			// Do full re-search if better than alpha
+			if (score > alpha) {
+				score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
+			}
 		}
 		else if (PV_node && legal == 1) {
 			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
 		}
-		*/
 
 		take_move(pos);
 
