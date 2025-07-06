@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cmath>
+#include <cstring>
 
 #include "search.hpp"
 #include "attack.hpp"
@@ -25,7 +26,6 @@ static inline int check_draw(const Board* pos, bool qsearch);
 static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
 
 static inline void init_PVLine(PVLine* line);
-static inline void movcpy(int* pTarget, const int* pSource, int n);
 static inline void update_best_line(Board* pos, PVLine* pv);
 
 static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null);
@@ -191,20 +191,25 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		info->seldepth = pos->ply;
 	}
 
-	PVLine* candidate_PV = new PVLine;
-	init_PVLine(candidate_PV);
+	line->length = 0;
+	PVLine candidate_PV;
+	init_PVLine(&candidate_PV);
 
 	int stand_pat = evaluate_pos(pos);
 	int best_score = stand_pat;
-	int score = stand_pat;
+	// int best_move = NO_MOVE;
+	int score = -INF_BOUND;
 
 	if (stand_pat >= beta) {
-		delete candidate_PV;
 		return beta;
 	}
 
 	if (stand_pat > alpha) {
 		alpha = stand_pat;
+	}
+
+	if (alpha >= beta) {
+		return stand_pat;
 	}
 	
 	/*
@@ -212,7 +217,6 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 	*/
 	constexpr uint16_t big_delta = 936; // Queen eg value
 	if (stand_pat + big_delta < alpha) {
-		delete candidate_PV;
 		return alpha; // We are dead lost, no point searching for improvements
 	}
 
@@ -227,21 +231,6 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 
 		int curr_move = list[move_num].move;
 
-		/*
-		// Delta pruning (general case)
-		int captured = get_move_captured(curr_move);
-		int promoted = get_move_promoted(curr_move);
-		int delta1 = piece_value_MG[captured];
-		int delta2 = piece_value_MG[promoted];
-		constexpr uint16_t delta_margin = 300;
-		bool is_late_endgame = count_bits(pos->occupancies[BOTH]) <= 8;
-		// We skip the move if the gain from capturing or promoting a piece is too low
-		if (!is_late_endgame && delta1 + delta_margin <= alpha && delta2 + delta_margin <= alpha) {
-			delete candidate_PV;
-			return alpha;
-		}
-		*/
-
 		// Check if it's a legal move
 		if (!make_move(pos, curr_move)) {
 			continue;
@@ -249,39 +238,37 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		info->nodes++;
 		legal++;
 
-		score = -quiescence(pos, info, -beta, -alpha, line);
+		score = -quiescence(pos, info, -beta, -alpha, &candidate_PV);
 
 		take_move(pos);
 
 		if (info->stopped) {
-			delete candidate_PV;
 			return 0;
 		}
-		
+
 		if (score > best_score) {
 			best_score = score;
-		}
-		if (score > alpha) {
-			if (score >= beta) {
-				if (legal == 1) {
-					info->fhf++;
+			// best_move = curr_move;
+
+			if (score > alpha) {
+				alpha = score;
+
+				// Build new PV: current move + child PV
+				line->length = 1 + candidate_PV.length;
+				line->moves[0] = curr_move;
+				std::memcpy(line->moves + 1, candidate_PV.moves, sizeof(int) * candidate_PV.length);
+
+				if (score >= beta) {
+					if (legal == 1) {
+						info->fhf++;
+					}
+					info->fh++;
+					break;
 				}
-				info->fh++;
-				delete candidate_PV;
-				return score;
 			}
-
-			alpha = score;
-
-			// Copy child's PV and prepend the current move
-			line->score = score;
-			line->length = 1 + candidate_PV->length;
-			line->moves[0] = curr_move;
-			movcpy(line->moves + 1, candidate_PV->moves, candidate_PV->length);
 		}
 	}
 
-	delete candidate_PV;
 	return best_score;
 }
 
@@ -290,8 +277,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	check_time(info); // Check if time is up
 
-	// const int PV_node = (alpha != beta - 1);
-
+	const int PV_node = (alpha != beta - 1);
+	
 	if (depth == 0 && pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
 	}
@@ -320,8 +307,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 	*/
 
-	PVLine* candidate_PV = new PVLine;
-	init_PVLine(candidate_PV);
+	line->length = 0;
+	PVLine candidate_PV;
+	init_PVLine(&candidate_PV);
 
 	uint8_t US = pos->side;
 	uint8_t THEM = US ^ 1;
@@ -337,7 +325,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	if (probe_hash_entry(pos, table, PV_move, score, alpha, beta, depth)) {
 		table->cut++;
-		delete candidate_PV;
 		return score;
 	}
 
@@ -366,17 +353,15 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (depth >= 4) {
 			if (do_null && !in_check && big_pieces > 1 && pos->ply) {
 				make_null_move(pos);
-				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, candidate_PV, false);
+				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
-					delete candidate_PV;
 					return 0;
 				}
 
 				if (score >= beta && abs(score) < MATE_SCORE) {
 					info->null_cut++;
-					delete candidate_PV;
 					return score;
 				}
 			}
@@ -453,7 +438,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 		*/
 
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
+		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
 
 		// Re-search with full depth if it beats alpha (make sure it's not a fluke)
 		/*
@@ -462,22 +447,24 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 		*/
 
+		// Principal variation search (based on Stoat shogi engine by Ciekce)
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
+
+		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
 		/*
-		// Principal variation search
-		bool do_full_search = !PV_node || legal > 1;
-		if (do_full_search) {
+		if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
-			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, candidate_PV, true);
+			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true);
 		}
-		else if (PV_node && legal == 1) {
-			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
+		// We are in a PV node and either it's the first legal move, OR the ZWS failed high
+		if (PV_node && (legal == 1 || score > alpha)) {
+			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
 		}
 		*/
 
 		take_move(pos);
 
 		if (info->stopped) {
-			delete candidate_PV;
 			return 0;
 		}
 
@@ -502,7 +489,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 					store_hash_entry(pos, table, best_move, beta, HFBETA, depth);
 
-					delete candidate_PV;
 					return beta; // Fail-hard beta-cutoff
 				}
 
@@ -510,9 +496,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// Copy child's PV and prepend the current move (extraction idea from Ethereal)
 				line->score = score;
-				line->length = 1 + candidate_PV->length;
+				line->length = 1 + candidate_PV.length;
 				line->moves[0] = curr_move;
-				movcpy(line->moves + 1, candidate_PV->moves, candidate_PV->length);
+				std::memcpy(line->moves + 1, candidate_PV.moves, sizeof(int) * candidate_PV.length);
 
 				// Store the move that beats alpha if it's quiet
 				if (!is_capture) {
@@ -525,12 +511,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	if (legal == 0) {
 		if (in_check) {
 			// Checkmate
-			delete candidate_PV;
 			return -INF_BOUND + pos->ply; 
 		}
 		else {
 			// Stalemate
-			delete candidate_PV;
 			return 0;
 		}
 	}
@@ -542,7 +526,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
 	}
 
-	delete candidate_PV;
 	return alpha;
 }
 
@@ -662,16 +645,9 @@ static inline void init_PVLine(PVLine* line) {
 	}
 }
 
-// Copies the moves from pSource to pTarget, given the number of moves n
-static inline void movcpy(int* pTarget, const int* pSource, int n) {
-	for (int i = 0; i < n; ++i) {
-		pTarget[i] = pSource[i];
-	}
-}
-
 static inline void update_best_line(Board* pos, PVLine* pv) {
 	if (pv->score > pos->PV_array.score) {
 		pos->PV_array.length = pv->length;
-		movcpy(pos->PV_array.moves, pv->moves, pv->length);
+		memcpy(pos->PV_array.moves, pv->moves, sizeof(int) * pv->length);
 	}
 }

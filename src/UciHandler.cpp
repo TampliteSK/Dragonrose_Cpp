@@ -203,6 +203,9 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         else if (line.substr(0, 5) == "print") {
             print_board(pos);
         }
+        else if (line.substr(0, 9) == "load test") {
+            parse_fen(pos, "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2");
+        }
 
         if (info->quit) break;
     }
