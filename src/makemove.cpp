@@ -145,6 +145,8 @@ void take_move(Board *pos) {
 	}
 }
 
+// Makes a move on the board
+// Returns true if legal, and false if illegal
 bool make_move(Board* pos, int move) {
 	int from = get_move_source(move);
 	int to = get_move_target(move);
