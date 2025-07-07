@@ -308,7 +308,8 @@ void sort_moves(const Board *pos, std::vector<Move>& move_list) {
     }
 
     // Sort the move list in descending order of scores
-    std::sort(move_list.begin(), move_list.end(), [](const Move& a, const Move& b) {
+    // Use stable_sort instead of sort to be deterministic
+    std::stable_sort(move_list.begin(), move_list.end(), [](const Move& a, const Move& b) {
         return a.score > b.score;
         });
 }

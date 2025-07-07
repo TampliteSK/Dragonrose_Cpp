@@ -277,7 +277,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	check_time(info); // Check if time is up
 
-	const int PV_node = (alpha != beta - 1);
+	// const int PV_node = (alpha != beta - 1);
 	
 	if (depth == 0 && pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
