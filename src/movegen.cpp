@@ -307,11 +307,19 @@ void sort_moves(const Board *pos, std::vector<Move>& move_list) {
         move_list[i].score += score_move(pos, move_list[i].move);
     }
 
-    // Sort the move list in descending order of scores
-    // Use stable_sort instead of sort to be deterministic
-    std::stable_sort(move_list.begin(), move_list.end(), [](const Move& a, const Move& b) {
-        return a.score > b.score;
-        });
+    // Insertion sort
+    // std::stable_sort performance depends greatly on P/E cores
+    for (int i = 1; i < (int)move_list.size(); ++i) {
+        Move key = std::move(move_list[i]);
+        int j = i - 1;
+
+        // Shift elements > key.score to the right
+        while (j >= 0 && move_list[j].score < key.score) {  // Sort DESC (high score first)
+            move_list[j + 1] = std::move(move_list[j]);
+            j--;
+        }
+        move_list[j + 1] = key;
+    }
 }
 
 // Determine is a move is possible in a given position
