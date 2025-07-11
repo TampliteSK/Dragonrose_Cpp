@@ -74,7 +74,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     // Time Management
     if (time != -1) {
         info->timeset = true;
-        int buffered_time = time - std::max(time / 5, 50);
+        int buffered_time = time - std::min(time / 2, 50);
         double time_allocated = allocate_time(pos, buffered_time);
         info->stop_time = uint64_t(info->start_time + time_allocated + inc / 2);
     }
