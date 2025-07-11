@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <algorithm>
 
 /*
     Private methods
@@ -73,7 +74,8 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     // Time Management
     if (time != -1) {
         info->timeset = true;
-        double time_allocated = allocate_time(pos, time);
+        int buffered_time = time - std::max(time / 5, 50);
+        double time_allocated = allocate_time(pos, buffered_time);
         info->stop_time = uint64_t(info->start_time + time_allocated + inc / 2);
     }
     else {
