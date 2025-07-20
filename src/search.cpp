@@ -28,7 +28,8 @@ static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
 static inline void init_PVLine(PVLine* line);
 static inline void update_best_line(Board* pos, PVLine* pv);
 
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null);
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, 
+	int alpha, int beta, int depth, PVLine* line, bool do_null, bool PV_node);
 
 /*
 	Iterative deepening loop
@@ -61,7 +62,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			// Do a full search first 3 depths as they are unstable
 			if (curr_depth == 3) {
-				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv, true);
+				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv, true, true);
 			}
 			else {
 				alpha = std::max(-INF_BOUND, guess - window_size);
@@ -71,7 +72,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				// Aspiration windows algorithm adapted from Ethereal by Andrew Grant
 				bool reSearch = true;
 				while (reSearch) {
-					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true);
+					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true, true);
 
 					// Re-search with a wider window on the side that fails
 					if (best_score <= alpha) {
@@ -197,10 +198,6 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		return beta;
 	}
 
-	if (stand_pat > alpha) {
-		alpha = stand_pat;
-	}
-
 	if (alpha >= beta) {
 		return stand_pat;
 	}
@@ -218,7 +215,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 
 	uint16_t legal = 0;
 
-	sort_moves(pos, list);
+	sort_moves(pos, list, NO_MOVE);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 
@@ -266,15 +263,16 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 }
 
 // Negamax Search with Alpha-beta Pruning
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null) {
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, 
+	int alpha, int beta, int depth, PVLine* line, bool do_null, bool PV_node) {
 
 	check_up(info); // Check if time is up
 
-	const bool at_horizon = depth == 0;
+	// const bool at_horizon = depth == 0;
 	const bool is_root = pos->ply == 0;
-	// const int PV_node = (alpha != beta - 1);
+	// const bool PV_node = (alpha != beta - 1);
 	
-	if (at_horizon && pos->ply > info->seldepth) {
+	if (pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
 	}
 
@@ -316,9 +314,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	int score = -INF_BOUND;
-	int PV_move = NO_MOVE;
-
-	if (probe_hash_entry(pos, table, PV_move, score, alpha, beta, depth)) {
+	int hash_move = NO_MOVE;
+	// int hash_score = -INF_BOUND;
+	// remember to add back is_root && 
+	// and switch score to hash_score
+	if (probe_hash_entry(pos, table, hash_move, score, alpha, beta, depth)) {
 		table->cut++;
 		return score;
 	}
@@ -344,17 +344,19 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-		if (do_null && depth >= 4 && is_root && !in_check) {
+		if (do_null && depth >= 4 && !is_root) {
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
-				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false);
+				// remember to change to null_score
+				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
 					return 0;
 				}
 
+				// change these to null_score
 				if (score >= beta && abs(score) < MATE_SCORE) {
 					info->null_cut++;
 					return score;
@@ -371,19 +373,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	int best_move = NO_MOVE;
 	int best_score = -INF_BOUND;
 
-	// Order PV move as first move (linear search)
-	if (PV_move != NO_MOVE) {
-		for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
-			if (list.at(move_num).move == PV_move) {
-				list.at(move_num).score += 10'000'000;
-				break;
-			}
-		}
-	}
-
-	sort_moves(pos, list);
+	sort_moves(pos, list, hash_move);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
+		// int score = -INF_BOUND;
 		int curr_move = list.at(move_num).move;
 
 		// bool is_PVnode = curr_move == PV_move;
@@ -401,6 +394,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			int static_eval = evaluate_pos(pos);
 
 			if (static_eval + futility_margin <= alpha) {
+				// store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
 				continue; // Discard moves with no potential to raise alpha
 			}
 		}
@@ -443,17 +437,20 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Principal variation search (based on Stoat shogi engine by Ciekce)
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
+		if (PV_node) {
+
+		}
 
 		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
 		/*
 		if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
-			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true);
+			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
 		}
 		// We are in a PV node and either it's the first legal move, OR the ZWS failed high
 		if (PV_node && (legal == 1 || score > alpha)) {
-			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
+			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
 		}
 		*/
 
