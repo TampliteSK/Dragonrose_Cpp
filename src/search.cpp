@@ -321,7 +321,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	// Whole node pruning
-	if (!in_check && !is_root) {
+	if (!in_check) {
 
 		/*
 			Reverse futility pruning
@@ -341,7 +341,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-		if (do_null && depth >= 4) {
+		if (do_null && depth >= 4 && is_root) {
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
@@ -489,7 +489,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// Store the move that beats alpha if it's quiet
 				if (!is_capture) {
-					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth * depth;
+					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
 				}
 			}
 		}
