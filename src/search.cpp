@@ -198,10 +198,6 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		return beta;
 	}
 
-	if (stand_pat > alpha) {
-		alpha = stand_pat;
-	}
-
 	if (alpha >= beta) {
 		return stand_pat;
 	}
@@ -219,7 +215,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 
 	uint16_t legal = 0;
 
-	sort_moves(pos, list);
+	sort_moves(pos, list, NO_MOVE);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 
@@ -272,11 +268,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	check_up(info); // Check if time is up
 
-	const bool at_horizon = depth == 0;
+	// const bool at_horizon = depth == 0;
 	const bool is_root = pos->ply == 0;
 	// const bool PV_node = (alpha != beta - 1);
 	
-	if (at_horizon && pos->ply > info->seldepth) {
+	if (pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
 	}
 
@@ -317,16 +313,15 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		depth++;
 	}
 
-	int score = -INF_BOUND;
-	int PV_move = NO_MOVE;
-
-	if (probe_hash_entry(pos, table, PV_move, score, alpha, beta, depth)) {
+	int hash_move = NO_MOVE;
+	int hash_score = -INF_BOUND;
+	if (is_root && probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, depth)) {
 		table->cut++;
-		return score;
+		return hash_score;
 	}
 
 	// Whole node pruning
-	if (!in_check) {
+	if (!in_check && !is_root) {
 
 		/*
 			Reverse futility pruning
@@ -346,20 +341,20 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-		if (do_null && depth >= 4 && is_root && !in_check) {
+		if (do_null && depth >= 4) {
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
-				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
+				int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
 					return 0;
 				}
 
-				if (score >= beta && abs(score) < MATE_SCORE) {
+				if (null_score >= beta && abs(null_score) < MATE_SCORE) {
 					info->null_cut++;
-					return score;
+					return null_score;
 				}
 			}
 		}
@@ -373,19 +368,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	int best_move = NO_MOVE;
 	int best_score = -INF_BOUND;
 
-	// Order PV move as first move (linear search)
-	if (PV_move != NO_MOVE) {
-		for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
-			if (list.at(move_num).move == PV_move) {
-				list.at(move_num).score += 10'000'000;
-				break;
-			}
-		}
-	}
-
-	sort_moves(pos, list);
+	sort_moves(pos, list, hash_move);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
+		int score = -INF_BOUND;
 		int curr_move = list.at(move_num).move;
 
 		// bool is_PVnode = curr_move == PV_move;
@@ -403,6 +389,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			int static_eval = evaluate_pos(pos);
 
 			if (static_eval + futility_margin <= alpha) {
+				store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
 				continue; // Discard moves with no potential to raise alpha
 			}
 		}
@@ -445,9 +432,13 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Principal variation search (based on Stoat shogi engine by Ciekce)
-		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
+		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
+		if (PV_node) {
+
+		}
 
 		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
+		/*
 		if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
@@ -456,6 +447,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (PV_node && (legal == 1 || score > alpha)) {
 			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
 		}
+		*/
 
 		take_move(pos);
 
@@ -497,7 +489,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// Store the move that beats alpha if it's quiet
 				if (!is_capture) {
-					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
+					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth * depth;
 				}
 			}
 		}

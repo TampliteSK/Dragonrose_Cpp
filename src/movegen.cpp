@@ -283,7 +283,12 @@ void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_o
 */
 
 // score moves
-static inline int score_move(const Board *pos, int move) {
+static inline int score_move(const Board *pos, int move, int hash_move) {
+
+    // Score hash move (PV move)
+    if (hash_move != NO_MOVE && move == hash_move) {
+        return 10'000'000;
+    }
 
     // Score capture move
     int captured = get_move_captured(move);
@@ -292,7 +297,6 @@ static inline int score_move(const Board *pos, int move) {
     }
 
     // Score quiet move
-
     if (pos->killer_moves[0][pos->ply] == move) return 950'000; // Score 1st killer move
     if (pos->killer_moves[1][pos->ply] == move) return 900'000; // Score 2nd killer move
 
@@ -301,10 +305,10 @@ static inline int score_move(const Board *pos, int move) {
 }
 
 // Sort moves in descending order
-void sort_moves(const Board *pos, std::vector<Move>& move_list) {
+void sort_moves(const Board *pos, std::vector<Move>& move_list, int hash_move) {
     // Score all the moves
     for (int i = 0; i < (int)move_list.size(); ++i) {
-        move_list[i].score += score_move(pos, move_list[i].move);
+        move_list[i].score += score_move(pos, move_list[i].move, hash_move);
     }
 
     // Insertion sort
