@@ -272,7 +272,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	const bool at_horizon = depth == 0;
 	const bool is_root = pos->ply == 0;
-	// const int PV_node = (alpha != beta - 1);
+	const bool PV_node = (alpha != beta - 1);
 	
 	if (at_horizon && pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
@@ -443,10 +443,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Principal variation search (based on Stoat shogi engine by Ciekce)
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
+		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
 
 		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
-		/*
 		if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true);
@@ -455,7 +454,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (PV_node && (legal == 1 || score > alpha)) {
 			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
 		}
-		*/
 
 		take_move(pos);
 
