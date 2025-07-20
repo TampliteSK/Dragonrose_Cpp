@@ -14,8 +14,10 @@ typedef struct {
 	uint8_t depth;
 	uint8_t seldepth;
 	uint64_t nodes;
+	uint64_t nodes_limit;
 
-	bool timeset;
+	bool timeset;  // go with time
+	bool nodesset; // go nodes <>
 	uint16_t movestogo;
 	bool quit;
 	bool stopped;

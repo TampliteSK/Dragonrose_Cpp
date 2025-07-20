@@ -21,7 +21,7 @@
 int LMR_reduction_table[MAX_DEPTH][280];
 
 // Function prototypes
-static inline void check_time(SearchInfo* info);
+static inline void check_up(SearchInfo* info);
 static inline int check_draw(const Board* pos, bool qsearch);
 static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
 
@@ -101,9 +101,9 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			// Search exited early as hash move found
-			int PV_moves = 0;
 			if (info->nodes == 0) {
-				PV_moves = get_PV_line(pos, table, curr_depth); // Get PV from TT
+				// Fallback to getting PV from TT
+				get_PV_line(pos, table, curr_depth);
 			}
 			best_move = pos->PV_array.moves[0];
 
@@ -140,21 +140,14 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 
 			// Print PV
-			int limit = 0;
-			if (PV_moves == 0) {
-				limit = pos->PV_array.length; // PV from search
-			}
-			else {
-				limit = PV_moves; // PV from hash table
-			}
-
-			for (int i = 0; i < limit; ++i) {
+			// int limit = check_PV_legality(pos);
+			for (int i = 0; i < pos->PV_array.length; ++i) {
 				std::cout << " " << print_move(pos->PV_array.moves[i]);
 			}
 			std::cout << "\n" << std::flush; // Make sure it outputs depth-by-depth to GUI
 
 			// Second check to make sure it doesn't hang in low time and flag
-			check_time(info);
+			check_up(info);
 			if (info->stopped) {
 				break;
 			}
@@ -176,7 +169,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 // Quiescence search
 static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, PVLine* line) {
 
-	check_time(info); // Check if time is up
+	check_up(info); // Check if time is up
 
 	int flag = check_draw(pos, true);
 	if (flag != -1) {
@@ -275,11 +268,13 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 // Negamax Search with Alpha-beta Pruning
 static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null) {
 
-	check_time(info); // Check if time is up
+	check_up(info); // Check if time is up
 
+	const bool at_horizon = depth == 0;
+	const bool is_root = pos->ply == 0;
 	// const int PV_node = (alpha != beta - 1);
 	
-	if (depth == 0 && pos->ply > info->seldepth) {
+	if (at_horizon && pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
 	}
 
@@ -348,10 +343,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			Null-move Pruning
 		*/
 
-		uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-		if (depth >= 4) {
-			if (do_null && !in_check && big_pieces > 1 && pos->ply) {
+		if (do_null && depth >= 4 && is_root && !in_check) {
+			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
+			if (big_pieces > 1) {
 				make_null_move(pos);
 				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false);
 				take_null_move(pos);
@@ -534,9 +529,13 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 */
 
 // Check if the time is up
-static inline void check_time(SearchInfo* info) {
+static inline void check_up(SearchInfo* info) {
 	// Check if time is up
 	if (info->timeset && (get_time_ms() > info->stop_time)) {
+		info->stopped = true;
+	}
+	// Check if nodes limit is reached
+	else if (info->nodesset && info->nodes > info->nodes_limit) {
 		info->stopped = true;
 	}
 }
@@ -614,8 +613,10 @@ void init_searchinfo(SearchInfo* info) {
 	info->depth = 0;
 	info->seldepth = 0;
 	info->nodes = 0;
+	info->nodes_limit = 0;
 
 	info->timeset = false;
+	info->nodesset = false;
 	info->movestogo = 0;
 	info->quit = false;
 	info->stopped = false;

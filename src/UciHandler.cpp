@@ -36,16 +36,24 @@ UciHandler::UciHandler() {
     // Does absolutely nothing. No attributes to initialise.
 }
 
+// Handles go <> UCI commands
+// Supports: go wtime <> btime <> winc <> binc <>
+//           go movetime <>
+//           go depth <>
+//           go nodes <>
+//           go infinite (although no stop command at the moment, can only be stopped via keyboard interrupt)
 void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const std::string& line) {
     // int movestogo = 30;
-    int depth = -1, movetime = -1;
-    int time = -1, inc = 0;
+    int time = -1, movetime = -1;
+    int depth = -1, inc = 0, nodes = -1;
     info->timeset = false;
+    info->nodesset = false;
 
     if (line.find("infinite") != std::string::npos) {
-        // Handle infinite case if necessary
+        // Nothing to handle
     }
 
+    // Extract time control
     if (pos->side == BLACK) {
         inc = get_value_from_line(line, "binc");
     }
@@ -59,9 +67,12 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         time = get_value_from_line(line, "btime");
     }
 
-    // movestogo = get_value_from_line(line, "movestogo");
+    // Extract other "go" options
+    // movestogo is inaccurate and will not be supported in DR for the time being
+    // movestogo = get_value_from_line(line, "movestogo"); 
     movetime = get_value_from_line(line, "movetime");
     depth = get_value_from_line(line, "depth");
+    nodes = get_value_from_line(line, "nodes");
 
     if (movetime != -1) {
         time = movetime;
@@ -73,10 +84,13 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
 
     // Time Management
     if (time != -1) {
+        // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench)
+        constexpr int MIN_NETWORK_BUFFER = 150;
+        time += inc;
         info->timeset = true;
-        int buffered_time = time - std::min(time / 2, 50);
+        int buffered_time = time - std::min(time / 2, MIN_NETWORK_BUFFER);
         double time_allocated = allocate_time(pos, buffered_time);
-        info->stop_time = uint64_t(info->start_time + time_allocated + inc / 2);
+        info->stop_time = uint64_t(info->start_time + time_allocated);
     }
     else {
         // No time was given. Just run until depth is reached
@@ -86,8 +100,13 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     if (depth == -1) {
         info->depth = MAX_DEPTH;
     }
+    if (nodes != -1) {
+        info->nodesset = true;
+        info->nodes_limit = nodes;
+    }
 
     // std::cout << "time: " << time << " start: " << info->start_time << " stop: " << info->stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
+    // std::cout << "nodeset: " << info->nodesset << " | nodes limit: " << nodes << "\n";
     search_position(pos, table, info);
 }
 

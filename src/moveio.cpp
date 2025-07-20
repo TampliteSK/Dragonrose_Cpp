@@ -11,15 +11,26 @@
 // print move (for UCI purposes)
 std::string print_move(int move) {
     std::ostringstream oss;
+    oss << ascii_squares[get_move_source(move)]
+        << ascii_squares[get_move_target(move)];
+
+    // Promoted pieces must be encoded in lowercase
     if (get_move_promoted(move)) {
-        oss << ascii_squares[get_move_source(move)]
-            << ascii_squares[get_move_target(move)]
-            << ascii_pieces[get_move_promoted(move)];
+        int promoted_piece = get_move_promoted(move);
+        if (piece_type[promoted_piece] == QUEEN) {
+            oss << "q";
+        }
+        else if (piece_type[promoted_piece] == ROOK) {
+            oss << "r";
+        }
+        else if (piece_type[promoted_piece] == BISHOP) {
+            oss << "b";
+        }
+        else if (piece_type[promoted_piece] == KNIGHT) {
+            oss << "n";
+        }
     }
-    else {
-        oss << ascii_squares[get_move_source(move)]
-            << ascii_squares[get_move_target(move)];
-    }
+
     return oss.str();
 }
 

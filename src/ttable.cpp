@@ -20,8 +20,9 @@ int probe_PV_move(const Board* pos, const HashTable* table) {
 	return NO_MOVE;
 }
 
-// Returns number of moves in the PV
-int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
+// Fills the PV by iteratively probing TT
+// Should only be used as a fallback option - not as reliable as tracking PV via extraction
+void get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 	int move = probe_PV_move(pos, table);
 	int count = 0;
 
@@ -36,12 +37,11 @@ int get_PV_line(Board* pos, const HashTable* table, const uint8_t depth) {
 		}
 		move = probe_PV_move(pos, table);
 	}
+	pos->PV_array.length = count;
 
 	while (pos->ply > 0) {
 		take_move(pos);
 	}
-
-	return count;
 }
 
 void clear_hash_table(HashTable* table) {
