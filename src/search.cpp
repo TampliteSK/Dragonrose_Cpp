@@ -313,11 +313,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		depth++;
 	}
 
+	int score = -INF_BOUND;
 	int hash_move = NO_MOVE;
-	int hash_score = -INF_BOUND;
-	if (is_root && probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, depth)) {
+	// int hash_score = -INF_BOUND;
+	// remember to add back is_root && 
+	// and switch score to hash_score
+	if (probe_hash_entry(pos, table, hash_move, score, alpha, beta, depth)) {
 		table->cut++;
-		return hash_score;
+		return score;
 	}
 
 	// Whole node pruning
@@ -341,20 +344,22 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-		if (do_null && depth >= 4 && is_root) {
+		if (do_null && depth >= 4 && !is_root) {
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
-				int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
+				// remember to change to null_score
+				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
 					return 0;
 				}
 
-				if (null_score >= beta && abs(null_score) < MATE_SCORE) {
+				// change these to null_score
+				if (score >= beta && abs(score) < MATE_SCORE) {
 					info->null_cut++;
-					return null_score;
+					return score;
 				}
 			}
 		}
@@ -371,7 +376,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	sort_moves(pos, list, hash_move);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
-		int score = -INF_BOUND;
+		// int score = -INF_BOUND;
 		int curr_move = list.at(move_num).move;
 
 		// bool is_PVnode = curr_move == PV_move;
@@ -389,7 +394,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			int static_eval = evaluate_pos(pos);
 
 			if (static_eval + futility_margin <= alpha) {
-				store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
+				// store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
 				continue; // Discard moves with no potential to raise alpha
 			}
 		}
