@@ -28,7 +28,8 @@ static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
 static inline void init_PVLine(PVLine* line);
 static inline void update_best_line(Board* pos, PVLine* pv);
 
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null);
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, 
+	int alpha, int beta, int depth, PVLine* line, bool do_null, bool PV_node);
 
 /*
 	Iterative deepening loop
@@ -61,7 +62,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			// Do a full search first 3 depths as they are unstable
 			if (curr_depth == 3) {
-				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv, true);
+				best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv, true, true);
 			}
 			else {
 				alpha = std::max(-INF_BOUND, guess - window_size);
@@ -71,7 +72,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				// Aspiration windows algorithm adapted from Ethereal by Andrew Grant
 				bool reSearch = true;
 				while (reSearch) {
-					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true);
+					best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true, true);
 
 					// Re-search with a wider window on the side that fails
 					if (best_score <= alpha) {
@@ -266,13 +267,14 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 }
 
 // Negamax Search with Alpha-beta Pruning
-static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, int depth, PVLine* line, bool do_null) {
+static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, 
+	int alpha, int beta, int depth, PVLine* line, bool do_null, bool PV_node) {
 
 	check_up(info); // Check if time is up
 
 	const bool at_horizon = depth == 0;
 	const bool is_root = pos->ply == 0;
-	const bool PV_node = (alpha != beta - 1);
+	// const bool PV_node = (alpha != beta - 1);
 	
 	if (at_horizon && pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
@@ -348,7 +350,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
-				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false);
+				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
@@ -448,11 +450,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
 		if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
-			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true);
+			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
 		}
 		// We are in a PV node and either it's the first legal move, OR the ZWS failed high
 		if (PV_node && (legal == 1 || score > alpha)) {
-			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true);
+			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
 		}
 
 		take_move(pos);
