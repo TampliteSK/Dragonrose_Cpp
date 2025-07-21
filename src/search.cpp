@@ -318,7 +318,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	// int hash_score = -INF_BOUND;
 	// remember to add back is_root && 
 	// and switch score to hash_score
-	if (is_root && probe_hash_entry(pos, table, hash_move, score, alpha, beta, depth)) {
+	// Probe before considering cutoff if it is not root
+	if (probe_hash_entry(pos, table, hash_move, score, alpha, beta, depth) && !is_root) {
 		table->cut++;
 		return score;
 	}
