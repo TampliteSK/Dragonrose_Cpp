@@ -27,7 +27,9 @@ Aside from VICE, Dragonrose also draws inspiration from other engines such as
 - [BBC](https://github.com/maksimKorzh/bbc/tree/master) by Maksim Korzh (Code Monkey King), and
 - [Caissa](https://github.com/Witek902/Caissa) by Michal Witanowski (Witek902) et al.
 
-I would also like to thank [Adam Kulju](https://github.com/Adam-Kulju), developer of Willow and Patricia, for helping out with my code.
+I would also like to thank:
+- [mcthouacbb](https://github.com/mcthouacbb) (better known as A_randomnoob on Discord), developer of the most goated HCE engine Sirius, for looking through `search.cpp` and discovering silly bugs in my engine.
+- [Adam Kulju](https://github.com/Adam-Kulju), developer of Willow and Patricia, for helping out with my code.
 
 ## How to Use
 
