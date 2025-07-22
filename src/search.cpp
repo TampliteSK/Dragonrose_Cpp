@@ -313,15 +313,12 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		depth++;
 	}
 
-	int score = -INF_BOUND;
-	int hash_move = NO_MOVE;
-	// int hash_score = -INF_BOUND;
-	// remember to add back is_root && 
-	// and switch score to hash_score
 	// Probe before considering cutoff if it is not root
-	if (probe_hash_entry(pos, table, hash_move, score, alpha, beta, depth) && !is_root) {
+	int hash_move = NO_MOVE;
+	int hash_score = -INF_BOUND;
+	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, depth) && !is_root) {
 		table->cut++;
-		return score;
+		return hash_score;
 	}
 
 	// Whole node pruning
@@ -349,8 +346,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
-				// remember to change to null_score
-				score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
+				int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
@@ -358,9 +354,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 				}
 
 				// change these to null_score
-				if (score >= beta && abs(score) < MATE_SCORE) {
+				if (null_score >= beta && abs(null_score) < MATE_SCORE) {
 					info->null_cut++;
-					return score;
+					return null_score;
 				}
 			}
 		}
@@ -377,7 +373,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	sort_moves(pos, list, hash_move);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
-		// int score = -INF_BOUND;
+		int score = -INF_BOUND;
 		int curr_move = list.at(move_num).move;
 
 		// bool is_PVnode = curr_move == PV_move;
