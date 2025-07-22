@@ -24,6 +24,7 @@ typedef struct {
 	uint16_t movestogo;
 	bool quit;
 	bool stopped;
+	bool soft_stopped;
 
 	float fh; // beta cutoffs
 	float fhf; // legal moves
