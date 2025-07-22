@@ -99,7 +99,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 
 			// Make sure at least depth 1 is completed before breaking
 			if (info->timeset && curr_depth > 1 && (info->stopped || get_time_ms() > info->soft_stop_time)) {
-				std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?: " << (get_time_ms() > info->soft_stop_time) << "\n";
+				// std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?: " << (get_time_ms() > info->soft_stop_time) << "\n";
 				break;
 			}
 
