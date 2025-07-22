@@ -84,8 +84,8 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
 
     // Time Management
     if (time != -1) {
-        // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench)
-        constexpr int MIN_NETWORK_BUFFER = 150;
+        // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench - 250ms latency)
+        constexpr int MIN_NETWORK_BUFFER = 260; // in ms
         time += inc;
         info->timeset = true;
         int buffered_time = time - std::min(time / 2, MIN_NETWORK_BUFFER);

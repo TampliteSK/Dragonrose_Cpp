@@ -389,10 +389,12 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (depth <= 3 && move_num >= 4 && is_quiet && !in_check && abs(score) < MATE_SCORE) {
 			int futility_margin = 200 * depth; // Scale margin with depth
 			int static_eval = evaluate_pos(pos);
-
+			
+			// Discard moves with no potential to raise alpha
 			if (static_eval + futility_margin <= alpha) {
-				// store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
-				continue; // Discard moves with no potential to raise alpha
+				// Cache the eval before pruning 
+				// store_hash_entry(pos, table, NO_MOVE, static_eval, HFNONE, 0);
+				continue;
 			}
 		}
 
