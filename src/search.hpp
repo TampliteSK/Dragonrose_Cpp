@@ -9,23 +9,24 @@
 #include "datatypes.hpp"
 
 typedef struct {
+	bool timeset;  // go with time
+	bool nodesset; // go nodes <>
+
 	uint64_t start_time;
-	uint64_t stop_time;
+	uint64_t soft_stop_time; // Soft time limit
+	uint64_t hard_stop_time; // Hard time limit
+
 	uint8_t depth;
 	uint8_t seldepth;
 	uint64_t nodes;
 	uint64_t nodes_limit;
-
-	bool timeset;  // go with time
-	bool nodesset; // go nodes <>
+	
 	uint16_t movestogo;
 	bool quit;
 	bool stopped;
 
 	float fh; // beta cutoffs
 	float fhf; // legal moves
-	uint16_t null_cut;
-
 } SearchInfo;
 
 extern int LMR_reduction_table[MAX_DEPTH][280]; // [ply][move_num]

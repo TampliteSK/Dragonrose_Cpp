@@ -97,7 +97,9 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			delete pv;
 			guess = best_score;
 
-			if (info->stopped) {
+			// Make sure at least depth 1 is completed before breaking
+			if (info->timeset && curr_depth > 1 && (info->stopped || get_time_ms() > info->soft_stop_time)) {
+				std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?: " << (get_time_ms() > info->soft_stop_time) << "\n";
 				break;
 			}
 
@@ -146,12 +148,6 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				std::cout << " " << print_move(pos->PV_array.moves[i]);
 			}
 			std::cout << "\n" << std::flush; // Make sure it outputs depth-by-depth to GUI
-
-			// Second check to make sure it doesn't hang in low time and flag
-			check_up(info);
-			if (info->stopped) {
-				break;
-			}
 
 			// Exit search if mate at current depth is found, in order to save time
 			if (mate_found && (curr_depth > (abs(mate_moves) + 1))) {
@@ -355,7 +351,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// change these to null_score
 				if (null_score >= beta && abs(null_score) < MATE_SCORE) {
-					info->null_cut++;
 					return null_score;
 				}
 			}
@@ -530,7 +525,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 // Check if the time is up
 static inline void check_up(SearchInfo* info) {
 	// Check if time is up
-	if (info->timeset && (get_time_ms() > info->stop_time)) {
+	if (info->timeset && (get_time_ms() > info->hard_stop_time)) {
 		info->stopped = true;
 	}
 	// Check if nodes limit is reached
@@ -607,22 +602,23 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 }
 
 void init_searchinfo(SearchInfo* info) {
+	info->timeset = false;
+	info->nodesset = false;
+
 	info->start_time = 0;
-	info->stop_time = 0;
+	info->hard_stop_time = 0;
+	info->soft_stop_time = 0;
 	info->depth = 0;
 	info->seldepth = 0;
 	info->nodes = 0;
 	info->nodes_limit = 0;
 
-	info->timeset = false;
-	info->nodesset = false;
 	info->movestogo = 0;
 	info->quit = false;
 	info->stopped = false;
 
 	info->fh = 0.0f;
 	info->fhf = 0.0f;
-	info->null_cut = 0;
 }
 
 void init_LMR_table() {
