@@ -392,8 +392,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			
 			// Discard moves with no potential to raise alpha
 			if (static_eval + futility_margin <= alpha) {
-				// Cache the eval before pruning 
-				// store_hash_entry(pos, table, NO_MOVE, static_eval, HFNONE, 0);
 				continue;
 			}
 		}
@@ -478,9 +476,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 						pos->killer_moves[0][pos->ply] = curr_move;
 					}
 
-					store_hash_entry(pos, table, best_move, beta, HFBETA, depth);
-
-					return beta; // Fail-hard beta-cutoff
+					break; // Fail-high
 				}
 
 				alpha = score;
@@ -510,14 +506,21 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 	}
 
-	if (alpha != old_alpha) {
-		store_hash_entry(pos, table, best_move, best_score, HFEXACT, depth);
+	// Store move and score to TT
+	uint8_t hash_flag = HFNONE;
+	if (best_score >= beta) {
+		hash_flag = HFBETA;
+	}
+	else if (best_score > old_alpha) {
+		hash_flag = HFEXACT;
 	}
 	else {
-		store_hash_entry(pos, table, best_move, alpha, HFALPHA, depth);
+		hash_flag = HFALPHA;
 	}
+	store_hash_entry(pos, table, best_move, best_score, hash_flag, depth);
 
-	return alpha;
+	// Fail-low
+	return best_score;
 }
 
 /*
