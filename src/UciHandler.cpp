@@ -85,16 +85,34 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     // Time Management
     if (time != -1) {
         // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench - 250ms latency)
-        constexpr int MIN_NETWORK_BUFFER = 260; // in ms
-        time += inc;
         info->timeset = true;
-        int buffered_time = time - std::min(time / 2, MIN_NETWORK_BUFFER);
+        constexpr int MIN_NETWORK_BUFFER = 50; // in ms
+
+        // Get hard time limit
+        int buffered_time = std::max((time + inc/2) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
+        // std::cout << "Hard limit: " << buffered_time << "ms\n";
+        info->hard_stop_time = info->start_time + buffered_time;
+
+        // Get soft time limit
+        buffered_time = std::max((time + inc/2) / 30 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER / 2);
+        // std::cout << "Soft limit: " << buffered_time << "ms\n";
+        info->soft_stop_time = info->start_time + buffered_time;
+
+        /*
+        // Get hard time limit
+        int buffered_time = time + inc - std::min(time/2 + inc/2, MIN_NETWORK_BUFFER);
         double time_allocated = allocate_time(pos, buffered_time);
-        info->stop_time = uint64_t(info->start_time + time_allocated);
-    }
-    else {
-        // No time was given. Just run until depth is reached
-        info->stop_time = info->start_time + 3600000; // 1 hour window
+        info->hard_stop_time = uint64_t(info->start_time + time_allocated);
+
+        // Get soft time limit
+        buffered_time = time/20 + inc/2 - std::min(time/40 + inc/4, MIN_NETWORK_BUFFER);
+        //     Prevent soft limit from exceeding hard limit
+        info->soft_stop_time = std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER / 3);
+        */
+
+        // std::cout << "Current time: " << get_time_ms() 
+        //    << " | Hard limit: " << info->hard_stop_time << " (" << info->hard_stop_time - get_time_ms() << ") "
+        //    << " | Soft limit: " << info->soft_stop_time << " (" << info->soft_stop_time - get_time_ms() << ") " << "\n";
     }
 
     if (depth == -1) {

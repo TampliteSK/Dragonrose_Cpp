@@ -21,7 +21,7 @@
 int LMR_reduction_table[MAX_DEPTH][280];
 
 // Function prototypes
-static inline void check_up(SearchInfo* info);
+static inline void check_up(SearchInfo* info, bool soft_limit);
 static inline int check_draw(const Board* pos, bool qsearch);
 static void clear_search_vars(Board* pos, HashTable* table, SearchInfo* info);
 
@@ -51,8 +51,8 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 	// No book move available. Find best move via search.
 	if (best_move == NO_MOVE) {
 
-		for (int curr_depth = 1; curr_depth <= info->depth; ++curr_depth) {
-
+		uint8_t curr_depth = 1;
+		do {
 			PVLine* pv = new PVLine; // Stores the best PV in the search depth so far. Merges with PV of child nodes if it's good
 			init_PVLine(pv);
 
@@ -67,7 +67,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			else {
 				alpha = std::max(-INF_BOUND, guess - window_size);
 				beta = std::min(guess + window_size, INF_BOUND);
-				int delta = window_size;
+				uint16_t delta = window_size;
 
 				// Aspiration windows algorithm adapted from Ethereal by Andrew Grant
 				bool reSearch = true;
@@ -97,7 +97,9 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			delete pv;
 			guess = best_score;
 
-			if (info->stopped) {
+			// Make sure at least depth 1 is completed before breaking
+			if (info->stopped && curr_depth > 1) {
+				// std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?: " << (get_time_ms() > info->soft_stop_time) << "\n";
 				break;
 			}
 
@@ -120,7 +122,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 				// copysign(1.0, value) outputs +/- 1.0 depending on the sign of "value" (i.e. sgn(value))
 				// Note that /2 is integer division (e.g. 3/2 = 1)
 				mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * copysign(1.0, best_score);
-				std::cout << "info depth " << curr_depth
+				std::cout << "info depth " << (int)curr_depth
 					<< " seldepth " << (int)info->seldepth
 					<< " score mate " << (int)mate_moves
 					<< " nodes " << info->nodes
@@ -130,7 +132,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 					<< " pv";
 			}
 			else {
-				std::cout << "info depth " << curr_depth
+				std::cout << "info depth " << (int)curr_depth
 					<< " seldepth " << (int)info->seldepth
 					<< " score cp " << best_score
 					<< " nodes " << info->nodes
@@ -147,17 +149,14 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 			}
 			std::cout << "\n" << std::flush; // Make sure it outputs depth-by-depth to GUI
 
-			// Second check to make sure it doesn't hang in low time and flag
-			check_up(info);
-			if (info->stopped) {
-				break;
-			}
-
 			// Exit search if mate at current depth is found, in order to save time
 			if (mate_found && (curr_depth > (abs(mate_moves) + 1))) {
 				break; // Buggy if insufficient search is performed before pruning
 			}
-		}
+
+			curr_depth++; // Increment depth
+			check_up(info, true);
+		} while (curr_depth <= info->depth && !info->soft_stopped);
 	}
 
 	std::cout << "bestmove " << print_move(best_move) << "\n" << std::flush;
@@ -170,7 +169,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 // Quiescence search
 static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, PVLine* line) {
 
-	check_up(info); // Check if time is up
+	check_up(info, false); // Check if time is up
 
 	int flag = check_draw(pos, true);
 	if (flag != -1) {
@@ -266,7 +265,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* info, 
 	int alpha, int beta, int depth, PVLine* line, bool do_null, bool PV_node) {
 
-	check_up(info); // Check if time is up
+	check_up(info, false); // Check if time is up
 
 	// const bool at_horizon = depth == 0;
 	const bool is_root = pos->ply == 0;
@@ -355,7 +354,6 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// change these to null_score
 				if (null_score >= beta && abs(null_score) < MATE_SCORE) {
-					info->null_cut++;
 					return null_score;
 				}
 			}
@@ -528,14 +526,22 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 */
 
 // Check if the time is up
-static inline void check_up(SearchInfo* info) {
+static inline void check_up(SearchInfo* info, bool soft_limit) {
 	// Check if time is up
-	if (info->timeset && (get_time_ms() > info->stop_time)) {
-		info->stopped = true;
+	uint64_t time_limit = info->hard_stop_time;
+	uint64_t nodes_limit = info->nodes_limit;
+	bool& stopper = info->stopped;
+	if (soft_limit) {
+		time_limit = info->soft_stop_time;
+		stopper = info->soft_stopped;
+	}
+
+	if (info->timeset && (get_time_ms() > time_limit)) {
+		stopper = true;
 	}
 	// Check if nodes limit is reached
-	else if (info->nodesset && info->nodes > info->nodes_limit) {
-		info->stopped = true;
+	else if (info->nodesset && info->nodes > nodes_limit) {
+		stopper = true;
 	}
 }
 
@@ -600,6 +606,7 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 	pos->ply = 0;
 	
 	info->seldepth = 0;
+	info->soft_stopped = false;
 	info->stopped = false;
 	info->nodes = 0;
 	info->fh = 0.0;
@@ -607,22 +614,24 @@ static inline void clear_search_vars(Board* pos, HashTable* table, SearchInfo* i
 }
 
 void init_searchinfo(SearchInfo* info) {
+	info->timeset = false;
+	info->nodesset = false;
+
 	info->start_time = 0;
-	info->stop_time = 0;
+	info->hard_stop_time = 0;
+	info->soft_stop_time = 0;
 	info->depth = 0;
 	info->seldepth = 0;
 	info->nodes = 0;
 	info->nodes_limit = 0;
 
-	info->timeset = false;
-	info->nodesset = false;
 	info->movestogo = 0;
 	info->quit = false;
+	info->soft_stopped = false;
 	info->stopped = false;
 
 	info->fh = 0.0f;
 	info->fhf = 0.0f;
-	info->null_cut = 0;
 }
 
 void init_LMR_table() {
