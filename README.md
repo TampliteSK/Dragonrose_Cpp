@@ -48,12 +48,14 @@ I would also like to thank:
 ## Main Features
 
 Search:
-- Negamax alpha-beta search (fail-hard)
-  - PV-search (TODO)
-  - Reverse futility pruning (RFP)
-  - Null-move pruning (NMP)
-  - Futility pruning (extended to depth 3)
-  - Late move reductions (LMR) (TODO)
+- Negamax alpha-beta search (fail-soft)
+  - Principal-variation Search (PVS) (TODO)
+  - Whole node-pruning
+    - Reverse futility pruning (RFP)
+    - Null-move pruning (NMP)
+  - Move-loop pruning
+    - Futility pruning (extended to depth 3)
+    - Late move reductions (LMR) (TODO)
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Transposition table using "age"
@@ -105,7 +107,10 @@ Below are some other metrics:
 
 ## Changelogs <br>
 ### 0.x: <br>
-0.29 (dev): Completely rewritten from scratch, on par with 0.28 and 0.25. Using more aggressive FP/EFP, as well as more evaluation terms. Added reverse futility pruning.
+0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
+- Added more evaluation terms
+- Using more aggressive FP/EFP. Added RFP.
+- Switched to fail-soft entirely and patched some bugs.
 
 ## To-do list
 - Other search / eval enhancements

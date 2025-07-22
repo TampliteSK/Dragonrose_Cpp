@@ -476,9 +476,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 						pos->killer_moves[0][pos->ply] = curr_move;
 					}
 
-					store_hash_entry(pos, table, best_move, best_score, HFBETA, depth);
-
-					return best_score;
+					break; // Fail-high
 				}
 
 				alpha = score;
@@ -508,12 +506,18 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 	}
 
-	if (best_score > old_alpha) {
-		store_hash_entry(pos, table, best_move, best_score, HFEXACT, depth);
+	// Store move and score to TT
+	uint8_t hash_flag = HFNONE;
+	if (best_score >= beta) {
+		hash_flag = HFBETA;
+	}
+	else if (best_score > old_alpha) {
+		hash_flag = HFEXACT;
 	}
 	else {
-		store_hash_entry(pos, table, best_move, best_score, HFALPHA, depth);
+		hash_flag = HFALPHA;
 	}
+	store_hash_entry(pos, table, best_move, best_score, hash_flag, depth);
 
 	// Fail-low
 	return best_score;
