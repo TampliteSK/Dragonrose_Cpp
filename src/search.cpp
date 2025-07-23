@@ -432,13 +432,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Principal variation search (based on Stoat shogi engine by Ciekce)
-		score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
-		if (PV_node) {
-
-		}
+		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
 
 		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
-		/*
 		if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
@@ -447,8 +443,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (PV_node && (legal == 1 || score > alpha)) {
 			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
 		}
-		*/
-
+		
 		take_move(pos);
 
 		if (info->stopped) {
