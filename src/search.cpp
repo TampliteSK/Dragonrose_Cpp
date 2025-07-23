@@ -382,15 +382,15 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		bool is_mate = abs(best_score) >= MATE_SCORE;
 
 		// Move loop pruning
-		if (!is_root && !is_mate) {
+		if (!PV_node && !is_root && is_quiet && !in_check && !is_mate) {
 
 			/*
 				Futility pruning
 			*/
 
 			// Don't skip PV move, captures and killers
-			if (depth <= 3 && move_num >= 4 && is_quiet && !in_check) {
-				int futility_margin = 200 * depth; // Scale margin with depth
+			if (depth <= 3 && move_num >= 4) {
+				int futility_margin = 300 * depth; // Scale margin with depth
 				int static_eval = evaluate_pos(pos);
 				
 				// Discard moves with no potential to raise alpha
