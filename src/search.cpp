@@ -379,19 +379,24 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		bool is_capture = (bool)get_move_captured(curr_move);
 		bool is_promotion = (bool)get_move_promoted(curr_move);
 		bool is_quiet = !is_capture && !is_promotion;
+		bool is_mate = abs(best_score) >= MATE_SCORE;
 
-		/*
-			Futility pruning
-		*/
+		// Move loop pruning
+		if (!is_root && !is_mate) {
 
-		// Don't skip PV move, captures and killers
-		if (depth <= 3 && move_num >= 4 && is_quiet && !in_check) {
-			int futility_margin = 300 * depth; // Scale margin with depth
-			int static_eval = evaluate_pos(pos);
-			
-			// Discard moves with no potential to raise alpha
-			if (static_eval + futility_margin <= alpha) {
-				continue;
+			/*
+				Futility pruning
+			*/
+
+			// Don't skip PV move, captures and killers
+			if (depth <= 3 && move_num >= 4 && is_quiet && !in_check) {
+				int futility_margin = 200 * depth; // Scale margin with depth
+				int static_eval = evaluate_pos(pos);
+				
+				// Discard moves with no potential to raise alpha
+				if (static_eval + futility_margin <= alpha) {
+					continue;
+				}
 			}
 		}
 
