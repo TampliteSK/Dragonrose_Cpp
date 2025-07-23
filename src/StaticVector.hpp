@@ -18,6 +18,8 @@ constexpr uint16_t MAX_LEGAL_MOVES = 280;
 template<typename T, size_t capacity>
 class StaticVector {
     public:
+        // Can be implicitly constructed as Move is trivial type
+
         // General operations
         void push(const T &elem) {
             assert(m_size < capacity); // Debug safety
