@@ -386,7 +386,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		// Don't skip PV move, captures and killers
 		if (depth <= 3 && move_num >= 4 && is_quiet && !in_check) {
-			int futility_margin = 200 * depth; // Scale margin with depth
+			int futility_margin = 300 * depth; // Scale margin with depth
 			int static_eval = evaluate_pos(pos);
 			
 			// Discard moves with no potential to raise alpha
