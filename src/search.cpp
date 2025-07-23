@@ -15,6 +15,7 @@
 #include "makemove.hpp"
 #include "movegen.hpp"
 #include "moveio.hpp"
+#include "StaticVector.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
 
@@ -209,7 +210,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		return alpha; // We are dead lost, no point searching for improvements
 	}
 
-	std::vector<Move> list;
+	StaticVector<Move, MAX_LEGAL_MOVES> list;
 	generate_moves(pos, list, true);
 
 	uint16_t legal = 0;
@@ -360,7 +361,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 	}
 	
-	std::vector<Move> list;
+	StaticVector<Move, MAX_LEGAL_MOVES> list;
 	generate_moves(pos, list, false);
 
 	int legal = 0;
@@ -372,7 +373,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int score = -INF_BOUND;
-		int curr_move = list.at(move_num).move;
+		int curr_move = list[move_num].move;
 
 		// bool is_PVnode = curr_move == PV_move;
 		bool is_capture = (bool)get_move_captured(curr_move);
@@ -561,7 +562,7 @@ static inline int check_draw(const Board* pos, bool qsearch) {
 	if (pos->fifty_move >= 100) {
 		// Make sure there isn't a checkmate on or before the 100th half-move
 		if (is_square_attacked(pos, pos->king_sq[pos->side], pos->side ^ 1)) {
-			std::vector<Move> list;
+			StaticVector<Move, MAX_LEGAL_MOVES> list;
 			generate_moves(pos, list, false);
 			if (list.size() == 0) {
 				return -INF_BOUND + pos->ply;
