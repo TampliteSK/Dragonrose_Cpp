@@ -48,8 +48,9 @@ I would also like to thank:
 ## Main Features
 
 Search:
+- Iterative deepening + Aspiration windows
 - Negamax alpha-beta search (fail-soft)
-  - Principal-variation Search (PVS) (TODO)
+  - Principal-variation Search (PVS)
   - Whole node-pruning
     - Reverse futility pruning (RFP)
     - Null-move pruning (NMP)
@@ -59,7 +60,6 @@ Search:
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Transposition table using "age"
-- Iterative deepening + Aspiration windows
 
 Evaluation (Hand-crafted evaluation, or HCE):
 - Tapered eval
@@ -108,9 +108,9 @@ Below are some other metrics:
 ## Changelogs <br>
 ### 0.x: <br>
 0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
-- Added more evaluation terms
-- Using more aggressive FP/EFP. Added RFP.
-- Switched to fail-soft entirely and patched some bugs.
+- Eval: Added more evaluation terms
+- Search: Using more aggressive FP/EFP. Added PVS, RFP. Switched to fail-soft entirely.
+- Other: Patched some bugs.
 
 ## To-do list
 - Other search / eval enhancements
