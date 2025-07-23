@@ -5,6 +5,7 @@
 
 #include <vector>
 #include "Board.hpp"
+#include "StaticVector.hpp"
 
 typedef struct {
     int move;
@@ -12,8 +13,8 @@ typedef struct {
 } Move;
 
 // Functions
-void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_only);
-void sort_moves(const Board *pos, std::vector<Move>& move_list, int hash_move);
+void generate_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, bool noisy_only);
+void sort_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, int hash_move);
 bool move_exists(Board* pos, const int move);
 
 /*

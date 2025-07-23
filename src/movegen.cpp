@@ -5,10 +5,9 @@
 #include <iostream>
 #include <algorithm>
 #include "movegen.hpp"
-#include "bitboard.hpp"
-#include "Board.hpp"
 #include "attack.hpp"
 #include "attackgen.hpp"
+#include "bitboard.hpp"
 #include "makemove.hpp"
 
 /*
@@ -64,13 +63,13 @@ static int mvv_lva[12][12] = {
 */
 
 // add move to the move list
-static inline void add_move(std::vector<Move>& move_list, int move, int score) {
+static inline void add_move(StaticVector<Move, MAX_LEGAL_MOVES>& move_list, int move, int score) {
     Move move_struct = { move, score };
-    move_list.push_back(move_struct);
+    move_list.push(move_struct);
 }
 
 // Movegen function forked from BBC by Maksim Korzh (Code Monkey King)
-void generate_moves(const Board *pos, std::vector<Move>& move_list, bool noisy_only) {
+void generate_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, bool noisy_only) {
 
     uint8_t source_square, target_square;
     uint8_t side = pos->side;
@@ -305,7 +304,7 @@ static inline int score_move(const Board *pos, int move, int hash_move) {
 }
 
 // Sort moves in descending order
-void sort_moves(const Board *pos, std::vector<Move>& move_list, int hash_move) {
+void sort_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, int hash_move) {
     // Score all the moves
     for (int i = 0; i < (int)move_list.size(); ++i) {
         move_list[i].score += score_move(pos, move_list[i].move, hash_move);
@@ -329,7 +328,7 @@ void sort_moves(const Board *pos, std::vector<Move>& move_list, int hash_move) {
 // Determine is a move is possible in a given position
 bool move_exists(Board* pos, const int move) {
 
-    std::vector<Move> list;
+    StaticVector<Move, MAX_LEGAL_MOVES> list;
     generate_moves(pos, list, false);
 
     for (int i = 0; i < (int)list.size(); ++i) {

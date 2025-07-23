@@ -38,7 +38,7 @@ std::string print_move(int move) {
 // Returns the move if valid.
 int parse_move(const Board *pos, std::string move_string) {
 
-    std::vector<Move> move_list;
+    StaticVector<Move, MAX_LEGAL_MOVES> move_list;
     generate_moves(pos, move_list, false);
 
     // Parse squares
@@ -48,7 +48,7 @@ int parse_move(const Board *pos, std::string move_string) {
     // Search if the move exists in the list
     for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
 
-        int move = move_list.at(move_count).move;
+        int move = move_list[move_count].move;
 
         // make sure source & target squares are available within the generated move
         if (source_square == get_move_source(move) && target_square == get_move_target(move)) {
