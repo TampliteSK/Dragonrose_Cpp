@@ -204,13 +204,11 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	// Transposition table cutoffs
 	// Probe before considering cutoff if it is not root
 	int hash_move = NO_MOVE;
-	/*
 	int hash_score = -INF_BOUND;
 	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, 0)) {
 		table->cut++;
 		return hash_score;
 	}
-	*/
 	
 	/*
 		Delta pruning (dead lost scenario)
