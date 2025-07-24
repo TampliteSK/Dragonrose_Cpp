@@ -416,33 +416,27 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		int reduced_depth = depth - 1; // We move further into the tree
 
-		/*
-		// Do not reduce if it's completely winning / near mating position
-		// Check if it's a "late move"
-		if (depth >= 4 && move_num >= 4 && abs(score) < MATE_SCORE) {
+		// Do not reduce if it's near mating position
+		// Late move: later in the list (in this case move_num >= 4)
+		if (depth >= 4 && move_num >= 4 && !PV_node && !is_killer && is_quiet && !in_check && !is_mate) {
 			uint8_t moving_pce = get_move_piece(curr_move);
 
-			if (is_quiet && !in_check && piece_type[moving_pce] != PAWN) {
+			if (piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
 				reduced_depth = std::max(reduced_depth - r - 1, 1);
 			}
+
+			// Search at reduced depth with null window
+			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
+
+			// Re-search at full depth still with null window
+			if (score > alpha) {
+				score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1, &candidate_PV, true, false);
+			}
 		}
-		*/
-
-		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, candidate_PV, true);
-
-		// Re-search with full depth if it beats alpha (make sure it's not a fluke)
-		/*
-		if (score > alpha) {
-			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, depth - 1, candidate_PV, true);
-		}
-		*/
-
 		// Principal variation search (based on Stoat shogi engine by Ciekce)
-		// score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
-
 		// If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal move
-		if (!PV_node || legal > 1) {
+		else if (!PV_node || legal > 1) {
 			// Perform zero-window search (ZWS) on non-PV nodes
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
 		}
@@ -639,7 +633,7 @@ void init_searchinfo(SearchInfo* info) {
 void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
 		for (int move_num = 4; move_num < 280; ++move_num) {
-			LMR_reduction_table[depth][move_num] = int(0.25 + log(depth) * log(move_num) / 2.25);
+			LMR_reduction_table[depth][move_num] = int(0.50 + log(depth) * log(move_num) / 2.75);
 		}
 	}
 }
