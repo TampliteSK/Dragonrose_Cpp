@@ -369,29 +369,35 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	int best_move = NO_MOVE;
 	int best_score = -INF_BOUND;
 
+	// Futility pruning variables
+	int static_eval = evaluate_pos(pos);
+	int futility_margin = 300 * depth; // Scale margin with depth
+
 	sort_moves(pos, list, hash_move);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 		int score = -INF_BOUND;
 		int curr_move = list[move_num].move;
 
-		// bool is_PVnode = curr_move == PV_move;
+		bool is_killer = curr_move == pos->killer_moves[0][pos->ply] || curr_move == pos->killer_moves[1][pos->ply];
 		bool is_capture = (bool)get_move_captured(curr_move);
 		bool is_promotion = (bool)get_move_promoted(curr_move);
 		bool is_quiet = !is_capture && !is_promotion;
+		bool is_mate = abs(best_score) >= MATE_SCORE;
 
-		/*
-			Futility pruning
-		*/
+		// Move loop pruning
+		if (!is_root && !PV_node && is_quiet && !is_killer && !in_check && !is_mate) {
 
-		// Don't skip PV move, captures and killers
-		if (depth <= 3 && move_num >= 4 && is_quiet && !in_check && abs(score) < MATE_SCORE) {
-			int futility_margin = 200 * depth; // Scale margin with depth
-			int static_eval = evaluate_pos(pos);
-			
-			// Discard moves with no potential to raise alpha
-			if (static_eval + futility_margin <= alpha) {
-				continue;
+			/*
+				Futility pruning
+			*/
+
+			// Don't skip PV move, captures and killers
+			if (depth <= 3 && move_num >= 4) {
+				// Discard moves with no potential to raise alpha
+				if (static_eval + futility_margin <= alpha) {
+					continue;
+				}
 			}
 		}
 
