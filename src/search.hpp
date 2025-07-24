@@ -7,6 +7,7 @@
 #include "ttable.hpp"
 #include "Board.hpp"
 #include "datatypes.hpp"
+#include "StaticVector.hpp"
 
 typedef struct {
 	bool timeset;  // go with time

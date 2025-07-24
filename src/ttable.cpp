@@ -92,6 +92,7 @@ bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int a
 			if (score > MATE_SCORE)		  score -= pos->ply;
 			else if (score < -MATE_SCORE) score += pos->ply;
 
+			// Transposition table cutoffs
 			switch (table->pTable[index].flags) {
 			case HFALPHA: 
 				if (score <= alpha) {

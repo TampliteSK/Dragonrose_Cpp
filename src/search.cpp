@@ -15,11 +15,10 @@
 #include "makemove.hpp"
 #include "movegen.hpp"
 #include "moveio.hpp"
-#include "StaticVector.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
 
-int LMR_reduction_table[MAX_DEPTH][280][2];
+int LMR_reduction_table[MAX_DEPTH][MAX_LEGAL_MOVES][2];
 
 // Function prototypes
 static inline void check_up(SearchInfo* info, bool soft_limit);
@@ -168,7 +167,7 @@ void search_position(Board* pos, HashTable* table, SearchInfo* info) {
 */
 
 // Quiescence search
-static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, PVLine* line) {
+static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int alpha, int beta, PVLine* line) {
 
 	check_up(info, false); // Check if time is up
 
@@ -201,6 +200,17 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 	if (alpha >= beta) {
 		return stand_pat;
 	}
+
+	// Transposition table cutoffs
+	// Probe before considering cutoff if it is not root
+	int hash_move = NO_MOVE;
+	/*
+	int hash_score = -INF_BOUND;
+	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, 0)) {
+		table->cut++;
+		return hash_score;
+	}
+	*/
 	
 	/*
 		Delta pruning (dead lost scenario)
@@ -215,7 +225,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 
 	uint16_t legal = 0;
 
-	sort_moves(pos, list, NO_MOVE);
+	sort_moves(pos, list, hash_move);
 
 	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
 
@@ -228,7 +238,7 @@ static inline int quiescence(Board* pos, SearchInfo* info, int alpha, int beta, 
 		info->nodes++;
 		legal++;
 
-		score = -quiescence(pos, info, -beta, -alpha, &candidate_PV);
+		score = -quiescence(pos, table, info, -beta, -alpha, &candidate_PV);
 
 		take_move(pos);
 
@@ -277,7 +287,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	}
 
 	if (depth <= 0) {
-		return quiescence(pos, info, alpha, beta, line);
+		return quiescence(pos, table, info, alpha, beta, line);
 	}
 
 	// Check draw
@@ -313,6 +323,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		depth++;
 	}
 
+	// Transposition table cutoffs
 	// Probe before considering cutoff if it is not root
 	int hash_move = NO_MOVE;
 	int hash_score = -INF_BOUND;
@@ -421,7 +432,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (depth >= 3 && move_num >= 4 && !is_mate) {
 			
 			// Base reduction based on depth, move number and whether the move is quiet or not
-			int r = std::max(0, LMR_reduction_table[depth][move_num][is_quiet]); // Depth to be reduced
+			int r = std::max(0, (LMR_reduction_table[depth][move_num][(int)is_quiet])); // Depth to be reduced
 			r += !PV_node; // Reduce more if not PV-node
 			reduced_depth = std::max(reduced_depth - r - 1, 1);
 
