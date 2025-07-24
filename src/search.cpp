@@ -421,7 +421,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (depth >= 3 && move_num >= 4 && !is_mate) {
 			
 			// Base reduction based on depth, move number and whether the move is quiet or not
-			int r = std::max(0, LMR_reduction_table[depth][move_num][!is_quiet]); // Depth to be reduced
+			int r = std::max(0, LMR_reduction_table[depth][move_num][is_quiet]); // Depth to be reduced
 			r += !PV_node; // Reduce more if not PV-node
 			reduced_depth = std::max(reduced_depth - r - 1, 1);
 
@@ -633,9 +633,9 @@ void init_searchinfo(SearchInfo* info) {
 void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
 		for (int move_num = 4; move_num < 280; ++move_num) {
-			// [0]: Quiet, [1]: Noisy (Values yoinked from Weiss)
-			LMR_reduction_table[depth][move_num][0] = int(1.00 + log(depth) * log(move_num) / 3.00);
-			LMR_reduction_table[depth][move_num][1] = int(0.20 + log(depth) * log(move_num) / 3.35);
+			// [0]: Noisy, [1]: Quiet (Values yoinked from Weiss)
+			LMR_reduction_table[depth][move_num][0] = int(0.25 + log(depth) * log(move_num) / 3.25);
+			LMR_reduction_table[depth][move_num][1] = int(0.50 + log(depth) * log(move_num) / 3.00);
 		}
 	}
 }
