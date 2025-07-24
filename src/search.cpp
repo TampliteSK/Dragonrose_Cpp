@@ -189,8 +189,9 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	init_PVLine(&candidate_PV);
 
 	int stand_pat = evaluate_pos(pos);
+	int old_alpha = alpha;
 	int best_score = stand_pat;
-	// int best_move = NO_MOVE;
+	int best_move = NO_MOVE;
 	int score = -INF_BOUND;
 
 	if (stand_pat >= beta) {
@@ -246,7 +247,7 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 
 		if (score > best_score) {
 			best_score = score;
-			// best_move = curr_move;
+			best_move = curr_move;
 
 			if (score > alpha) {
 				alpha = score;
@@ -266,6 +267,19 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 			}
 		}
 	}
+
+	// Store move and score to TT
+	uint8_t hash_flag = HFNONE;
+	if (best_score >= beta) {
+		hash_flag = HFBETA;
+	}
+	else if (best_score > old_alpha) {
+		hash_flag = HFEXACT;
+	}
+	else {
+		hash_flag = HFALPHA;
+	}
+	store_hash_entry(pos, table, best_move, best_score, hash_flag, 0);
 
 	return best_score;
 }
