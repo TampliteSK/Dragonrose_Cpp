@@ -634,7 +634,7 @@ void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
 		for (int move_num = 4; move_num < 280; ++move_num) {
 			// [0]: Quiet, [1]: Noisy (Values yoinked from Weiss)
-			LMR_reduction_table[depth][move_num][0] = int(1.35 + log(depth) * log(move_num) / 2.75);
+			LMR_reduction_table[depth][move_num][0] = int(1.00 + log(depth) * log(move_num) / 3.00);
 			LMR_reduction_table[depth][move_num][1] = int(0.20 + log(depth) * log(move_num) / 3.35);
 		}
 	}
