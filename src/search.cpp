@@ -291,9 +291,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	check_up(info, false); // Check if time is up
 
-	// const bool at_horizon = depth == 0;
+	// const bool is_leaf = depth == 0;
 	const bool is_root = pos->ply == 0;
-	// const bool PV_node = (alpha != beta - 1);
 	
 	if (pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
@@ -366,11 +365,12 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		*/
 
 		// Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in endgames.
-		if (do_null && depth >= 4) {
+		if (do_null && depth >= 3) {
 			uint8_t big_pieces = count_bits(pos->occupancies[US] ^ pos->bitboards[(US == WHITE) ? wP : bP]);
 			if (big_pieces > 1) {
 				make_null_move(pos);
-				int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - 4, &candidate_PV, false, false);
+				uint8_t R = 3 + depth / 3; // Reduction based on depth
+				int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - R, &candidate_PV, false, false);
 				take_null_move(pos);
 
 				if (info->stopped) {
