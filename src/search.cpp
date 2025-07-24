@@ -418,14 +418,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		// Do not reduce if it's near mating position
 		// Late move: later in the list (in this case move_num >= 4)
-		if (depth >= 4 && move_num >= 4 && !is_killer && is_quiet && !in_check && !is_mate) {
-			uint8_t moving_pce = get_move_piece(curr_move);
+		if (depth >= 3 && move_num >= 4 && !is_mate) {
 
-			if (piece_type[moving_pce] != PAWN) {
-				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
-				r += !PV_node; // Reduce more if not PV-node
-				reduced_depth = std::max(reduced_depth - r - 1, 1);
-			}
+			int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
+			r += !PV_node; // Reduce more if not PV-node
+			reduced_depth = std::max(reduced_depth - r - 1, 1);
 
 			// Search at reduced depth with null window
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
@@ -635,7 +632,7 @@ void init_searchinfo(SearchInfo* info) {
 void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
 		for (int move_num = 4; move_num < 280; ++move_num) {
-			LMR_reduction_table[depth][move_num] = int(0.50 + log(depth) * log(move_num) / 2.75);
+			LMR_reduction_table[depth][move_num] = int(0.50 + log(depth) * log(move_num) / 3.00);
 		}
 	}
 }
