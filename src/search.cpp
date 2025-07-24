@@ -440,7 +440,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			// Perform zero-window search (ZWS) on non-PV nodes
 			score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth, &candidate_PV, true, false);
 		}
-		// We are in a PV node and either it's the first legal move, OR the ZWS failed high
+		// If we're in a PV node and searching the first move, or the score from reduced search beat
+        // alpha, then we search with full depth and alpha-beta window.
 		if (PV_node && (legal == 1 || score > alpha)) {
 			score = -negamax_alphabeta(pos, table, info, -beta, -alpha, reduced_depth, &candidate_PV, true, true);
 		}
