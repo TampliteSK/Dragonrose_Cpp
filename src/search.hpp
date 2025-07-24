@@ -30,7 +30,7 @@ typedef struct {
 	float fhf; // legal moves
 } SearchInfo;
 
-extern int LMR_reduction_table[MAX_DEPTH][280][2]; // [ply][move_num][is_quiet]
+extern int LMR_reduction_table[MAX_DEPTH][MAX_LEGAL_MOVES][2]; // [ply][move_num][is_quiet]
 
 // Functions
 void search_position(Board* pos, HashTable* table, SearchInfo* info);

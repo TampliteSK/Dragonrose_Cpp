@@ -56,7 +56,7 @@ Search:
     - Null-move pruning (NMP)
   - Move-loop pruning
     - Futility pruning (extended to depth 3)
-    - Late move reductions (LMR) (TODO)
+    - Late move reductions (LMR)
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Transposition table using "age"
@@ -109,7 +109,7 @@ Below are some other metrics:
 ### 0.x: <br>
 0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
 - Eval: Added more evaluation terms
-- Search: Using more aggressive FP/EFP. Added PVS, RFP. Switched to fail-soft entirely.
+- Search: Using more aggressive FP/EFP. Added PVS, RFP, LMR. Switched to fail-soft entirely.
 - Other: Patched some bugs.
 
 ## To-do list

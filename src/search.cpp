@@ -632,7 +632,7 @@ void init_searchinfo(SearchInfo* info) {
 
 void init_LMR_table() {
 	for (int depth = 3; depth < MAX_DEPTH; ++depth) {
-		for (int move_num = 4; move_num < 280; ++move_num) {
+		for (int move_num = 4; move_num < MAX_LEGAL_MOVES; ++move_num) {
 			// [0]: Noisy, [1]: Quiet
 			LMR_reduction_table[depth][move_num][0] = int(0.25 + log(depth) * log(move_num) / 3.25);
 			LMR_reduction_table[depth][move_num][1] = int(0.50 + log(depth) * log(move_num) / 3.00);
