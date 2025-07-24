@@ -195,6 +195,7 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	int best_score = stand_pat;
 	int best_move = NO_MOVE;
 	
+	/*
 	if (stand_pat >= beta) {
 		return beta;
 	}
@@ -202,8 +203,8 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	if (alpha >= beta) {
 		return stand_pat;
 	}
+	*/
 	
-	/*
 	if (stand_pat >= alpha) {
 		alpha = stand_pat;
 	}
@@ -211,7 +212,6 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	if (alpha >= beta) {
 		return stand_pat;
 	}
-	*/
 
 	// Transposition table cutoffs
 	// Probe before considering cutoff if it is not root
