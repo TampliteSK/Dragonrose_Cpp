@@ -86,7 +86,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 ## Playing Strength
 |   Version   | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
 |:-----------:|:-------------:|:-----:|
-| v0.29 (dev) |     ~2184     |   -   |
+| v0.29 (dev) |     ~2264     |   -   |
 |    v0.25    |     ~2136     | 2157  |
 - CCRL rating estimates are obtained from tests against Stash v17 (rated 2295 CCRL 2+1).
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
