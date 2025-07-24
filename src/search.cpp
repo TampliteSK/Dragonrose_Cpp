@@ -418,11 +418,12 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 		// Do not reduce if it's near mating position
 		// Late move: later in the list (in this case move_num >= 4)
-		if (depth >= 4 && move_num >= 4 && !PV_node && !is_killer && is_quiet && !in_check && !is_mate) {
+		if (depth >= 4 && move_num >= 4 && !is_killer && is_quiet && !in_check && !is_mate) {
 			uint8_t moving_pce = get_move_piece(curr_move);
 
 			if (piece_type[moving_pce] != PAWN) {
 				int r = std::max(0, LMR_reduction_table[depth][move_num]); // Depth to be reduced
+				r += !PV_node; // Reduce more if not PV-node
 				reduced_depth = std::max(reduced_depth - r - 1, 1);
 			}
 
