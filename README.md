@@ -109,7 +109,7 @@ Below are some other metrics:
 ### 0.x: <br>
 0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
 - Eval: Added more evaluation terms
-- Search: Using more aggressive FP/EFP. Added PVS, RFP, LMR. Switched to fail-soft entirely.
+- Search: Improved FP/EFP & NMP. Added PVS, RFP, LMR. Switched to fail-soft entirely.
 - Other: Patched some bugs.
 
 ## To-do list
