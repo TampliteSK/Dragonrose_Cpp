@@ -188,11 +188,13 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	PVLine candidate_PV;
 	init_PVLine(&candidate_PV);
 
-	int stand_pat = evaluate_pos(pos);
-	int best_score = stand_pat;
-	// int best_move = NO_MOVE;
+	// Use hash score as stand pat if no cutoffs
+	int stand_pat = /*(hash_score != -INF_BOUND) ? hash_score :*/ evaluate_pos(pos);
+	int old_alpha = alpha;
 	int score = -INF_BOUND;
-
+	int best_score = stand_pat;
+	int best_move = NO_MOVE;
+	
 	if (stand_pat >= beta) {
 		return beta;
 	}
@@ -200,18 +202,26 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	if (alpha >= beta) {
 		return stand_pat;
 	}
+	
+	/*
+	if (stand_pat >= alpha) {
+		alpha = stand_pat;
+	}
+
+	if (alpha >= beta) {
+		return stand_pat;
+	}
+	*/
 
 	// Transposition table cutoffs
 	// Probe before considering cutoff if it is not root
 	int hash_move = NO_MOVE;
-	/*
 	int hash_score = -INF_BOUND;
 	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, 0)) {
 		table->cut++;
 		return hash_score;
 	}
-	*/
-	
+
 	/*
 		Delta pruning (dead lost scenario)
 	*/
@@ -248,7 +258,7 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 
 		if (score > best_score) {
 			best_score = score;
-			// best_move = curr_move;
+			best_move = curr_move;
 
 			if (score > alpha) {
 				alpha = score;
@@ -268,6 +278,19 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 			}
 		}
 	}
+
+	// Store move and score to TT
+	uint8_t hash_flag = HFNONE;
+	if (best_score >= beta) {
+		hash_flag = HFBETA;
+	}
+	else if (best_score > old_alpha) {
+		hash_flag = HFEXACT;
+	}
+	else {
+		hash_flag = HFALPHA;
+	}
+	store_hash_entry(pos, table, best_move, best_score, hash_flag, 0);
 
 	return best_score;
 }
