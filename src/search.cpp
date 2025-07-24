@@ -188,22 +188,11 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	PVLine candidate_PV;
 	init_PVLine(&candidate_PV);
 
-	// Use hash score as stand pat if no cutoffs
-	int stand_pat = /*(hash_score != -INF_BOUND) ? hash_score :*/ evaluate_pos(pos);
+	int stand_pat = evaluate_pos(pos);
 	int old_alpha = alpha;
 	int score = -INF_BOUND;
 	int best_score = stand_pat;
 	int best_move = NO_MOVE;
-	
-	/*
-	if (stand_pat >= beta) {
-		return beta;
-	}
-
-	if (alpha >= beta) {
-		return stand_pat;
-	}
-	*/
 	
 	if (stand_pat >= alpha) {
 		alpha = stand_pat;
@@ -215,6 +204,7 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 
 	// Transposition table cutoffs
 	// Probe before considering cutoff if it is not root
+	// Loses elo if ordered before stand-pat
 	int hash_move = NO_MOVE;
 	int hash_score = -INF_BOUND;
 	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, 0)) {

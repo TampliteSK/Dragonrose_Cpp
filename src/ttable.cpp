@@ -96,13 +96,11 @@ bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int a
 			switch (table->pTable[index].flags) {
 			case HFALPHA: 
 				if (score <= alpha) {
-					score = alpha;
 					return true;
 				}
 				break;
 			case HFBETA: 
 				if (score >= beta) {
-					score = beta;
 					return true;
 				}
 				break;
