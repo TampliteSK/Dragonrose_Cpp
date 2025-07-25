@@ -507,7 +507,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 				// Store the move that beats alpha if it's quiet
 				if (!is_capture) {
-					pos->history_moves[pos->pieces[get_move_source(best_move)]][get_move_target(best_move)] += depth;
+					pos->history_moves[get_move_piece(best_move)][get_move_target(best_move)] += depth * depth;
 				}
 			}
 		}
