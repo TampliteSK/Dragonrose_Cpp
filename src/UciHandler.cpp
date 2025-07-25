@@ -168,7 +168,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
     std::cout << "id author Tamplite Siphron Kents" << std::endl;
 
     // UCI Options
-    std::cout << "option name Hash type spin default 16 min 4 max " << MAX_HASH << std::endl;
+    std::cout << "option name Hash type spin default 16 min 1 max " << MAX_HASH << std::endl;
     int MB = 16;
     options->hash_size = 16;
     init_hash_table(table, MB);
@@ -230,7 +230,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             std::istringstream iss(line.substr(26)); // Extract the relevant substring
             int new_MB;
             if (iss >> new_MB) { // Attempt to read the integer
-                MB = CLAMP(new_MB, 4, (int)MAX_HASH);
+                MB = CLAMP(new_MB, 1, (int)MAX_HASH);
                 options->hash_size = MB;
                 init_hash_table(table, MB);
                 std::cout << "info string Set Hash to " << MB << " MB" << std::endl;

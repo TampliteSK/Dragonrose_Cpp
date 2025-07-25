@@ -372,5 +372,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Misc files to be ignored
 /Dragonrose.exe
 /Dragonrose_Cpp.exe
+Dragonrose_Cpp
+gmon.out
+profile_report.txt

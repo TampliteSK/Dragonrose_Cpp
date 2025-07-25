@@ -8,7 +8,7 @@
 #include "datatypes.hpp"
 #include "Board.hpp"
 
-const uint32_t MAX_HASH = 65536;
+const uint32_t MAX_HASH = 262144;
 // const uint8_t BUCKET_SIZE = 4;
 
 // Hash entry flags

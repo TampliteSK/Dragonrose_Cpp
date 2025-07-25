@@ -30,19 +30,18 @@ Aside from VICE, Dragonrose also draws inspiration from other engines such as
 I would also like to thank:
 - [mcthouacbb](https://github.com/mcthouacbb) (better known as A_randomnoob on Discord), developer of the most goated HCE engine Sirius, for looking through `search.cpp` and discovering silly bugs in my engine.
 - [Adam Kulju](https://github.com/Adam-Kulju), developer of Willow and Patricia, for helping out with my code.
+- MattBench (an instance of [OpenBench](https://github.com/AndyGrant/OpenBench)) users for contributing hardware and helping with code as well
 
 ## How to Use
-
 - Challenge it on Lichess [here](https://lichess.org/@/DragonroseDev)
 - To run it locally either download a binary from releases or build it yourself with the makefile. Run `make CXX=<compiler>` and replace compiler with your preferred compiler (g++ / clang++). With it you can pick one of two options:
   - Plug it into a chess GUI such as Arena or Cutechess
   - Directly run the executable (usually for testing). You can run it normally with ./Dragonrose or run a benchmark with ./Dragonrose bench
 
 ## UCI options
-
 | Name  |      Type       | Default |  Valid values  | Description                                                                                             |
 |:-----:|:---------------:|:-------:|:--------------:|:-------------------------------------------------------------------------------------------------------:|
-| Hash  | integer (spin)  |    64   |   [1, 65536]   | Size of the transposition table in megabytes (MB). 16 - 512 MB is recommended.                               |
+| Hash  | integer (spin)  |    16   |   [1, 262144]   | Size of the transposition table in megabytes (MB). 16 - 512 MB is recommended for most use cases.                               |
 | Bench |  CLI Argument   |    -    |        -       | Run `./Dragonrose_Cpp bench` (or whatever you named the binary) from a CLI to check nodes and NPS, based on a 50-position suite (from [Heimdall](https://git.nocturn9x.space/nocturn9x/heimdall)).|
 
 ## Main Features
@@ -56,15 +55,14 @@ Search:
     - Null-move pruning (NMP)
   - Move-loop pruning
     - Futility pruning (extended to depth 3)
-    - Late move reductions (LMR)
+  - Late move reductions (LMR)
 - Quiesence search (fail-soft)
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
 - Transposition table using "age"
 
 Evaluation (Hand-crafted evaluation, or HCE):
 - Tapered eval
-  - Material
-  - Piece-square table bonuses
+  - PesTO Material & Piece-square Table (PST/PSQT) bonuses
   - Piece activity	
   - Tempi
 - King safety
@@ -81,7 +79,10 @@ Evaluation (Hand-crafted evaluation, or HCE):
   - Bonus for semi-open and open files for rooks and queens
   - Bonus for sliders to target enemy pieces
   - Bonus for batteries (bishop + queen, rook + queen, rook + rook)
-- Basic endgaeme knowledge	 
+- Basic drawn endgaeme knowledge
+
+Others:
+- Simple hard + soft time limits
 
 ## Playing Strength
 |   Version   | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
@@ -92,11 +93,10 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
 Below are some other metrics:
-|       Metric      |    Rapid   |   Blitz    |   Bullet   |
-|:-----------------:|:----------:|:----------:|:----------:|
-|   Lichess (BOT)   | 2208 ± 66  | 2019 ± 52  | 2102 ± 60  |
-| Chesscom\* (est.) | 2591 ± 239 | 2760 ± 178 | 2659 ± 227 |
-
+|       Metric      |    Rapid   |   Blitz   |   Bullet   |
+|:-----------------:|:----------:|:---------:|:----------:|
+|   Lichess (BOT)   | 2208 ± 66  | 2019 ± 52 | 2102 ± 60  |
+| Chesscom\* (est.) | 2655 ± 109 | 2888 ± 88 | 2675 ± 338 |
 \*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
 
 ## Useful Reesources
@@ -113,12 +113,14 @@ Below are some other metrics:
 - Other: Patched some bugs.
 
 ## To-do list
-- Other search / eval enhancements
-- Add mate distance pruning
 - Release
+- Search / Eval progression
+- Add mate distance pruning
 - ...
 - Search thread / LazySMP
 - Add Chess960 support
 
 ## Bugs to fix:
 - May blunder threefold in a winning position due to how threefold is implemented
+- Illegal PV moves
+- Occasional null moves when testing on OB
