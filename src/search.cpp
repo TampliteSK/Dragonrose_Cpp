@@ -413,16 +413,26 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (!is_root && !PV_node && is_quiet && !is_killer && !in_check && !is_mate) {
 
 			/*
+				Late move pruning
+			*/
+			// If we have seen many moves in this position already, and we don't expect
+        	// anything from this move, we can skip all the remaining quiets
+			uint8_t LMP_offset = 4;
+			uint8_t LMP_multiplier = 3;
+			if (move_num >= LMP_offset + LMP_multiplier * depth * depth) {
+				continue;
+			}
+
+			/*
 				Futility pruning
 			*/
-
 			// Don't skip PV move, captures and killers
 			if (depth <= 3 && move_num >= 4) {
 				// Discard moves with no potential to raise alpha
 				if (static_eval + futility_margin <= alpha) {
 					continue;
 				}
-			}
+			}	
 		}
 
 		// Check if it's a legal move
