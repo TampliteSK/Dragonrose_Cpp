@@ -8,10 +8,10 @@
 
 typedef unsigned long long Bitboard;
 
-#define MAX_DEPTH 64
-#define INF_BOUND 30000
-#define MAX_GAME_MOVES 2048
-#define MATE_SCORE ((INF_BOUND) - (MAX_DEPTH))
+constexpr uint8_t MAX_DEPTH = 64;
+constexpr int INF_BOUND = 30000;
+constexpr uint16_t MAX_GAME_MOVES = 2048;
+constexpr uint16_t MATE_SCORE = INF_BOUND - MAX_DEPTH;
 
 #define CLAMP(value, min, max) ((value) < (min) ? (min) : ((value) > (max) ? (max) : (value)))
 

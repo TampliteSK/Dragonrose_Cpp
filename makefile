@@ -1,15 +1,15 @@
 # Compiler selection
 CXX ?= g++
-SRCS = $(wildcard src/*.cpp)
+SRCS = $(wildcard src/*.cpp) $(wildcard src/chess/*.cpp) $(wildcard src/eval/*.cpp)
 EXE ?= Dragonrose_Cpp
 
-
 # Compiler flags
+INC_DIRS = -Isrc -Isrc/chess -Isrc/eval
 STD_FLAGS = -std=c++20
 WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic
 OPT_FLAGS = -O3 -ffast-math -march=native -funroll-loops
 MISC_FLAGS ?=
-CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(MISC_FLAGS)
+CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(INC_DIRS) $(MISC_FLAGS)
 
 # Debug flags
 # Usage: make DEBUG=1 (-fsanitize not supported by MinGW)

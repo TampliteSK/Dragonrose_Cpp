@@ -22,13 +22,13 @@
 int main(int argc, char* argv[]) {
 	init_all();
 
-    Board* pos = (Board*)malloc(sizeof(Board));;
+    Board* pos = new Board();
     reset_board(pos);
-	SearchInfo* info = (SearchInfo*)malloc(sizeof(SearchInfo));
+	SearchInfo* info = new SearchInfo();
 	init_searchinfo(info);
-	HashTable* hash_table = (HashTable*)malloc(sizeof(HashTable)); // Global hash
+	HashTable* hash_table = new HashTable();
 	hash_table->pTable = NULL;
-    UciOptions* options = (UciOptions*)malloc(sizeof(UciOptions));
+    UciOptions* options = new UciOptions();
     UciHandler* uci = new UciHandler();
 
     // Handle CLI Arguments
@@ -56,11 +56,11 @@ int main(int argc, char* argv[]) {
             std::cout << total_nodes << " nodes " << int(total_nodes / (double)time * 1000) << " nps\n";
 
             // Quit after benching is finished
-            free(pos);
-            free(info);
+            delete pos;
+            delete info;
             free(hash_table->pTable);
-            free(hash_table);
-            free(options);
+            delete hash_table;
+            delete options;
             delete uci;
             return 0;
         }
@@ -94,11 +94,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    free(pos);
-	free(info);
+    delete pos;
+	delete info;
     free(hash_table->pTable);
-	free(hash_table);
-    free(options);
+	delete hash_table;
+    delete options;
     delete uci;
 
 	return 0;

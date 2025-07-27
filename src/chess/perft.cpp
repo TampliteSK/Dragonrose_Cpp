@@ -1,17 +1,19 @@
 // perft.cpp
 
-#include <iostream>
-#include <vector>
-#include <cstdint>
+#include "../timeman.hpp"
+#include "../StaticVector.hpp"
+
 #include "perft.hpp"
 #include "Board.hpp"
 #include "movegen.hpp"
 #include "makemove.hpp"
-#include "timeman.hpp"
 #include "moveio.hpp"
 #include "bitboard.hpp"
 #include "attackgen.hpp"
-#include "StaticVector.hpp"
+
+#include <iostream>
+#include <vector>
+#include <cstdint>
 
 uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
 

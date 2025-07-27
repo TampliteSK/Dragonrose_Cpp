@@ -3,9 +3,8 @@
 #ifndef MOVEGEN_HPP
 #define MOVEGEN_HPP
 
-#include <vector>
 #include "Board.hpp"
-#include "StaticVector.hpp"
+#include "../StaticVector.hpp"
 
 typedef struct {
     int move;

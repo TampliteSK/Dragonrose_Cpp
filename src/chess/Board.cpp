@@ -1,12 +1,13 @@
 // Board.cpp
 
-#include <iostream>
-#include <cstdlib> // atoi()
 #include "movegen.hpp"
 #include "Board.hpp"
 #include "bitboard.hpp"
 #include "zobrist.hpp"
 #include "moveio.hpp"
+
+#include <iostream>
+#include <cstdlib> // atoi()
 
 /*
 	Macro board manipulation

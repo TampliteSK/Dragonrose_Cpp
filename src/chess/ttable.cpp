@@ -1,11 +1,12 @@
 // ttable.cpp
 
-#include <iostream>
-#include <iomanip>
 #include "ttable.hpp"
 #include "Board.hpp"
 #include "makemove.hpp"
 #include "moveio.hpp"
+
+#include <iostream>
+#include <iomanip>
 
 // std::string ascii_flags[] = { "None", "Alpha", "Beta", "Exact" };
 

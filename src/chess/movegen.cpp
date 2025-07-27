@@ -1,14 +1,12 @@
 // movegen.cpp
 
-#include <vector>
-#include <cstdint>
-#include <iostream>
-#include <algorithm>
 #include "movegen.hpp"
 #include "attack.hpp"
 #include "attackgen.hpp"
 #include "bitboard.hpp"
 #include "makemove.hpp"
+
+#include <cstdint>
 
 /*
         Most Valuable Victim & Least Valuable Attacker

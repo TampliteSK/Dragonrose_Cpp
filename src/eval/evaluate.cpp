@@ -1,17 +1,17 @@
 // evaluate.cpp
 
+#include "../chess/attack.hpp"
+#include "../chess/attackgen.hpp"
+#include "../chess/Board.hpp"
+#include "../chess/bitboard.hpp"
+
+#include "evaluate.hpp"
+#include "endgame.hpp"
+#include "ScorePair.hpp"
+#include "../datatypes.hpp"
+
 #include <algorithm>
 #include <iostream>
-#include "evaluate.hpp"
-#include "datatypes.hpp"
-#include "attack.hpp"
-#include "attackgen.hpp"
-#include "Board.hpp"
-#include "bitboard.hpp"
-#include "endgame.hpp"
-
-uint16_t piece_value_MG[13] = { 0, 82, 337, 365, 477, 1025, 30000, 82, 337, 365, 477, 1025, 30000 };
-uint16_t piece_value_EG[13] = { 0, 94, 281, 297, 512,  936, 30000, 94, 281, 297, 512,  936, 30000 };
 
 // Function prototypes
 static inline int get_phase(const Board* pos);
@@ -139,7 +139,7 @@ int count_material(const Board* pos) {
 	int phase = get_phase(pos);
 
 	for (int pce = wP; pce <= bK; ++pce) {
-		int value = pos->piece_num[pce] * ( piece_value_MG[pce] * phase + piece_value_EG[pce] * (64 - phase)) / 64;
+		int value = pos->piece_num[pce] * ( piece_values[pce].mg() * phase + piece_values[pce].eg() * (64 - phase)) / 64;
 		sum += value * ((piece_col[pce] == WHITE) ? 1 : -1);
 	}
 
@@ -150,10 +150,10 @@ static inline int compute_PSQT(uint8_t pce, uint8_t sq, int phase) {
 	int score = 0;
 	uint8_t col = piece_col[pce];
 	if (col == WHITE) {
-		score += (PSQT_MG[piece_type[pce] - 1][sq] * phase + PSQT_EG[piece_type[pce] - 1][sq] * (64 - phase)) / 64;
+		score += (PSQT[piece_type[pce] - 1][sq].mg() * phase + PSQT[piece_type[pce] - 1][sq].eg() * (64 - phase)) / 64;
 	}
 	else {
-		score += (PSQT_MG[piece_type[pce] - 1][Mirror64[sq]] * phase + PSQT_EG[piece_type[pce] - 1][Mirror64[sq]] * (64 - phase)) / 64;
+		score += (PSQT[piece_type[pce] - 1][Mirror64[sq]].mg() * phase + PSQT[piece_type[pce] - 1][Mirror64[sq]].eg() * (64 - phase)) / 64;
 	}
 	return score;
 }

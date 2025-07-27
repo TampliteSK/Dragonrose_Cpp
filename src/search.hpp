@@ -3,11 +3,12 @@
 #ifndef SEARCH_HPP
 #define SEARCH_HPP
 
-#include <cstdint>
+#include "../chess/Board.hpp"
 #include "ttable.hpp"
-#include "Board.hpp"
 #include "datatypes.hpp"
 #include "StaticVector.hpp"
+
+#include <cstdint>
 
 typedef struct {
 	bool timeset;  // go with time

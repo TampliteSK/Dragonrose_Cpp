@@ -1,12 +1,13 @@
 // moveio.cpp
 
+#include "../datatypes.hpp"
+#include "moveio.hpp"
+#include "movegen.hpp"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <vector>
-#include "moveio.hpp"
-#include "movegen.hpp"
-#include "datatypes.hpp"
 
 // print move (for UCI purposes)
 std::string print_move(int move) {
@@ -79,7 +80,7 @@ int parse_move(const Board *pos, std::string move_string) {
 }
 
 // print move list
-void print_move_list(const std::vector<Move> move_list) {
+void print_move_list(const StaticVector<Move, MAX_LEGAL_MOVES> move_list, bool verbose = true) {
 
     // Do nothing on empty move list
     if (move_list.empty()) {
@@ -87,49 +88,39 @@ void print_move_list(const std::vector<Move> move_list) {
         return;
     }
 
-    std::cout << "\n     move    piece     capture   double    enpass    castling    score\n\n";
+    if (verbose) {
+        std::cout << "\n     move    piece     capture   double    enpass    castling    score\n\n";
 
-    // Loop over moves within a move list
-    for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
+            // Loop over moves within a move list
+            for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
 
-        Move move_struct = move_list.at(move_count);
-        int move = move_struct.move;
-        int score = move_struct.score;
+                Move move_struct = move_list[move_count];
+                int move = move_struct.move;
+                int score = move_struct.score;
 
-        // Print move with ASCII representation
-        std::cout << "      " << ascii_squares[get_move_source(move)]
-            << ascii_squares[get_move_target(move)]
-            << (get_move_promoted(move) ? ascii_pieces[get_move_promoted(move)] : ' ')
-            << "   " << ascii_pieces[get_move_piece(move)]
-            << "         " << get_move_captured(move)
-            << "         " << (get_move_double(move) ? 1 : 0)
-            << "         " << (get_move_enpassant(move) ? 1 : 0)
-            << "         " << (get_move_castling(move) ? 1 : 0)
-            << "         " << score << "\n";
+                // Print move with ASCII representation
+                std::cout << "      " << ascii_squares[get_move_source(move)]
+                    << ascii_squares[get_move_target(move)]
+                    << (get_move_promoted(move) ? ascii_pieces[get_move_promoted(move)] : ' ')
+                    << "   " << ascii_pieces[get_move_piece(move)]
+                    << "         " << get_move_captured(move)
+                    << "         " << (get_move_double(move) ? 1 : 0)
+                    << "         " << (get_move_enpassant(move) ? 1 : 0)
+                    << "         " << (get_move_castling(move) ? 1 : 0)
+                    << "         " << score << "\n";
+            }
+    }
+    else {
+         std::cout << "Generated moves: ";
+
+        for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
+            Move move_struct = move_list[move_count];
+            int move = move_struct.move;
+            int score = move_struct.score;
+            std::cout << print_move(move) << " (" << score << ") ";
+        }
     }
 
     // Print total number of moves
     std::cout << "\n\n     Total number of moves: " << move_list.size() << "\n\n";
-}
-
-// print move list (comapct version)
-void print_move_list_compact(const std::vector<Move> move_list) {
-
-    // Do nothing on empty move list
-    if (move_list.empty()) {
-        std::cout << "\nMove list has no moves!\n";
-        return;
-    }
-
-    std::cout << "Generated moves: ";
-
-    for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
-        Move move_struct = move_list.at(move_count);
-        int move = move_struct.move;
-        int score = move_struct.score;
-        std::cout << print_move(move) << " (" << score << ") ";
-    }
-
-    // Print total number of moves
-    std::cout << "\nCount: " << move_list.size() << "\n\n";
 }

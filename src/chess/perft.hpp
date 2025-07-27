@@ -3,8 +3,8 @@
 #ifndef PERFT_HPP
 #define PERFT_HPP
 
-#include <cstdint>
 #include "Board.hpp"
+#include <cstdint>
 
 // Common test positions
 /*

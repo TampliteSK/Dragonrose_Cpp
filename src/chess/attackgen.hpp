@@ -3,7 +3,7 @@
 #ifndef ATTACKGEN_HPP
 #define ATTACKGEN_HPP
 
-#include "datatypes.hpp"
+#include "../datatypes.hpp"
 
 // Attack tables
 extern Bitboard pawn_attacks[2][64];     // pawn attacks table [side][square]

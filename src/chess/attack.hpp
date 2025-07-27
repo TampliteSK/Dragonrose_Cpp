@@ -3,8 +3,8 @@
 #ifndef ATTACK_HPP
 #define ATTACK_HPP
 
-#include <cstdint>
 #include "Board.hpp"
+#include <cstdint>
 
 bool is_square_attacked(const Board *pos, uint8_t sq, uint8_t side);
 int get_square_control(const Board* pos, uint8_t sq, uint8_t side);

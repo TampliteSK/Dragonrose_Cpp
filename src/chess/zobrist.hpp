@@ -3,7 +3,6 @@
 #ifndef ZOBRIST_HPP
 #define ZOBRIST_HPP
 
-#include <cstdint>
 #include "Board.hpp"
 
 extern uint64_t piece_keys[13][64]; // random piece keys [piece][square]

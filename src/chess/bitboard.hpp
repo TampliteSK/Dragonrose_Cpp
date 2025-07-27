@@ -3,7 +3,7 @@
 #ifndef BITBOARD_HPP
 #define BITBOARD_HPP
 
-#include "datatypes.hpp"
+#include "../datatypes.hpp"
 
 // set/get/pop bit macros
 #define GET_BIT(bitboard, square) ((bitboard) & (1ULL << (square)))

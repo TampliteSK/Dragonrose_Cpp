@@ -3,10 +3,9 @@
 #ifndef TTABLE_HPP
 #define TTABLE_HPP
 
-#include <cstdint>
-#include <vector>
-#include "datatypes.hpp"
+#include "../datatypes.hpp"
 #include "Board.hpp"
+#include <cstdint>
 
 const uint32_t MAX_HASH = 262144;
 // const uint8_t BUCKET_SIZE = 4;

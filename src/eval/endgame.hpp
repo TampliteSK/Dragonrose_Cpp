@@ -1,11 +1,10 @@
 // endgame.hpp
 
-#include "datatypes.hpp"
-
 #ifndef ENDGAME_HPP
 #define ENDGAME_HPP
 
-#include "Board.hpp"
+#include "../chess/Board.hpp"
+#include "../datatypes.hpp"
 
 int8_t endgame_noise(unsigned int seed, uint8_t width);
 bool check_material_draw(const Board* pos);

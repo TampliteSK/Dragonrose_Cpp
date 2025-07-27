@@ -1,9 +1,10 @@
 // endgame.cpp
 
+#include "../chess/bitboard.hpp"
 #include "datatypes.hpp"
-#include "bitboard.hpp"
 #include "endgame.hpp"
 #include "evaluate.hpp"
+
 #include <random>
 #include <iostream>
 

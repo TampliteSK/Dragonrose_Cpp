@@ -1,8 +1,8 @@
 // attackgen.cpp
 
-#include "datatypes.hpp"
 #include "attackgen.hpp"
 #include "bitboard.hpp"
+#include "../datatypes.hpp"
 
 // Init globals
 Bitboard pawn_attacks[2][64] = { {0} };     // pawn attacks table [side][square]

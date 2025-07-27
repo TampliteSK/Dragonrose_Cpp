@@ -1,17 +1,17 @@
 // zobrist.cpp
 
-#include <cstdint>
-#include <random>
-#include <iostream>
 #include "zobrist.hpp"
 #include "Board.hpp"
+
+#include <cstdint>
+#include <random>
 
 // Init globals
 uint64_t piece_keys[13][64] = { {0} }; // random piece keys [piece][square]
 uint64_t castle_keys[16] = { 0 };      // random castling keys
 uint64_t side_key = 0ULL;              // random side key, indicating white to move
 
-uint64_t generate_random_U64(unsigned int seed) {
+static inline uint64_t generate_random_U64(uint32_t seed) {
     std::mt19937_64 engine(seed); // 64-bit Mersenne Twister (Period length: 2^19937 - 1)
     std::uniform_int_distribution<uint64_t> distribution(0, UINT64_MAX);
     return distribution(engine);
