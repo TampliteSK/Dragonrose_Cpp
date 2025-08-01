@@ -7,7 +7,6 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <vector>
 
 // print move (for UCI purposes)
 std::string print_move(int move) {
@@ -39,7 +38,7 @@ std::string print_move(int move) {
 // Returns the move if valid.
 int parse_move(const Board *pos, std::string move_string) {
 
-    StaticVector<Move, MAX_LEGAL_MOVES> move_list;
+    MoveList move_list;
     generate_moves(pos, move_list, false);
 
     // Parse squares
@@ -47,9 +46,9 @@ int parse_move(const Board *pos, std::string move_string) {
     int target_square = (move_string[2] - 'a') + (8 - (move_string[3] - '0')) * 8;
 
     // Search if the move exists in the list
-    for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
+    for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
 
-        int move = move_list[move_count].move;
+        int move = move_list.moves[move_count].move;
 
         // make sure source & target squares are available within the generated move
         if (source_square == get_move_source(move) && target_square == get_move_target(move)) {
@@ -80,10 +79,10 @@ int parse_move(const Board *pos, std::string move_string) {
 }
 
 // print move list
-void print_move_list(const StaticVector<Move, MAX_LEGAL_MOVES> move_list, bool verbose = true) {
+void print_move_list(const MoveList move_list, bool verbose = true) {
 
     // Do nothing on empty move list
-    if (move_list.empty()) {
+    if (move_list.length == 0) {
         std::cout << "\n     No move in the move list!\n";
         return;
     }
@@ -92,9 +91,9 @@ void print_move_list(const StaticVector<Move, MAX_LEGAL_MOVES> move_list, bool v
         std::cout << "\n     move    piece     capture   double    enpass    castling    score\n\n";
 
             // Loop over moves within a move list
-            for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
+            for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
 
-                Move move_struct = move_list[move_count];
+                Move move_struct = move_list.moves[move_count];
                 int move = move_struct.move;
                 int score = move_struct.score;
 
@@ -113,8 +112,8 @@ void print_move_list(const StaticVector<Move, MAX_LEGAL_MOVES> move_list, bool v
     else {
          std::cout << "Generated moves: ";
 
-        for (int move_count = 0; move_count < (int)move_list.size(); move_count++) {
-            Move move_struct = move_list[move_count];
+        for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
+            Move move_struct = move_list.moves[move_count];
             int move = move_struct.move;
             int score = move_struct.score;
             std::cout << print_move(move) << " (" << score << ") ";
@@ -122,5 +121,5 @@ void print_move_list(const StaticVector<Move, MAX_LEGAL_MOVES> move_list, bool v
     }
 
     // Print total number of moves
-    std::cout << "\n\n     Total number of moves: " << move_list.size() << "\n\n";
+    std::cout << "\n\n     Total number of moves: " << move_list.length << "\n\n";
 }

@@ -1,6 +1,5 @@
 // search.cpp
 
-#include <vector>
 #include <algorithm>
 #include <iostream>
 #include <cmath>
@@ -220,16 +219,16 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 		return alpha; // We are dead lost, no point searching for improvements
 	}
 
-	StaticVector<Move, MAX_LEGAL_MOVES> list;
+	MoveList list;
 	generate_moves(pos, list, true);
 
 	uint16_t legal = 0;
 
 	sort_moves(pos, list, hash_move);
 
-	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
+	for (int move_num = 0; move_num < (int)list.length; ++move_num) {
 
-		int curr_move = list[move_num].move;
+		int curr_move = list.moves[move_num].move;
 
 		// Check if it's a legal move
 		if (!make_move(pos, curr_move)) {
@@ -385,7 +384,7 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 	}
 	
-	StaticVector<Move, MAX_LEGAL_MOVES> list;
+	MoveList list;
 	generate_moves(pos, list, false);
 
 	int legal = 0;
@@ -399,9 +398,9 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	sort_moves(pos, list, hash_move);
 
-	for (int move_num = 0; move_num < (int)list.size(); ++move_num) {
+	for (int move_num = 0; move_num < (int)list.length; ++move_num) {
 		int score = -INF_BOUND;
-		int curr_move = list[move_num].move;
+		int curr_move = list.moves[move_num].move;
 
 		bool is_killer = curr_move == pos->killer_moves[0][pos->ply] || curr_move == pos->killer_moves[1][pos->ply];
 		bool is_capture = (bool)get_move_captured(curr_move);
@@ -596,9 +595,9 @@ static inline int check_draw(const Board* pos, bool qsearch) {
 	if (pos->fifty_move >= 100) {
 		// Make sure there isn't a checkmate on or before the 100th half-move
 		if (is_square_attacked(pos, pos->king_sq[pos->side], pos->side ^ 1)) {
-			StaticVector<Move, MAX_LEGAL_MOVES> list;
+			MoveList list;
 			generate_moves(pos, list, false);
-			if (list.size() == 0) {
+			if (list.length == 0) {
 				return -INF_BOUND + pos->ply;
 			}
 		}

@@ -6,14 +6,9 @@
 #include "Board.hpp"
 #include "../StaticVector.hpp"
 
-typedef struct {
-    int move;
-    int score;
-} Move;
-
 // Functions
-void generate_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, bool noisy_only);
-void sort_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, int hash_move);
+void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only);
+void sort_moves(const Board *pos, MoveList& move_list, int hash_move);
 bool move_exists(Board* pos, const int move);
 
 /*

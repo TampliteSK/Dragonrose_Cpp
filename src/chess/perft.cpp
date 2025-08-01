@@ -12,7 +12,6 @@
 #include "attackgen.hpp"
 
 #include <iostream>
-#include <vector>
 #include <cstdint>
 
 uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
@@ -24,8 +23,7 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
     uint64_t nodes = 0;
     uint64_t start = 0;
 
-    // std::vector<Move> move_list;
-    StaticVector<Move, MAX_LEGAL_MOVES> move_list;
+    MoveList move_list;
     generate_moves(pos, move_list, false);
 
     if (print_info) {
@@ -33,10 +31,10 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
         start = get_time_ms();
     }
 
-    for (int move_count = 0; move_count < (int)move_list.size(); ++move_count) {
+    for (int move_count = 0; move_count < (int)move_list.length; ++move_count) {
 
         // Skip illegal moves
-        if (!make_move(pos, move_list[move_count].move)) {
+        if (!make_move(pos, move_list.moves[move_count].move)) {
             continue;
         }
 
@@ -55,7 +53,7 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
 
         // Print move if root level
         if (print_info) {
-            int move = move_list[move_count].move;
+            int move = move_list.moves[move_count].move;
             std::cout << print_move(move) << ": " << new_nodes << "\n";
         }
     }

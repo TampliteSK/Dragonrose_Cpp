@@ -1,12 +1,11 @@
 // endgame.cpp
 
 #include "../chess/bitboard.hpp"
-#include "datatypes.hpp"
-#include "endgame.hpp"
 #include "evaluate.hpp"
+#include "endgame.hpp"
+#include "../datatypes.hpp"
 
 #include <random>
-#include <iostream>
 
 // Returns an integer between -width ~ width cp as a draw score
 // This makes the engine prefer positions with higher mobility (more likely to get higher scores)
@@ -17,7 +16,7 @@ int8_t endgame_noise(unsigned int seed, uint8_t width) {
 }
 
 // Determines if the position is a drawn endgame (exc. pawns)
-bool check_material_draw(const Board* pos) {
+bool check_material_draw(const Board* pos, uint8_t phase) {
 	constexpr uint16_t draw_threshold = 365; // Value of a bishop in the opening
 
 	// Exception to the rule
@@ -29,5 +28,5 @@ bool check_material_draw(const Board* pos) {
 	}
 
 	// General case
-	return abs(count_material(pos)) < draw_threshold;
+	return abs(count_material(pos, phase)) < draw_threshold;
 }

@@ -6,14 +6,10 @@
 #include <cstring> // For strncmp
 #include <cstdlib> // For exit
 
-#include "attack.hpp"
-#include "Board.hpp"
-#include "bitboard.hpp"
+#include "chess/Board.hpp"
 #include "dragonrose.hpp" // Bench positions
 #include "evaluate.hpp"
 #include "init.hpp"
-#include "makemove.hpp"
-#include "moveio.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
@@ -28,8 +24,8 @@ int main(int argc, char* argv[]) {
 	init_searchinfo(info);
 	HashTable* hash_table = new HashTable();
 	hash_table->pTable = NULL;
-    UciOptions* options = new UciOptions();
-    UciHandler* uci = new UciHandler();
+    UciOptions options = UciOptions();
+    UciHandler uci = UciHandler();
 
     // Handle CLI Arguments
     for (int arg_num = 0; arg_num < argc; ++arg_num) {
@@ -45,7 +41,7 @@ int main(int argc, char* argv[]) {
                 info->nodes = 0;
                 std::cout << "Position: " << bench_positions[index] << "\n";
                 parse_fen(pos, bench_positions[index]);
-                uci->parse_go(pos, hash_table, info, "go depth 8");
+                uci.parse_go(pos, hash_table, info, "go depth 8");
                 total_nodes += info->nodes;
             }
 
@@ -60,9 +56,7 @@ int main(int argc, char* argv[]) {
             delete info;
             free(hash_table->pTable);
             delete hash_table;
-            delete options;
-            delete uci;
-            return 0;
+            return EXIT_SUCCESS;
         }
     }
 
@@ -73,7 +67,7 @@ int main(int argc, char* argv[]) {
         if (line.empty()) continue;
 
         if (line.substr(0, 3) == "uci") {
-            uci->uci_loop(pos, hash_table, info, options);
+            uci.uci_loop(pos, hash_table, info, &options);
             if (info->quit == true) break;
             continue;
         }
@@ -98,8 +92,6 @@ int main(int argc, char* argv[]) {
 	delete info;
     free(hash_table->pTable);
 	delete hash_table;
-    delete options;
-    delete uci;
 
-	return 0;
+	return EXIT_SUCCESS;
 }

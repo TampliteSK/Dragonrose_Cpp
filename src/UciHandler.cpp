@@ -1,13 +1,14 @@
 // UciHandler.cpp
 
-#include "Board.hpp"
+#include "chess/Board.hpp"
+#include "chess/makemove.hpp"
+#include "chess/moveio.hpp"
+#include "chess/perft.hpp"
+
 #include "datatypes.hpp"
-#include "makemove.hpp"
-#include "moveio.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 #include "UciHandler.hpp"
-#include "perft.hpp"
 
 #include <cstdint>
 #include <iostream>

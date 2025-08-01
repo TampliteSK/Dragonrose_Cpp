@@ -14,7 +14,7 @@
 #include <iostream>
 
 // Function prototypes
-static inline int get_phase(const Board* pos);
+static inline uint8_t get_phase(const Board* pos);
 
 static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase); 
 static inline int evaluate_knights(const Board* pos, uint8_t pce, int phase);
@@ -28,6 +28,9 @@ static inline int16_t count_activity(Bitboard white_attacks[], Bitboard black_at
 
 int evaluate_pos(const Board* pos) {
 
+	int score = 0;
+	int phase = get_phase(pos);
+
 	Bitboard white_attacks[32] = { 0ULL };
 	Bitboard black_attacks[32] = { 0ULL };
 	int white_attackers[32] = { 0 }; // The pieces corresponding to each attack bitboard in piece_attacks
@@ -36,16 +39,14 @@ int evaluate_pos(const Board* pos) {
 	Bitboard pawns = pos->bitboards[wP] | pos->bitboards[bP];
 	bool is_TB_endgame = count_bits(pos->occupancies[BOTH]) - pos->piece_num[wP] - pos->piece_num[bP] < 8;
 	if (is_TB_endgame && count_bits(pawns) == 0) {
-		if (check_material_draw(pos)) {
+		if (check_material_draw(pos, phase)) {
 			return endgame_noise(pos->hash_key % UINT32_MAX, 3);
 		}
 	}
 
 	bool is_endgame = count_bits(pos->occupancies[BOTH]) < 8;
-	int score = 0;
-	int phase = get_phase(pos);
 
-	score += count_material(pos);
+	score += count_material(pos, phase);
 	// std::cout << "Material: " << count_material(pos) << "\n";
 
 	// Get easily-accessible attacks in one-go to save time
@@ -122,7 +123,7 @@ int evaluate_pos(const Board* pos) {
 
 // Calculates the middlegame weight for tapered eval.
 // Evaluates to 64 at startpos
-static inline int get_phase(const Board* pos) {
+static inline uint8_t get_phase(const Board* pos) {
 	// Caissa game phase formula (0.11e)
 	// Performs about 200 elo better than PesTO's own tapered eval and directly scaling to material
 	int game_phase = 3 * (pos->piece_num[wN] + pos->piece_num[bN] + pos->piece_num[wB] + pos->piece_num[bB]);
@@ -134,9 +135,8 @@ static inline int get_phase(const Board* pos) {
 }
 
 // Calculates the material from White's perspective
-int count_material(const Board* pos) {
+int count_material(const Board* pos, const uint8_t phase) {
 	int sum = 0;
-	int phase = get_phase(pos);
 
 	for (int pce = wP; pce <= bK; ++pce) {
 		int value = pos->piece_num[pce] * ( piece_values[pce].mg() * phase + piece_values[pce].eg() * (64 - phase)) / 64;

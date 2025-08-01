@@ -3,11 +3,16 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# VS files
 *.vs
 *.sln
 *.vcxproj
 *.filters
 *.user
+
+# VSCode files
+.vscode
+
 *.gitattributes
 .git
 

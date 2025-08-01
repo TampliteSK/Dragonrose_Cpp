@@ -7,6 +7,10 @@
 #include "../chess/Board.hpp"
 #include "ScorePair.hpp"
 
+// Functions
+int evaluate_pos(const Board* pos);
+int count_material(const Board* pos, const uint8_t phase);
+
 // Evaluation constants
 // indicies:  0  1  2  3  4  5  6  7
 // ranks:    r8 r7 r6 r5 r4 r3 r2 r1
@@ -31,10 +35,6 @@ const uint8_t battery = 10; // B+Q, R+R, Q+R
 
 const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL; // B2-G7 set
 
-// Functions
-int evaluate_pos(const Board* pos);
-int count_material(const Board* pos);
-
 // Attack units table from Stockfish, rescaled to centipawns
 const int safety_table[100] = {
     0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
@@ -54,14 +54,14 @@ const int safety_table[100] = {
 */
 
 // Material
-constexpr ScorePair piece_values[13] = { 
+inline ScorePair piece_values[13] = { 
     S(0, 0), // EMPTY
     S(82, 94), S(337, 281), S(365, 297), S(477, 512), S(1025, 936), S(0, 0), // wP, wN, wB, wR, wQ, wK
     S(82, 94), S(337, 281), S(365, 297), S(477, 512), S(1025, 936), S(0, 0)  // bP, bN, bB, bR, bQ, bK
 };
 
 // Piece-square Tables
-constexpr ScorePair PSQT[6][64] = {
+inline ScorePair PSQT[6][64] = {
     {  // Pawns
         S(  0,   0), S(  0,   0), S(  0,   0), S(  0,   0), S(  0,   0), S(  0,   0), S(  0,   0), S(  0,   0),
         S( 98, 178), S(134, 173), S( 61, 158), S( 95, 134), S( 68, 147), S(126, 132), S( 34, 165), S(-11, 187),

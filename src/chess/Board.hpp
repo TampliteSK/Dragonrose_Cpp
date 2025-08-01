@@ -3,7 +3,7 @@
 #ifndef BOARD_HPP
 #define BOARD_HPP
 
-#include "datatypes.hpp"
+#include "../datatypes.hpp"
 #include <string>
 #include <cstdint>
 

@@ -61,13 +61,14 @@ static int mvv_lva[12][12] = {
 */
 
 // add move to the move list
-static inline void add_move(StaticVector<Move, MAX_LEGAL_MOVES>& move_list, int move, int score) {
+static inline void add_move(MoveList& move_list, int move, int score) {
     Move move_struct = { move, score };
-    move_list.push(move_struct);
+    move_list.moves[move_list.length] = move_struct;
+    move_list.length++;
 }
 
 // Movegen function forked from BBC by Maksim Korzh (Code Monkey King)
-void generate_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, bool noisy_only) {
+void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only) {
 
     uint8_t source_square, target_square;
     uint8_t side = pos->side;
@@ -302,40 +303,40 @@ static inline int score_move(const Board *pos, int move, int hash_move) {
 }
 
 // Sort moves in descending order
-void sort_moves(const Board *pos, StaticVector<Move, MAX_LEGAL_MOVES>& move_list, int hash_move) {
+void sort_moves(const Board *pos, MoveList& move_list, int hash_move) {
     // Score all the moves
-    for (int i = 0; i < (int)move_list.size(); ++i) {
-        move_list[i].score += score_move(pos, move_list[i].move, hash_move);
+    for (int i = 0; i < (int)move_list.length; ++i) {
+        move_list.moves[i].score += score_move(pos, move_list.moves[i].move, hash_move);
     }
 
     // Insertion sort
     // std::stable_sort performance depends greatly on P/E cores
-    for (int i = 1; i < (int)move_list.size(); ++i) {
-        Move key = std::move(move_list[i]);
+    for (int i = 1; i < (int)move_list.length; ++i) {
+        Move key = std::move(move_list.moves[i]);
         int j = i - 1;
 
         // Shift elements > key.score to the right
-        while (j >= 0 && move_list[j].score < key.score) {  // Sort DESC (high score first)
-            move_list[j + 1] = std::move(move_list[j]);
+        while (j >= 0 && move_list.moves[j].score < key.score) {  // Sort DESC (high score first)
+            move_list.moves[j + 1] = std::move(move_list.moves[j]);
             j--;
         }
-        move_list[j + 1] = key;
+        move_list.moves[j + 1] = key;
     }
 }
 
 // Determine is a move is possible in a given position
 bool move_exists(Board* pos, const int move) {
 
-    StaticVector<Move, MAX_LEGAL_MOVES> list;
+    MoveList list;
     generate_moves(pos, list, false);
 
-    for (int i = 0; i < (int)list.size(); ++i) {
+    for (int i = 0; i < (int)list.length; ++i) {
 
-        if (!make_move(pos, list[i].move)) {
+        if (!make_move(pos, list.moves[i].move)) {
             continue;
         }
         take_move(pos);
-        if (list[i].move == move) {
+        if (list.moves[i].move == move) {
             return true;
         }
     }

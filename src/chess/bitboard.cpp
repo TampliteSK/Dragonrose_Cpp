@@ -1,11 +1,10 @@
 // bitboard.cpp
 
-#include "../datatypes.hpp"
 #include "bitboard.hpp"
 #include "Board.hpp"
+#include "../datatypes.hpp"
 
 #include <bit>
-#include <bitset>
 #include <cstdint>
 #include <algorithm>
 #include <iostream>

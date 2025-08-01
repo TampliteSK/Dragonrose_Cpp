@@ -1,6 +1,5 @@
 // attack.cpp
 
-#include <iostream>
 #include "attack.hpp"
 #include "attackgen.hpp"
 #include "Board.hpp"
