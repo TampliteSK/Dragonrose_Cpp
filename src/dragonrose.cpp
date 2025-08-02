@@ -1,7 +1,7 @@
 // dragonrose.cpp
 
 #include <iostream>
-#include <format>
+#include <string>
 #include <cstdint>
 #include <cstring> // For strncmp
 #include <cstdlib> // For exit
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
                 info->nodes = 0;
                 std::cout << "Position: " << bench_positions[index] << "\n";
                 parse_fen(pos, bench_positions[index]);
-                std::string command = std::format("go depth {}", BENCH_DEPTH);
+                std::string command = "go depth " + std::to_string(BENCH_DEPTH);
                 uci.parse_go(pos, hash_table, info, command);
                 total_nodes += info->nodes;
             }
