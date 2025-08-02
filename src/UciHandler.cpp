@@ -84,10 +84,17 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     info->depth = depth;
 
     // Time Management
-    if (time != -1) {
-        // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench - 250ms latency)
+    // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench - 250ms latency)
+    constexpr int MIN_NETWORK_BUFFER = 50; // in ms 
+    if (movetime != -1) {
+        // No time management, directly use available time (- buffer)
         info->timeset = true;
-        constexpr int MIN_NETWORK_BUFFER = 50; // in ms
+        int buffered_time = std::max(movetime - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
+        info->hard_stop_time = info->soft_stop_time = info->start_time + buffered_time;
+    }
+    else if (time != -1) {
+        
+        info->timeset = true;
 
         // Get hard time limit
         int buffered_time = std::max((time + inc/2) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
@@ -124,7 +131,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         info->nodes_limit = nodes;
     }
 
-    // std::cout << "time: " << time << " start: " << info->start_time << " stop: " << info->stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
+    std::cout << "time: " << time << " start: " << info->start_time << " soft stop: " << info->soft_stop_time << " hard stop: " << info->hard_stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
     // std::cout << "nodeset: " << info->nodesset << " | nodes limit: " << nodes << "\n";
     search_position(pos, table, info);
 }
