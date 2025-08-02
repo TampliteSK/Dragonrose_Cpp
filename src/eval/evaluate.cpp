@@ -139,7 +139,7 @@ int count_material(const Board* pos, const uint8_t phase) {
 	int sum = 0;
 
 	for (int pce = wP; pce <= bK; ++pce) {
-		int value = pos->piece_num[pce] * ( piece_values[pce].mg() * phase + piece_values[pce].eg() * (64 - phase)) / 64;
+		int value = pos->piece_num[pce] * piece_values[pce].interpolate(phase);
 		sum += value * ((piece_col[pce] == WHITE) ? 1 : -1);
 	}
 
@@ -150,10 +150,10 @@ static inline int compute_PSQT(uint8_t pce, uint8_t sq, int phase) {
 	int score = 0;
 	uint8_t col = piece_col[pce];
 	if (col == WHITE) {
-		score += (PSQT[piece_type[pce] - 1][sq].mg() * phase + PSQT[piece_type[pce] - 1][sq].eg() * (64 - phase)) / 64;
+		score += PSQT[piece_type[pce]][sq].interpolate(phase);
 	}
 	else {
-		score += (PSQT[piece_type[pce] - 1][Mirror64[sq]].mg() * phase + PSQT[piece_type[pce] - 1][Mirror64[sq]].eg() * (64 - phase)) / 64;
+		score += PSQT[piece_type[pce]][Mirror64[sq]].interpolate(phase);
 	}
 	return score;
 }
