@@ -17,6 +17,7 @@
 
 constexpr uint8_t BENCH_DEPTH = 7;
 
+
 int main(int argc, char* argv[]) {
 	init_all();
 
