@@ -14,8 +14,8 @@ typedef struct {
 } Move;
 
 template<typename T, size_t capacity>
-struct StaticVector {  // Named struct
-    T moves[capacity];
+struct StaticVector {
+    T moves[capacity] = {};
     uint16_t length = 0;
 };
 
