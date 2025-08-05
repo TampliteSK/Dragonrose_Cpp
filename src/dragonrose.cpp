@@ -15,7 +15,7 @@
 #include "ttable.hpp"
 #include "UciHandler.hpp"
 
-constexpr uint8_t BENCH_DEPTH = 7;
+constexpr uint8_t BENCH_DEPTH = 8;
 
 
 int main(int argc, char* argv[]) {
