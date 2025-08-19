@@ -87,10 +87,10 @@ void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only) {
 
                 // Generate quiet pawn moves
                 if (!noisy_only) {
-                    if (target_square >= a8 && !GET_BIT(pos->occupancies[BOTH], target_square)) {
+                    if (!GET_BIT(pos->occupancies[BOTH], target_square)) {
 
                         // pawn promotion
-                        if (source_square >= a7 && source_square <= h7) {
+                        if (source_square <= h7) {
                             add_move(move_list, encode_move(source_square, target_square, piece, wQ, 0, 0, 0, 0), 5'000'000);
                             add_move(move_list, encode_move(source_square, target_square, piece, wR, 0, 0, 0, 0), 200'000);
                             add_move(move_list, encode_move(source_square, target_square, piece, wB, 0, 0, 0, 0), 100'000);
@@ -117,7 +117,7 @@ void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only) {
                     int target_pce = pos->pieces[target_square];
 
                     // pawn promotion
-                    if (source_square >= a7 && source_square <= h7) {
+                    if (source_square <= h7) {
                         add_move(move_list, encode_move(source_square, target_square, piece, wQ, target_pce, 0, 0, 0), 5'000'000);
                         add_move(move_list, encode_move(source_square, target_square, piece, wR, target_pce, 0, 0, 0), 200'000);
                         add_move(move_list, encode_move(source_square, target_square, piece, wB, target_pce, 0, 0, 0), 100'000);
@@ -148,10 +148,10 @@ void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only) {
 
                 // Generate quiet pawn moves
                 if (!noisy_only) {
-                    if (target_square <= h1 && !GET_BIT(pos->occupancies[BOTH], target_square)) {
+                    if (!GET_BIT(pos->occupancies[BOTH], target_square)) {
 
                         // pawn promotion
-                        if (source_square >= a2 && source_square <= h2) {
+                        if (source_square >= a2) {
                             add_move(move_list, encode_move(source_square, target_square, piece, bQ, 0, 0, 0, 0), 5'000'000);
                             add_move(move_list, encode_move(source_square, target_square, piece, bR, 0, 0, 0, 0), 200'000);
                             add_move(move_list, encode_move(source_square, target_square, piece, bB, 0, 0, 0, 0), 100'000);
@@ -179,7 +179,7 @@ void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only) {
                     int target_pce = pos->pieces[target_square];
 
                     // pawn promotion
-                    if (source_square >= a2 && source_square <= h2) {
+                    if (source_square >= a2) {
                         add_move(move_list, encode_move(source_square, target_square, piece, bQ, target_pce, 0, 0, 0), 5'000'000);
                         add_move(move_list, encode_move(source_square, target_square, piece, bR, target_pce, 0, 0, 0), 200'000);
                         add_move(move_list, encode_move(source_square, target_square, piece, bB, target_pce, 0, 0, 0), 100'000);

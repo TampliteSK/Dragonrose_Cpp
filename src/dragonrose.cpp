@@ -6,17 +6,15 @@
 #include <cstring> // For strncmp
 #include <cstdlib> // For exit
 
+#include "chess/bench.hpp"
 #include "chess/Board.hpp"
-#include "dragonrose.hpp" // Bench positions
-#include "evaluate.hpp"
+#include "eval/evaluate.hpp"
+
 #include "init.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
 #include "UciHandler.hpp"
-
-constexpr uint8_t BENCH_DEPTH = 8;
-
 
 int main(int argc, char* argv[]) {
 	init_all();
@@ -34,27 +32,8 @@ int main(int argc, char* argv[]) {
     for (int arg_num = 0; arg_num < argc; ++arg_num) {
 
         if (strncmp(argv[arg_num], "bench", 5) == 0) {
-
-            init_hash_table(hash_table, 16);
-            uint64_t total_nodes = 0;
-            uint64_t start = get_time_ms();
-
-            for (int index = 0; index < 50; ++index) {
-                std::cout << "\n=== Benching position " << index+1 << "/50 ===\n";
-                info->nodes = 0;
-                std::cout << "Position: " << bench_positions[index] << "\n";
-                parse_fen(pos, bench_positions[index]);
-                std::string command = "go depth " + std::to_string(BENCH_DEPTH);
-                uci.parse_go(pos, hash_table, info, command);
-                total_nodes += info->nodes;
-            }
-
-            uint64_t end = get_time_ms();
-            uint64_t time = end - start;
-            std::cout << "\n-#-#- Benchmark results -#-#-\n";
-            std::cout << "Execution time: " << time / 1000.0 << "s \n";
-            std::cout << total_nodes << " nodes " << int(total_nodes / (double)time * 1000) << " nps\n";
-
+            run_bench(pos, hash_table, info, uci);
+            
             // Quit after benching is finished
             delete pos;
             delete info;

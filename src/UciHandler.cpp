@@ -214,7 +214,7 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
                         depth = 5; // Fall back to default depth
                     }
                 }
-                // parse_fen(pos, CPW_POS6);
+                parse_fen(pos, CPW_POS5);
                 run_perft(pos, depth, true);
             }
             else {

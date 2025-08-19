@@ -1,9 +1,15 @@
-// dragonrose.hpp
+// bench.hpp
 
-#ifndef DRAGONROSE_HPP
-#define DRAGONROSE_HPP
+#ifndef BENCH_HPP
+#define BENCH_HPP
 
-#include <string>
+#include "../UciHandler.hpp"
+#include "../ttable.hpp"
+#include "../search.hpp"
+#include "../timeman.hpp"
+
+#include "Board.hpp"
+#include <iostream>
 
 // 50 bench positions from Heimdall
 std::string bench_positions[] = {
@@ -59,4 +65,28 @@ std::string bench_positions[] = {
 	"2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93" 
 };
 
-#endif // DRAGONROSE_HPP
+constexpr uint8_t BENCH_DEPTH = 8;
+
+static inline void run_bench(Board* pos, HashTable* table, SearchInfo* info, UciHandler uci) {
+    init_hash_table(table, 16);
+    uint64_t total_nodes = 0;
+    uint64_t start = get_time_ms();
+
+    for (int index = 0; index < 50; ++index) {
+        std::cout << "\n=== Benching position " << index+1 << "/50 ===\n";
+        info->nodes = 0;
+        std::cout << "Position: " << bench_positions[index] << "\n";
+        parse_fen(pos, bench_positions[index]);
+        std::string command = "go depth " + std::to_string(BENCH_DEPTH);
+        uci.parse_go(pos, table, info, command);
+        total_nodes += info->nodes;
+    }
+
+    uint64_t end = get_time_ms();
+    uint64_t time = end - start;
+    std::cout << "\n-#-#- Benchmark results -#-#-\n";
+    std::cout << "Execution time: " << time / 1000.0 << "s \n";
+    std::cout << total_nodes << " nodes " << int(total_nodes / (double)time * 1000) << " nps\n" << std::flush;
+}
+
+#endif // BENCH_HPP
