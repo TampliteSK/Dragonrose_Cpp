@@ -569,7 +569,7 @@ static inline int16_t count_activity(Bitboard white_attacks[], Bitboard black_at
 		if (black_attackers[i] == EMPTY) {
 			break;
 		}
-		black_weight_count += activity_weight[white_attackers[i]];
+		black_weight_count += activity_weight[black_attackers[i]];
 		black_activity += (count_bits(black_attacks[i]) + count_bits(black_attacks[i] & BOTTOM_HALF)) * activity_weight[black_attackers[i]];
 	}
 	black_activity /= black_weight_count;
