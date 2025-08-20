@@ -4,6 +4,7 @@
 #define BITBOARD_HPP
 
 #include "../datatypes.hpp"
+#include <bit>
 
 // set/get/pop bit macros
 #define GET_BIT(bitboard, square) ((bitboard) & (1ULL << (square)))
@@ -22,9 +23,24 @@ const Bitboard TOP_HALF = 0xFFFFFFFF00000000ULL; // A5 ~ H8 set
 extern const int diagonals[64];
 extern const int anti_diagonals[64];
 
+/*
+    Bit Manipulation
+*/
+
+// Clears the least significant set bit and returns its index (0 - 63)
+static inline uint8_t pop_ls1b(Bitboard& bb) {
+    uint8_t index = __builtin_ctzll(bb); // Use gcc/clang intrinsic
+    bb &= bb - 1;
+    return index;
+}
+
+// Counts the number of set bits in a bitboard
+static inline uint8_t count_bits(Bitboard bb) {
+    return (uint8_t)std::popcount(bb);
+}
+
+
 // Bitboard functions
-uint8_t pop_ls1b(Bitboard& bb);
-uint8_t count_bits(Bitboard bb);
 Bitboard bits_between_squares(uint8_t sq1, uint8_t sq2);
 Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col);
 void print_bitboard(Bitboard board);

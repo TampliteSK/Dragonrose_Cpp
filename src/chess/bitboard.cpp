@@ -4,7 +4,6 @@
 #include "Board.hpp"
 #include "../datatypes.hpp"
 
-#include <bit>
 #include <cstdint>
 #include <algorithm>
 #include <iostream>
@@ -31,22 +30,6 @@ const int anti_diagonals[64]{
      6,  5,  4,  3,  2,  1,  0, 15,
      7,  6,  5,  4,  3,  2,  1,  0
 };
-
-/*
-    Bit Manipulation
-*/
-
-// Clears the least significant set bit and returns its index (0 - 63)
-uint8_t pop_ls1b(Bitboard& bb) {
-    uint8_t index = __builtin_ctzll(bb); // Use gcc/clang intrinsic
-    bb &= ~1ULL << index;
-    return index;
-}
-
-// Counts the number of set bits in a bitboard
-uint8_t count_bits(Bitboard bb) {
-    return (uint8_t)std::popcount(bb);
-}
 
 // Mask a bitboard with bits between 2 given squares set
 Bitboard bits_between_squares(uint8_t sq1, uint8_t sq2) {

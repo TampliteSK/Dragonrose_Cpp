@@ -252,9 +252,6 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         }
         else if (line.substr(0, 9) == "test") {
             // No tests
-            MoveList move_list;
-            generate_moves(pos, move_list, false);
-            print_move_list(move_list, false);
         }
 
         if (info->quit) break;
