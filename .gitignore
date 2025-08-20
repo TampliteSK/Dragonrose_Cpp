@@ -379,8 +379,9 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Misc files to be ignored
+Dragonrose
 /Dragonrose.exe
 /Dragonrose_Cpp.exe
 Dragonrose_Cpp
 gmon.out
-profile_report.txt
+analysis.txt
