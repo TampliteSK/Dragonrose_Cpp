@@ -3,6 +3,7 @@
 #include "chess/Board.hpp"
 #include "chess/makemove.hpp"
 #include "chess/moveio.hpp"
+#include "chess/movegen.hpp"
 #include "chess/perft.hpp"
 
 #include "datatypes.hpp"
@@ -131,7 +132,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         info->nodes_limit = nodes;
     }
 
-    std::cout << "time: " << time << " start: " << info->start_time << " soft stop: " << info->soft_stop_time << " hard stop: " << info->hard_stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
+    // std::cout << "time: " << time << " start: " << info->start_time << " soft stop: " << info->soft_stop_time << " hard stop: " << info->hard_stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
     // std::cout << "nodeset: " << info->nodesset << " | nodes limit: " << nodes << "\n";
     search_position(pos, table, info);
 }
@@ -252,6 +253,23 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         }
         else if (line.substr(0, 9) == "test") {
             // No tests
+        }
+        else if (line.substr(0, 10) == "test2") {
+            // TODO: Fix hash discrepancy
+            std::string test_fen = "r1b1k1nr/ppqn1pbp/2pp2p1/4pP2/3PP3/3B1N2/PPP3PP/RNBQK2R w KQkq e6 0 1";
+            parse_fen(pos, test_fen);
+            print_board(pos);
+
+            int move = 40899869; // f5e6
+            // MoveList list = MoveList();
+            // list.moves[0] = {move, 0};
+            // list.length = 1;
+            // print_move_list(list, true);
+            make_move(pos, move);
+            print_board(pos);
+
+            take_move(pos);
+            print_board(pos);
         }
 
         if (info->quit) break;
