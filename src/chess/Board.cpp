@@ -176,7 +176,7 @@ void parse_fen(Board* pos, const std::string FEN) {
 	// En passant parsing
 	if (FEN[pfen] != '-') {
 		file = FEN[pfen]     - 'a';
-		rank = 8 - int(FEN[pfen + 1] - '1');
+		rank = 7 - int(FEN[pfen + 1] - '1');
 		pos->enpas = FR2SQ(file, rank);
 		pfen += 3;
 	}
@@ -248,6 +248,11 @@ void print_board(const Board* pos) {
 }
 
 void print_move_history(const Board* pos) {
+	if (pos->his_ply == 0) {
+		std::cout << "print_move_history() warning: No move history available.\n";
+		return;
+	}
+
 	std::cout << "Move history: ";
 	for (int i = 0; i < pos->his_ply; ++i) {
 		std::cout << print_move(pos->move_history[i].move) << " ";
