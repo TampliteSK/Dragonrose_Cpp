@@ -7,7 +7,13 @@ EXE ?= Dragonrose_Cpp
 INC_DIRS = -Isrc -Isrc/chess -Isrc/eval
 STD_FLAGS = -std=c++20
 WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic
-OPT_FLAGS = -O3 -ffast-math -march=native -funroll-loops
+
+# Optimization flags: use -Ofast for g++, -O3 otherwise
+OPT_FLAGS = -O3 -ffast-math -march=native -funroll-loops -flto=auto
+ifeq ($(findstring g++,$(CXX)),g++)
+    OPT_FLAGS = -Ofast -ffast-math -march=native -funroll-loops -flto=auto
+endif
+
 MISC_FLAGS ?=
 CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(INC_DIRS) $(MISC_FLAGS)
 

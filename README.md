@@ -9,9 +9,9 @@ such as [En Croissant](https://encroissant.org/), [Arena](http://www.playwithare
 This repository is a **rewrite of the original [C Dragonrose](https://github.com/TampliteSK/dragonrose)**. <br>
 
 Notable differences with older repo: <br>
-- Uses magic bitboards to generate attacks, storing them in pre-generated attack tables for lookups later
+- Uses plain magic bitboards to generate attacks, storing them in pre-generated attack tables for lookups later
 - No longer uses the built-in opening book that comes with VICE
-- Consistent naming convention, data types and parameter ordering
+- More consistent naming convention, data types and parameter ordering
 - Takes inspiration from more engines
 
 You are free to borrow and/or modify my code if you so wish, as long as you give credit. <br>
@@ -82,7 +82,11 @@ Evaluation (Hand-crafted evaluation, or HCE):
 - Basic drawn endgaeme knowledge
 
 Others:
-- Simple hard + soft time limits
+- Attack generation
+  - Pre-computed attack tables initialised at startup
+  - Plain magic bitboards for slider attacks
+- Time management
+  - Simple hard + soft time limits
 
 ## Playing Strength
 |   Version   | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
@@ -95,7 +99,7 @@ Others:
 Below are some other metrics:
 |       Metric      |    Rapid   |   Blitz   |   Bullet   |
 |:-----------------:|:----------:|:---------:|:----------:|
-|   Lichess (BOT)   | 2208 ± 66  | 2019 ± 52 | 2102 ± 60  |
+|   Lichess (BOT)   | 2207 ± 57  | 2206 ± 47 | 2193 ± 48  |
 | Chesscom\* (est.) | 2655 ± 109 | 2888 ± 88 | 2675 ± 338 |
 \*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
 
@@ -113,7 +117,7 @@ Below are some other metrics:
 - Other: Patched some bugs.
 
 ## To-do list
-- Release
+- Release at 2500 CCRL (vs. Stash), and then next big release at 3000.
 - Search / Eval progression
 - Add mate distance pruning
 - ...
