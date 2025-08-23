@@ -101,6 +101,7 @@ Below are some other metrics:
 |:-----------------:|:----------:|:---------:|:----------:|
 |   Lichess (BOT)   | 2207 ± 57  | 2206 ± 47 | 2193 ± 48  |
 | Chesscom\* (est.) | 2655 ± 109 | 2888 ± 88 | 2675 ± 338 |
+
 \*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
 
 ## Useful Reesources

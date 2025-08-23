@@ -125,7 +125,7 @@ int evaluate_pos(const Board* pos) {
 // Evaluates to 64 at startpos
 static inline uint8_t get_phase(const Board* pos) {
 	// Caissa game phase formula (0.11e)
-	// Performs about 200 elo better than PesTO's own tapered eval and directly scaling to material
+	// ~20 elo better than the original PesTO phase formula
 	int game_phase = 3 * (pos->piece_num[wN] + pos->piece_num[bN] + pos->piece_num[wB] + pos->piece_num[bB]);
 	game_phase += 5 * (pos->piece_num[wR] + pos->piece_num[bR]);
 	game_phase += 10 * (pos->piece_num[wQ] + pos->piece_num[bQ]);
