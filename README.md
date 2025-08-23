@@ -86,7 +86,7 @@ Others:
   - Pre-computed attack tables initialised at startup
   - Plain magic bitboards for slider attacks
 - Time management
-  - Simple hard + soft time limits
+  - Simple hard time limit + varying soft time limit based on ply (phase)
 
 ## Playing Strength
 |   Version   | CCRL 2+1 est. | [UBC](https://e4e6.com/) |

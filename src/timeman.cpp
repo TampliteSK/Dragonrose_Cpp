@@ -11,6 +11,8 @@ uint64_t get_time_ms() {
     return static_cast<uint64_t>(duration.count());
 }
 
+// Allocate time based on the current ply, which is used to determine the phase of the game
+// Returns the time allocated in milliseconds
 int allocate_time(const Board* pos, int time) {
 
     int time_allocated = 0;
