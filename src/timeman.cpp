@@ -19,8 +19,8 @@ int allocate_time(const Board* pos, int time) {
     int time_allocated = 0;
 
     // Time trouble
-    if (time < 30000) { // 30s
-        return time / 60 + ((time > 300) ? 100 : 0); // Add 20ms buffer unless there's barely any time left for buffering
+    if (time < 15000) { // 30s
+        time_allocated = time / 60 + ((time > 300) ? 100 : 0); // Add 100ms buffer unless there's barely any time left for buffering
     }
     else {
         if (pos->his_ply <= 30) {

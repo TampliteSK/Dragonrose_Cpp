@@ -85,8 +85,8 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
     info->depth = depth;
 
     // Time Management
-    // Add a buffer for handling Engine <-> GUI communication latency (esp. OpenBench - 250ms latency)
-    constexpr int MIN_NETWORK_BUFFER = 50; // in ms 
+    // Add a buffer for handling Engine <-> GUI communication latency (esp. for OpenBench)
+    constexpr int MIN_NETWORK_BUFFER = 100; // in ms 
     if (movetime != -1) {
         // No time management, directly use available time (- buffer)
         info->timeset = true;
@@ -106,11 +106,9 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         // info->soft_stop_time = info->start_time + buffered_time;
 
         // Get soft time limit based on current ply (phase)
-        buffered_time = std::max(allocate_time(pos, time + inc/2 - MIN_NETWORK_BUFFER), MIN_NETWORK_BUFFER);
-        // std::cout << "Buffered time: " << buffered_time << "\n";
+        buffered_time = std::max(allocate_time(pos, (time + inc/2) * 8 / 10 - MIN_NETWORK_BUFFER), MIN_NETWORK_BUFFER);
         // Prevent soft limit from exceeding hard limit
         info->soft_stop_time = std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER / 3);
-        // std::cout << "A: " << info->start_time + buffered_time << " | B: " << info->hard_stop_time - MIN_NETWORK_BUFFER / 3 << "\n";
 
         // std::cout << "Current time: " << get_time_ms() 
         //    << " | Hard limit: " << info->hard_stop_time << " (" << info->hard_stop_time - get_time_ms() << ") "
