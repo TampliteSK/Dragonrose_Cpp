@@ -202,6 +202,8 @@ void parse_fen(Board* pos, const std::string FEN) {
 		full_move = full_move * 10 + (FEN[pfen] - '0');
 		pfen++;
 	}
+	pos->ply = (full_move - 1) * 2 + (pos->side == BLACK ? 1 : 0); // FEN fullmove starts at 1 → ply starts at 0
+	pos->his_ply = pos->ply;
 
 	pos->hash_key = generate_hash_key(pos); // Get Zobrist key for the position
 	

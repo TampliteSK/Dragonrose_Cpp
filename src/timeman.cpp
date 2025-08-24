@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <chrono>
 #include "timeman.hpp"
+#include <iostream>
 
 // Get time in milliseconds
 uint64_t get_time_ms() {
@@ -38,5 +39,6 @@ int allocate_time(const Board* pos, int time) {
         }
     }
 
-    return time_allocated + 50; // 50ms buffer
+    // std::cout << "Original time: " << time << ", Ply: " << (int)pos->his_ply << " | Allocated time: " << time_allocated << "ms\n";
+    return time_allocated;
 }
