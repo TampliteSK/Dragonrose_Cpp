@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <chrono>
 #include "timeman.hpp"
+#include <iostream>
 
 // Get time in milliseconds
 uint64_t get_time_ms() {
@@ -14,23 +15,24 @@ uint64_t get_time_ms() {
 // Allocate time based on the current ply, which is used to determine the phase of the game
 // Returns the time allocated in milliseconds
 int allocate_time(const Board* pos, int time) {
-
+    constexpr uint8_t OPENING_PLY = 30; // 15 moves
+    constexpr uint8_t MIDGAME_PLY = 80; // 40 moves
     int time_allocated = 0;
 
     // Time trouble
-    if (time < 30000) { // 30s
-        return time / 60 + ((time > 300) ? 100 : 0); // Add 20ms buffer unless there's barely any time left for buffering
+    if (time < 15000) { // 30s
+        time_allocated = time / 60 + ((time > 300) ? 100 : 0); // Add 100ms buffer unless there's barely any time left for buffering
     }
     else {
-        if (pos->his_ply <= 30) {
-            // Opening phase (10% / 50% / 40%)
-            int phase_moves = (40 - pos->his_ply) / 2; // Add an additional 10 ply as buffer
+        if (pos->his_ply <= OPENING_PLY) {
+            // Opening phase (10% / 55% / 35%)
+            int phase_moves = (OPENING_PLY + 10 - pos->his_ply) / 2; // Add an additional 10 ply as buffer
             time_allocated = time * 10 / (100 * phase_moves);
         }
-        else if (pos->his_ply <= 70) {
-            // Middlegame phase (50% / 40% -> 56% / 44%)
-            int phase_moves = (80 - pos->his_ply) / 2;
-            time_allocated = time * 56 / (100 * phase_moves);
+        else if (pos->his_ply <= MIDGAME_PLY) {
+            // Middlegame phase (55% / 35% -> 61% / 39%)
+            int phase_moves = (MIDGAME_PLY + 10 - pos->his_ply) / 2;
+            time_allocated = time * 61 / (100 * phase_moves);
         }
         else {
             // Endgame phase (divide evenly rather conservatively)
@@ -38,5 +40,6 @@ int allocate_time(const Board* pos, int time) {
         }
     }
 
-    return time_allocated + 50; // 50ms buffer
+    // std::cout << "Original time: " << time << ", Ply: " << (int)pos->his_ply << " | Allocated time: " << time_allocated << "ms\n";
+    return time_allocated;
 }
