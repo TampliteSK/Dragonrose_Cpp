@@ -25,14 +25,14 @@ int allocate_time(const Board* pos, int time) {
     }
     else {
         if (pos->his_ply <= OPENING_PLY) {
-            // Opening phase (10% / 50% / 40%)
+            // Opening phase (10% / 55% / 35%)
             int phase_moves = (OPENING_PLY + 10 - pos->his_ply) / 2; // Add an additional 10 ply as buffer
             time_allocated = time * 10 / (100 * phase_moves);
         }
         else if (pos->his_ply <= MIDGAME_PLY) {
-            // Middlegame phase (50% / 40% -> 56% / 44%)
+            // Middlegame phase (55% / 35% -> 61% / 39%)
             int phase_moves = (MIDGAME_PLY + 10 - pos->his_ply) / 2;
-            time_allocated = time * 56 / (100 * phase_moves);
+            time_allocated = time * 61 / (100 * phase_moves);
         }
         else {
             // Endgame phase (divide evenly rather conservatively)
