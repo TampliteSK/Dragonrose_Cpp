@@ -22,7 +22,7 @@ const uint8_t isolated_centre_pawn = 10; // Additional penalty
 const uint8_t stacked_pawn = 10; // multipled by n-1, where n is no. of stacked pawns
 const uint8_t backwards_pawn = 15;
 
-const uint8_t bishop_pair = 30;
+const uint8_t bishop_pair = 20;
 const uint8_t bishop_blocks_ctrpawn = 20;
 const uint8_t bishop_attacks_piece = 5;
 const uint8_t rook_open_file = 10;
