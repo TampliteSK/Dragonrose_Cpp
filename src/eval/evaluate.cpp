@@ -94,8 +94,8 @@ int evaluate_pos(const Board* pos) {
 	// std::cout << "Activity: " << count_activity(white_attacks, black_attacks, white_attackers, black_attackers) * 3 / 2 << "\n";
 	
 	// Bishop pair bonus
-	if (pos->piece_num[wB] > 2) score += bishop_pair;
-	if (pos->piece_num[bB] > 2) score -= bishop_pair;
+	if (pos->piece_num[wB] >= 2) score += bishop_pair;
+	if (pos->piece_num[bB] >= 2) score -= bishop_pair;
 	
 	/*
 		Endgame adjustments

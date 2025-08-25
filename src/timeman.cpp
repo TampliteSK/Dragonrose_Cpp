@@ -15,30 +15,28 @@ uint64_t get_time_ms() {
 // Allocate time based on the current ply, which is used to determine the phase of the game
 // Returns the time allocated in milliseconds
 int allocate_time(const Board* pos, int time) {
-    constexpr uint8_t OPENING_PLY = 30; // 15 moves
-    constexpr uint8_t MIDGAME_PLY = 80; // 40 moves
-    int time_allocated = 0;
-
     // Time trouble
     if (time < 15000) { // 30s
-        time_allocated = time / 35;
-        // time_allocated = time / 60 + ((time > 300) ? 100 : 0); // Add 100ms buffer unless there's barely any time left for buffering
+        return time / 35;
+    }
+
+    constexpr uint8_t OPENING_PLY = 30; // 15 moves
+    constexpr uint8_t MIDGAME_PLY = 80; // 40 moves
+    int time_allocated = 0, phase_moves = 0;
+
+    if (pos->his_ply <= OPENING_PLY) {
+        // Opening phase (10% / 55% / 35%)
+        phase_moves = (OPENING_PLY + 10 - pos->his_ply) / 2; // Add an additional 10 ply as buffer
+        time_allocated = time * 10 / (100 * phase_moves);
+    }
+    else if (pos->his_ply <= MIDGAME_PLY) {
+        // Middlegame phase (55% / 35% -> 61% / 39%)
+        phase_moves = (MIDGAME_PLY + 10 - pos->his_ply) / 2;
+        time_allocated = time * 61 / (100 * phase_moves);
     }
     else {
-        if (pos->his_ply <= OPENING_PLY) {
-            // Opening phase (10% / 55% / 35%)
-            int phase_moves = (OPENING_PLY + 10 - pos->his_ply) / 2; // Add an additional 10 ply as buffer
-            time_allocated = time * 10 / (100 * phase_moves);
-        }
-        else if (pos->his_ply <= MIDGAME_PLY) {
-            // Middlegame phase (55% / 35% -> 61% / 39%)
-            int phase_moves = (MIDGAME_PLY + 10 - pos->his_ply) / 2;
-            time_allocated = time * 61 / (100 * phase_moves);
-        }
-        else {
-            // Endgame phase (divide evenly rather conservatively)
-            time_allocated = time / 35;
-        }
+        // Endgame phase (divide evenly rather conservatively)
+        time_allocated = time / 35;
     }
 
     // std::cout << "Original time: " << time << ", Ply: " << (int)pos->his_ply << " | Allocated time: " << time_allocated << "ms\n";
