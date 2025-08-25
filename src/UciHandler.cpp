@@ -106,9 +106,9 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         // info->soft_stop_time = info->start_time + buffered_time;
 
         // Get soft time limit based on current ply (phase)
-        buffered_time = std::max(allocate_time(pos, (time + inc/2) * 9 / 10 - MIN_NETWORK_BUFFER), MIN_NETWORK_BUFFER);
+        buffered_time = std::max(allocate_time(pos, (time + inc/2) * 9 / 10) - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER / 2);
         // Prevent soft limit from exceeding hard limit
-        info->soft_stop_time = std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER / 3);
+        info->soft_stop_time = std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER);
 
         // std::cout << "Current time: " << get_time_ms() 
         //    << " | Hard limit: " << info->hard_stop_time << " (" << info->hard_stop_time - get_time_ms() << ") "
