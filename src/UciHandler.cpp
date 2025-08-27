@@ -5,6 +5,7 @@
 #include "chess/moveio.hpp"
 #include "chess/movegen.hpp"
 #include "chess/perft.hpp"
+#include "eval/evaluate.hpp"
 
 #include "datatypes.hpp"
 #include "search.hpp"
@@ -243,7 +244,15 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
             print_board(pos);
         }
         else if (line.substr(0, 9) == "test") {
-            // No tests
+            std::string test_fen = "2q1k2r/R2n2b1/3P2p1/2PQp2n/1p3p1p/4BP2/1P3NPP/6K1 b k - 1 26";
+            parse_fen(pos, test_fen);
+            for (int i = 0; i < 100'000; ++i) {
+                evaluate_pos(pos);
+                if (i % 10'000 == 9'999) {
+                    std::cout << "Evaluation #" << i << "\n";
+                }
+            }
+            std::cout << "Static evaluation: " << evaluate_pos(pos) << "cp \n";
         }
         else if (line.substr(0, 10) == "test2") {
             // TODO: Fix hash discrepancy

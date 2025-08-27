@@ -1,9 +1,6 @@
 // bitboard.cpp
 
 #include "bitboard.hpp"
-#include "Board.hpp"
-#include "../datatypes.hpp"
-
 #include <cstdint>
 #include <algorithm>
 #include <iostream>
@@ -30,48 +27,6 @@ const int anti_diagonals[64]{
      6,  5,  4,  3,  2,  1,  0, 15,
      7,  6,  5,  4,  3,  2,  1,  0
 };
-
-// Mask a bitboard with bits between 2 given squares set
-Bitboard bits_between_squares(uint8_t sq1, uint8_t sq2) {
-
-    Bitboard mask = 0ULL;
-    uint8_t rank1 = GET_RANK(sq1);
-    uint8_t rank2 = GET_RANK(sq2);
-    uint8_t file1 = GET_FILE(sq1);
-    uint8_t file2 = GET_FILE(sq2);
-
-    bool same_rank = rank1 == rank2;
-    bool same_file = file1 == file2;
-
-    // 0-D case
-    if (sq1 == sq2) {
-        return mask;
-    }
-    // 1-D cases
-    else if (same_rank ^ same_file) {
-        if (same_rank) {
-            for (int sq = std::min(sq1, sq2); sq <= std::max(sq1, sq2); ++sq) {
-                SET_BIT(mask, sq);
-            }
-        }
-        else {
-            for (int sq = std::min(sq1, sq2); sq <= std::max(sq1, sq2); sq += 8) {
-                SET_BIT(mask, sq);
-            }
-        }
-    }
-    // 2-D case 
-    else {
-        for (int rank = std::min(rank1, rank2); rank <= std::max(rank1, rank2); ++rank) {
-            for (int file = std::min(file1, file2); file <= std::max(file1, file2); ++file) {
-                uint8_t sq = FR2SQ(file, rank);
-                SET_BIT(mask, sq);
-            }
-        }
-    }
-
-    return mask;
-}
 
 Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col) {
 
