@@ -184,33 +184,13 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		// Passed pawn bonuses
 		// 1) There are no enemy pawns on the same or adjacent file(s)
 		// 2) The pawn on the same or adjacent file(s) are behind the pawn
-		int passer_score = 0;
-		bool is_passer = false;
-		if ((pos->bitboards[enemy_pce] & passer_masks[file]) == 0) {
-			is_passer = true;
-		}
-		else {
-			// There exists enemy pawns same or adjacent file(s). Check if they are further advanced.
-			bool possible_blocker = false;
-			Bitboard pawn_mask = pos->bitboards[enemy_pce] & passer_masks[file];
-			while (pawn_mask) {
-				uint8_t blocker_pawn = pop_ls1b(pawn_mask);
-				if ((col == WHITE && GET_RANK(blocker_pawn) < GET_RANK(sq)) ||
-					(col == BLACK && GET_RANK(blocker_pawn) > GET_RANK(sq))) {
-					possible_blocker = true; // The pawn is actually in front of the pawn. Not a passer
-				}
-			}
-			if (!possible_blocker) {
-				is_passer = true;
-			}
-		}
-		if (is_passer) {
+		Bitboard passer_mask = (col == WHITE) ? white_passer_masks[sq] : black_passer_masks[sq];
+		if ((passer_mask & pos->bitboards[enemy_pce]) == 0) {
 			passers[file] = true;
-			passer_score += passer_bonus[reference_rank];
+			score += passer_bonus[reference_rank];
+			// std::cout << "Passer detected at " << ascii_squares[sq] << " | Score: " << passer_bonus[reference_rank] << "\n";
 		}
-		// std::cout << "	Passers subscore: " << passer_score * ((pce == wP) ? 1 : -1) << " (" << ascii_pieces[pce] << " " << ascii_squares[sq] << ")\n";
-		score += passer_score;
-
+		
 		// Isolated and backwards pawn penalties
 		// Backwards pawn: No neighbouring pawns or they are further advanced, and square in front is attacked by an opponent's pawn 
 		bool is_isolated = (pos->bitboards[pce] & adjacent_files[file]) == 0;
@@ -243,26 +223,21 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		else if (is_isolated) {
 			score -= isolated_pawn;
 		}
-
-		// Stacked pawn penalties
-		uint64_t stacked_mask = pos->bitboards[pce] & file_masks[file];
-		uint8_t stacked_count = count_bits(stacked_mask);
-		if (stacked_count > 1) {
-			score -= stacked_pawn * (stacked_count - 1) / stacked_count; // Scales with the number of pawns stacked. Division to make sure it's not overcounted.
-		}
-
-		// Space advantage. Check if the pawn is controlled by an ally piece
-		/*
-		if (is_square_attacked(pos, sq, col)) {
-			uint8_t space_bonus = reference_rank * 2;
-			score += space_bonus;
-		}
-		*/
 	}
 
-	for (int file = FILE_B; file <= FILE_H; ++file) {
-		if (passers[file - 1] && passers[file]) {
-			score += connected_passers;
+	// File-based features
+	for (int file = FILE_A; file <= FILE_H; ++file) {
+		// Stacked pawn penalties
+		uint8_t stacked_count = count_bits(pos->bitboards[pce] & file_masks[file]);
+		if (stacked_count > 1) {
+			score -= stacked_pawn * (stacked_count - 1) / stacked_count; // Scales with the number of pawns stacked
+		}
+
+		// Connected passer bonuses
+		if (file >= FILE_A) {
+			if (passers[file] && passers[file - 1]) {
+				score += connected_passers;
+			}
 		}
 	}
 
