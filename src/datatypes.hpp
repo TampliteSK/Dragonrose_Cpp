@@ -32,7 +32,8 @@ extern int Mirror64[64];
 extern Bitboard file_masks[8];
 extern Bitboard rank_masks[8];
 extern Bitboard adjacent_files[8];
-extern Bitboard passer_masks[8];
+extern Bitboard white_passer_masks[64];
+extern Bitboard black_passer_masks[64];
 
 const std::string ascii_pieces = ".PNBRQKpnbrqk";
 

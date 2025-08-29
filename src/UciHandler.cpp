@@ -243,12 +243,16 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         else if (line.substr(0, 5) == "print") {
             print_board(pos);
         }
+        else if (line.substr(0, 4) == "eval") {
+            int eval = evaluate_pos(pos);
+            std::cout << "Static evaluation: " << eval << "cp\n";
+        }
         else if (line.substr(0, 9) == "test") {
             std::string test_fen = "2q1k2r/R2n2b1/3P2p1/2PQp2n/1p3p1p/4BP2/1P3NPP/6K1 b k - 1 26";
             parse_fen(pos, test_fen);
-            for (int i = 0; i < 100'000; ++i) {
+            for (int i = 0; i < 500'000; ++i) {
                 evaluate_pos(pos);
-                if (i % 10'000 == 9'999) {
+                if (i % 100'000 == 99'999) {
                     std::cout << "Evaluation #" << i << "\n";
                 }
             }
