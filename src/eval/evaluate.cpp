@@ -230,7 +230,7 @@ static inline int evaluate_pawns(const Board* pos, uint8_t pce, int phase) {
 		// Stacked pawn penalties
 		uint8_t stacked_count = count_bits(pos->bitboards[pce] & file_masks[file]);
 		if (stacked_count > 1) {
-			score -= stacked_pawn * (stacked_count - 1) / stacked_count; // Scales with the number of pawns stacked
+			score -= stacked_pawn * (stacked_count - 1); // Scales with the number of pawns stacked
 		}
 
 		// Connected passer bonuses
