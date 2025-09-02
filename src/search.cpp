@@ -291,20 +291,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	check_up(info, false); // Check if time is up
 
 	// const bool is_leaf = depth == 0;
-	const bool is_root = pos->ply == 0;
+	const bool is_root = pos->ply == 0; 
 	
 	if (pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
-	}
-
-	if (depth <= 0) {
-		return quiescence(pos, table, info, alpha, beta, line);
-	}
-
-	// Check draw
-	int flag = check_draw(pos, false);
-	if (flag != -1) {
-		return flag;
 	}
 
 	// Max depth reached
@@ -312,14 +302,26 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		return evaluate_pos(pos);
 	}
 
-	// Mate distance pruning
-	/*
-	alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
-	beta = std::min(beta, MATE_SCORE - (int)pos->ply - 1);
-	if (alpha >= beta) {
-		return alpha;
+	if (!is_root) {
+		// Check draw
+		int flag = check_draw(pos, false);
+		if (flag != -1) {
+			return flag;
+		}
+
+		// Mate distance pruning
+		/*
+		alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
+		beta = std::min(beta, MATE_SCORE - (int)pos->ply - 1);
+		if (alpha >= beta) {
+			return alpha;
+		}
+		*/
 	}
-	*/
+
+	if (depth <= 0) {
+		return quiescence(pos, table, info, alpha, beta, line);
+	}
 
 	line->length = 0;
 	PVLine candidate_PV;
