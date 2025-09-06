@@ -340,7 +340,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	// Probe before considering cutoff if it is not root
 	int hash_move = NO_MOVE;
 	int hash_score = -INF_BOUND;
-	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, depth) && !is_root) {
+	bool tt_hit = probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, depth);
+	if (tt_hit && !is_root) {
 		table->cut++;
 		return hash_score;
 	}
@@ -385,6 +386,15 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 			}
 		}
 	}
+
+	/*
+		Internal iterative reductions (IIR)
+	*/
+	// If the position has not been searched yet (i.e. no hash move), we try searching with reduced depth to record 
+	// a move that we can later re-use.
+    if (!in_check && !is_root && depth >= 5 && PV_node && (!tt_hit || hash_move == NO_MOVE)) {
+        depth--;
+    }
 	
 	MoveList list;
 	generate_moves(pos, list, false);
