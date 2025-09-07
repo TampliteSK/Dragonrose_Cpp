@@ -206,7 +206,8 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	// Loses elo if ordered before stand-pat
 	int hash_move = NO_MOVE;
 	int hash_score = -INF_BOUND;
-	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, 0)) {
+	int hash_depth = -1;
+	if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, hash_depth, 0)) {
 		table->cut++;
 		return hash_score;
 	}
@@ -340,7 +341,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	// Probe before considering cutoff if it is not root
 	int hash_move = NO_MOVE;
 	int hash_score = -INF_BOUND;
-	bool tt_hit = probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, depth);
+	int hash_depth = -1;
+	bool tt_hit = probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, hash_depth, depth);
 	if (tt_hit && !is_root) {
 		table->cut++;
 		return hash_score;
@@ -392,7 +394,10 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	*/
 	// If the position has not been searched yet (i.e. no hash move), we try searching with reduced depth to record 
 	// a move that we can later re-use.
-    if (!in_check && !is_root && depth >= 8 && PV_node && (!tt_hit || hash_move == NO_MOVE)) {
+    if (
+		depth >= 5 && !in_check && !is_root && PV_node 
+		&& (!tt_hit || (hash_move != NO_MOVE && hash_depth < depth - 5))
+	) {
         depth--;
     }
 	
