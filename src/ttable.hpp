@@ -47,7 +47,7 @@ int probe_PV_move(const Board* pos, const HashTable* table);
 void get_PV_line(Board* pos, const HashTable* table, const uint8_t depth);
 void clear_hash_table(HashTable* table);
 void init_hash_table(HashTable* table, const uint16_t MB);
-bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int alpha, int beta, int depth);
+bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int alpha, int beta, int& entry_depth, int depth);
 void store_hash_entry(Board* pos, HashTable* table, const int move, int score, const uint8_t flags, const uint8_t depth);
 
 #endif // TTABLE_HPP

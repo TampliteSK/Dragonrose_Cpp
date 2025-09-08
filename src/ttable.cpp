@@ -80,13 +80,14 @@ void init_hash_table(HashTable* table, const uint16_t MB) {
 
 }
 
-bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int alpha, int beta, int depth) {
+bool probe_hash_entry(Board* pos, HashTable* table, int& move, int& score, int alpha, int beta, int& entry_depth, int depth) {
 
 	int index = pos->hash_key % table->max_entries;
 
 	if (table->pTable[index].hash_key == pos->hash_key) {
 		move = table->pTable[index].move;
-		if (table->pTable[index].depth >= depth) {
+		entry_depth = table->pTable[index].depth;
+		if (entry_depth >= depth) {
 			table->hit++;
 
 			score = table->pTable[index].score;
