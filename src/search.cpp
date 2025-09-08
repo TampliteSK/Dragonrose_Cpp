@@ -188,7 +188,6 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	init_PVLine(&candidate_PV);
 
 	int stand_pat = evaluate_pos(pos);
-	int old_alpha = alpha;
 	int score = -INF_BOUND;
 	int best_score = stand_pat;
 	int best_move = NO_MOVE;
@@ -273,9 +272,6 @@ static inline int quiescence(Board* pos, HashTable* table, SearchInfo* info, int
 	uint8_t hash_flag = HFNONE;
 	if (best_score >= beta) {
 		hash_flag = HFBETA;
-	}
-	else if (best_score > old_alpha) {
-		hash_flag = HFEXACT;
 	}
 	else {
 		hash_flag = HFALPHA;
