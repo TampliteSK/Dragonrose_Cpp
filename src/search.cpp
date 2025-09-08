@@ -307,13 +307,11 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		}
 
 		// Mate distance pruning
-		/*
 		alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
 		beta = std::min(beta, MATE_SCORE - (int)pos->ply - 1);
 		if (alpha >= beta) {
 			return alpha;
 		}
-		*/
 	}
 
 	if (depth <= 0) {
