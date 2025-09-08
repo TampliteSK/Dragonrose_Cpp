@@ -394,12 +394,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	*/
 	// If the position has not been searched yet (i.e. no hash move), we try searching with reduced depth to record 
 	// a move that we can later re-use.
+	/*
     if (
 		depth >= 8 && !in_check && PV_node 
 		&& (!tt_hit || (hash_move != NO_MOVE && hash_depth <= depth - 5))
 	) {
         depth--;
     }
+	*/
 	
 	MoveList list;
 	generate_moves(pos, list, false);
