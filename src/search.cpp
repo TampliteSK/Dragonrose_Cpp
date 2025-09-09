@@ -315,8 +315,8 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 
 	// Mate distance pruning
 	// If we have already found a mate, prune nodes where no shorter mate is possible
-	alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
-	beta = std::min(beta, MATE_SCORE - (int)pos->ply);
+	alpha = std::max(alpha, -INF_BOUND + (int)pos->ply);
+	beta = std::min(beta, INF_BOUND - (int)pos->ply);
 	if (alpha >= beta) {
 		return alpha;
 	}
