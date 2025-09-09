@@ -290,13 +290,14 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 	// const bool is_leaf = depth == 0;
 	const bool is_root = pos->ply == 0; 
 	
+	// Update selective depth (seldepth)
 	if (pos->ply > info->seldepth) {
 		info->seldepth = pos->ply;
 	}
 
-	// Max depth reached
-	if (pos->ply >= MAX_DEPTH) {
-		return evaluate_pos(pos);
+	// Drop to qsearch at depth 0 or lower
+	if (depth <= 0) {
+		return quiescence(pos, table, info, alpha, beta, line);
 	}
 
 	if (!is_root) {
@@ -305,17 +306,19 @@ static inline int negamax_alphabeta(Board* pos, HashTable* table, SearchInfo* in
 		if (flag != -1) {
 			return flag;
 		}
-
-		// Mate distance pruning
-		alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
-		beta = std::min(beta, MATE_SCORE - (int)pos->ply);
-		if (alpha >= beta) {
-			return alpha;
-		}
 	}
 
-	if (depth <= 0) {
-		return quiescence(pos, table, info, alpha, beta, line);
+	// Max depth reached
+	if (pos->ply >= MAX_DEPTH) {
+		return evaluate_pos(pos);
+	}
+
+	// Mate distance pruning
+	// If we have already found a mate, prune nodes where no shorter mate is possible
+	alpha = std::max(alpha, -MATE_SCORE + (int)pos->ply);
+	beta = std::min(beta, MATE_SCORE - (int)pos->ply);
+	if (alpha >= beta) {
+		return alpha;
 	}
 
 	line->length = 0;
