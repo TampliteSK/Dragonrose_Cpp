@@ -49,15 +49,16 @@ I would also like to thank:
 Search:
 - Iterative deepening + Aspiration windows
 - Negamax alpha-beta search (fail-soft)
-  - Principal-variation Search (PVS)
+  - Mate distance pruning
   - Whole node-pruning
     - Reverse futility pruning (RFP)
     - Null-move pruning (NMP)
   - Move-loop pruning
+    - Late move pruning (LMP)
     - Futility pruning (extended to depth 3)
-  - Late move reductions (LMR)
+  - Late move reductions (LMR) + Principal-variation Search (PVS)
 - Quiesence search (fail-soft)
-- Move ordering: MVV/LVA, Killer heuristics, Priority moves (Castling, en passant)
+- Move ordering: MVV/LVA, Killer heuristics, Priority moves (promotions, castling, en passant)
 - Transposition table using "age"
 
 Evaluation (Hand-crafted evaluation, or HCE):
@@ -114,18 +115,16 @@ Below are some other metrics:
 ### 0.x: <br>
 0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
 - Eval: Added more evaluation terms
-- Search: Improved FP/EFP & NMP. Added PVS, RFP, LMR. Switched to fail-soft entirely.
-- Other: Patched some bugs.
+- Search: Improved NMP, FP/EFP & LMR. Added PVS, RFP, LMP, MDP. Switched to fail-soft entirely. Added TT probing in QS.
+- Other: Patched misc bugs.
 
 ## To-do list
 - Release at 2500 CCRL (vs. Stash), and then next big release at 3000.
 - Search / Eval progression
-- Add mate distance pruning
 - ...
 - Search thread / LazySMP
 - Add Chess960 support
 
 ## Bugs to fix:
-- May blunder threefold in a winning position due to how threefold is implemented
 - Illegal PV moves
-- Occasional null moves when testing on OB
+- Occasional disconnects on OB in perpetual checks positions
