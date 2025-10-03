@@ -16,7 +16,7 @@ typedef struct {
     int score;
 } Move;
 
-template <typename T, size_t capacity>
+template <typename T, std::size_t capacity>
 struct StaticVector {
     // Initialise everything at creation
     T moves[capacity] = {};
