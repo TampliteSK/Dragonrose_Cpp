@@ -3,13 +3,13 @@
 #ifndef MOVEGEN_HPP
 #define MOVEGEN_HPP
 
-#include "Board.hpp"
 #include "../StaticVector.hpp"
+#include "Board.hpp"
 
 // Functions
-void generate_moves(const Board *pos, MoveList& move_list, bool noisy_only);
-void sort_moves(const Board *pos, MoveList& move_list, int hash_move);
-bool move_exists(Board* pos, const int move);
+void generate_moves(const Board *pos, MoveList &move_list, bool noisy_only);
+void sort_moves(const Board *pos, MoveList &move_list, int hash_move);
+bool move_exists(Board *pos, const int move);
 
 /*
           binary move bits                               hexidecimal constants
@@ -26,16 +26,11 @@ bool move_exists(Board* pos, const int move);
 
 // encode move
 #define encode_move(source, target, piece, promoted, capture, double_adv, enpassant, castling) \
-    (source) |           \
-    ((target) << 6) |      \
-    ((piece) << 12) |      \
-    ((promoted) << 16) |   \
-    ((capture) << 20) |    \
-    ((double_adv) << 24) | \
-    ((enpassant) << 25) |  \
-    ((castling) << 26)     \
+    (source) | ((target) << 6) | ((piece) << 12) | ((promoted) << 16) | ((capture) << 20) |    \
+        ((double_adv) << 24) | ((enpassant) << 25) | ((castling) << 26)
 
-// extract source square, target square, piece, promoted piece, capture flag, double pawn push flag, enpassant flag, and castling flag
+// extract source square, target square, piece, promoted piece, capture flag, double pawn push flag,
+// enpassant flag, and castling flag
 #define get_move_source(move) (move & 0x3f)
 #define get_move_target(move) ((move & 0xfc0) >> 6)
 #define get_move_piece(move) ((move & 0xf000) >> 12)
@@ -45,4 +40,4 @@ bool move_exists(Board* pos, const int move);
 #define get_move_enpassant(move) (move & 0x2000000)
 #define get_move_castling(move) (move & 0x4000000)
 
-#endif // MOVEGEN_HPP
+#endif  // MOVEGEN_HPP

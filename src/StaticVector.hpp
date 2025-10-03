@@ -3,9 +3,12 @@
 #ifndef STATICVECTOR_HPP
 #define STATICVECTOR_HPP
 
+#include <cstdint>
+
 // Contrary to popular belief, there are positions with >256 legal moves
 // Example: QQQQQQBk/Q6B/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - - 0 1 (265 moves)
-// Credits to Caissa for discovering the position (and by virtue DarkNeutrino for digging Caissa commits)
+// Credits to Caissa for discovering the position (and by virtue DarkNeutrino for digging Caissa
+// commits)
 constexpr uint16_t MAX_LEGAL_MOVES = 280;
 
 typedef struct {
@@ -13,7 +16,7 @@ typedef struct {
     int score;
 } Move;
 
-template<typename T, size_t capacity>
+template <typename T, size_t capacity>
 struct StaticVector {
     // Initialise everything at creation
     T moves[capacity] = {};
@@ -22,4 +25,4 @@ struct StaticVector {
 
 typedef StaticVector<Move, MAX_LEGAL_MOVES> MoveList;
 
-#endif // STATICVECTOR_HPP
+#endif  // STATICVECTOR_HPP

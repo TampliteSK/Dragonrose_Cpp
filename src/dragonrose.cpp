@@ -1,39 +1,37 @@
 // dragonrose.cpp
 
+#include <cstdint>
+#include <cstdlib>  // For exit
+#include <cstring>  // For strncmp
 #include <iostream>
 #include <string>
-#include <cstdint>
-#include <cstring> // For strncmp
-#include <cstdlib> // For exit
 
-#include "chess/bench.hpp"
+#include "UciHandler.hpp"
 #include "chess/Board.hpp"
+#include "chess/bench.hpp"
 #include "eval/evaluate.hpp"
-
 #include "init.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
-#include "UciHandler.hpp"
 
-int main(int argc, char* argv[]) {
-	init_all();
+int main(int argc, char *argv[]) {
+    init_all();
 
-    Board* pos = new Board();
+    Board *pos = new Board();
     reset_board(pos);
-	SearchInfo* info = new SearchInfo();
-	init_searchinfo(info);
-	HashTable* hash_table = new HashTable();
-	hash_table->pTable = NULL;
+    SearchInfo *info = new SearchInfo();
+    init_searchinfo(info);
+    HashTable *hash_table = new HashTable();
+    hash_table->pTable = NULL;
     UciOptions options = UciOptions();
     UciHandler uci = UciHandler();
 
     // Handle CLI Arguments
     for (int arg_num = 0; arg_num < argc; ++arg_num) {
-
         if (strncmp(argv[arg_num], "bench", 5) == 0) {
             run_bench(pos, hash_table, info, uci);
-            
+
             // Quit after benching is finished
             delete pos;
             delete info;
@@ -53,8 +51,7 @@ int main(int argc, char* argv[]) {
             uci.uci_loop(pos, hash_table, info, &options);
             if (info->quit == true) break;
             continue;
-        }
-        else if (line.substr(0, 4) == "test") {
+        } else if (line.substr(0, 4) == "test") {
             parse_fen(pos, "4k3/P7/8/8/8/8/8/4K3 w - - 0 1");
             print_board(pos);
             int score = evaluate_pos(pos);
@@ -65,16 +62,15 @@ int main(int argc, char* argv[]) {
             std::cout << "Evaluation (black's perspective): " << score / 100.0 << "\n\n";
             */
             break;
-        }
-        else if (line.substr(0, 4) == "quit") {
+        } else if (line.substr(0, 4) == "quit") {
             break;
         }
     }
 
     delete pos;
-	delete info;
+    delete info;
     free(hash_table->pTable);
-	delete hash_table;
+    delete hash_table;
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

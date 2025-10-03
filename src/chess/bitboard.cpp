@@ -1,35 +1,23 @@
 // bitboard.cpp
 
 #include "bitboard.hpp"
-#include <cstdint>
+
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 
 // Diagonals and anti-diagonals
-const int diagonals[64]{
-    14, 13, 12, 11, 10,  9,  8,  7,
-    13, 12, 11, 10,  9,  8,  7,  6,
-    12, 11, 10,  9,  8,  7,  6,  5,
-    11, 10,  9,  8,  7,  6,  5,  4,
-    10,  9,  8,  7,  6,  5,  4,  3,
-     9,  8,  7,  6,  5,  4,  3,  2,
-     8,  7,  6,  5,  4,  3,  2,  1,
-     7,  6,  5,  4,  3,  2,  1,  0
-};
+const int diagonals[64]{14, 13, 12, 11, 10, 9, 8, 7, 13, 12, 11, 10, 9, 8, 7, 6,
+                        12, 11, 10, 9,  8,  7, 6, 5, 11, 10, 9,  8,  7, 6, 5, 4,
+                        10, 9,  8,  7,  6,  5, 4, 3, 9,  8,  7,  6,  5, 4, 3, 2,
+                        8,  7,  6,  5,  4,  3, 2, 1, 7,  6,  5,  4,  3, 2, 1, 0};
 
-const int anti_diagonals[64]{
-     0, 15, 14, 13, 12, 11, 10,  9,
-     1,  0, 15, 14, 13, 12, 11, 10,
-     2,  1,  0, 15, 14, 13, 12, 11,
-     3,  2,  1,  0, 15, 14, 13, 12,
-     4,  3,  2,  1,  0, 15, 14, 13,
-     5,  4,  3,  2,  1,  0, 15, 14,
-     6,  5,  4,  3,  2,  1,  0, 15,
-     7,  6,  5,  4,  3,  2,  1,  0
-};
+const int anti_diagonals[64]{0, 15, 14, 13, 12, 11, 10, 9,  1, 0, 15, 14, 13, 12, 11, 10,
+                             2, 1,  0,  15, 14, 13, 12, 11, 3, 2, 1,  0,  15, 14, 13, 12,
+                             4, 3,  2,  1,  0,  15, 14, 13, 5, 4, 3,  2,  1,  0,  15, 14,
+                             6, 5,  4,  3,  2,  1,  0,  15, 7, 6, 5,  4,  3,  2,  1,  0};
 
 Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col) {
-
     /*
     --------
     --------
@@ -48,7 +36,7 @@ Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col) {
     uint8_t start_sq = 0, end_sq = 0;
     if (col == WHITE) {
         if (king_rank <= RANK_5) {
-            return 0ULL; // King shield is useless when you're on the other side of the board
+            return 0ULL;  // King shield is useless when you're on the other side of the board
         }
 
         start_sq = FR2SQ(king_file - 1, king_rank - 1);
@@ -59,8 +47,7 @@ Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col) {
         if (king_file == FILE_H) {
             end_sq = FR2SQ(king_file, king_rank - 3);
         }
-    }
-    else {
+    } else {
         if (king_rank >= RANK_4) {
             return 0ULL;
         }
@@ -74,19 +61,17 @@ Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col) {
             end_sq = FR2SQ(king_file, king_rank + 3);
         }
     }
-    
+
     shield_zone = bits_between_squares(start_sq, end_sq);
 
     return shield_zone;
 }
-
 
 /*
     Misc
 */
 
 void print_bitboard(Bitboard board) {
-
     std::cout << "\n";
 
     for (int rank = RANK_8; rank <= RANK_1; ++rank) {
@@ -95,8 +80,7 @@ void print_bitboard(Bitboard board) {
             uint8_t sq = FR2SQ(file, rank);
             if (GET_BIT(board, sq)) {
                 std::cout << "X";
-            }
-            else {
+            } else {
                 std::cout << "-";
             }
         }
@@ -106,7 +90,6 @@ void print_bitboard(Bitboard board) {
     std::cout << "    ABCDEFGH\n\n";
     std::cout << "Bits set: " << (int)count_bits(board) << "\n";
     std::cout << "\n";
-
 }
 
 // Manhattan distance

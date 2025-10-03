@@ -5,4 +5,4 @@
 
 void init_all();
 
-#endif // INIT_HPP
+#endif  // INIT_HPP

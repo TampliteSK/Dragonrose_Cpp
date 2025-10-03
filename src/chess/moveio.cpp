@@ -1,32 +1,29 @@
 // moveio.cpp
 
-#include "../datatypes.hpp"
 #include "moveio.hpp"
-#include "movegen.hpp"
 
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
+
+#include "../datatypes.hpp"
+#include "movegen.hpp"
 
 // print move (for UCI purposes)
 std::string print_move(int move) {
     std::ostringstream oss;
-    oss << ascii_squares[get_move_source(move)]
-        << ascii_squares[get_move_target(move)];
+    oss << ascii_squares[get_move_source(move)] << ascii_squares[get_move_target(move)];
 
     // Promoted pieces must be encoded in lowercase
     if (get_move_promoted(move)) {
         int promoted_piece = get_move_promoted(move);
         if (piece_type[promoted_piece] == QUEEN) {
             oss << "q";
-        }
-        else if (piece_type[promoted_piece] == ROOK) {
+        } else if (piece_type[promoted_piece] == ROOK) {
             oss << "r";
-        }
-        else if (piece_type[promoted_piece] == BISHOP) {
+        } else if (piece_type[promoted_piece] == BISHOP) {
             oss << "b";
-        }
-        else if (piece_type[promoted_piece] == KNIGHT) {
+        } else if (piece_type[promoted_piece] == KNIGHT) {
             oss << "n";
         }
     }
@@ -37,7 +34,6 @@ std::string print_move(int move) {
 // Parses user/GUI move string input (e.g. "e7e8q") and checks if its valid.
 // Returns the move if valid.
 int parse_move(const Board *pos, std::string move_string) {
-
     MoveList move_list;
     generate_moves(pos, move_list, false);
 
@@ -47,40 +43,34 @@ int parse_move(const Board *pos, std::string move_string) {
 
     // Search if the move exists in the list
     for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
-
         int move = move_list.moves[move_count].move;
 
         // make sure source & target squares are available within the generated move
         if (source_square == get_move_source(move) && target_square == get_move_target(move)) {
-
             int promoted_piece = get_move_promoted(move);
 
             if (promoted_piece) {
                 if (piece_type[promoted_piece] == QUEEN && move_string[4] == 'q') {
                     return move;
-                }
-                else if (piece_type[promoted_piece] == ROOK && move_string[4] == 'r') {
+                } else if (piece_type[promoted_piece] == ROOK && move_string[4] == 'r') {
+                    return move;
+                } else if (piece_type[promoted_piece] == BISHOP && move_string[4] == 'b') {
+                    return move;
+                } else if (piece_type[promoted_piece] == KNIGHT && move_string[4] == 'n') {
                     return move;
                 }
-                else if (piece_type[promoted_piece] == BISHOP && move_string[4] == 'b') {
-                    return move;
-                }
-                else if (piece_type[promoted_piece] == KNIGHT && move_string[4] == 'n') {
-                    return move;
-                }
-                continue; // continue the loop on possible wrong promotions (e.g. "e7e8f")
+                continue;  // continue the loop on possible wrong promotions (e.g. "e7e8f")
             }
 
             return move;
         }
     }
 
-    return 0; // Illegal move
+    return 0;  // Illegal move
 }
 
 // print move list
 void print_move_list(const MoveList move_list, bool verbose = true) {
-
     // Do nothing on empty move list
     if (move_list.length == 0) {
         std::cout << "\n     No move in the move list!\n";
@@ -90,27 +80,24 @@ void print_move_list(const MoveList move_list, bool verbose = true) {
     if (verbose) {
         std::cout << "\n     move    piece     capture   double    enpass    castling    score\n\n";
 
-            // Loop over moves within a move list
-            for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
+        // Loop over moves within a move list
+        for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
+            Move move_struct = move_list.moves[move_count];
+            int move = move_struct.move;
+            int score = move_struct.score;
 
-                Move move_struct = move_list.moves[move_count];
-                int move = move_struct.move;
-                int score = move_struct.score;
-
-                // Print move with ASCII representation
-                std::cout << "      " << ascii_squares[get_move_source(move)]
-                    << ascii_squares[get_move_target(move)]
-                    << (get_move_promoted(move) ? ascii_pieces[get_move_promoted(move)] : ' ')
-                    << "   " << ascii_pieces[get_move_piece(move)]
-                    << "         " << ascii_pieces[get_move_captured(move)]
-                    << "         " << (get_move_double(move) ? 1 : 0)
-                    << "         " << (get_move_enpassant(move) ? 1 : 0)
-                    << "         " << (get_move_castling(move) ? 1 : 0)
-                    << "         " << score << "\n";
-            }
-    }
-    else {
-         std::cout << "Generated moves: ";
+            // Print move with ASCII representation
+            std::cout << "      " << ascii_squares[get_move_source(move)]
+                      << ascii_squares[get_move_target(move)]
+                      << (get_move_promoted(move) ? ascii_pieces[get_move_promoted(move)] : ' ')
+                      << "   " << ascii_pieces[get_move_piece(move)] << "         "
+                      << ascii_pieces[get_move_captured(move)] << "         "
+                      << (get_move_double(move) ? 1 : 0) << "         "
+                      << (get_move_enpassant(move) ? 1 : 0) << "         "
+                      << (get_move_castling(move) ? 1 : 0) << "         " << score << "\n";
+        }
+    } else {
+        std::cout << "Generated moves: ";
 
         for (uint16_t move_count = 0; move_count < move_list.length; move_count++) {
             Move move_struct = move_list.moves[move_count];

@@ -1,6 +1,7 @@
 // attack.cpp
 
 #include "attack.hpp"
+
 #include "movegen.hpp"
 
 bool is_move_attack(const Board *pos, int move) {

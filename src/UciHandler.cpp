@@ -1,28 +1,28 @@
 // UciHandler.cpp
 
-#include "chess/Board.hpp"
-#include "chess/makemove.hpp"
-#include "chess/moveio.hpp"
-#include "chess/movegen.hpp"
-#include "chess/perft.hpp"
-#include "eval/evaluate.hpp"
-
-#include "datatypes.hpp"
-#include "search.hpp"
-#include "timeman.hpp"
 #include "UciHandler.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <sstream>
-#include <cmath>
-#include <algorithm>
+
+#include "chess/Board.hpp"
+#include "chess/makemove.hpp"
+#include "chess/movegen.hpp"
+#include "chess/moveio.hpp"
+#include "chess/perft.hpp"
+#include "datatypes.hpp"
+#include "eval/evaluate.hpp"
+#include "search.hpp"
+#include "timeman.hpp"
 
 /*
     Private methods
 */
 
-int UciHandler::get_value_from_line(const std::string& line, const std::string& key) {
+int UciHandler::get_value_from_line(const std::string &line, const std::string &key) {
     auto pos = line.find(key);
     if (pos != std::string::npos) {
         return std::atoi(line.substr(pos + key.length() + 1).c_str());
@@ -44,8 +44,9 @@ UciHandler::UciHandler() {
 //           go movetime <>
 //           go depth <>
 //           go nodes <>
-//           go infinite (although no stop command at the moment, can only be stopped via keyboard interrupt)
-void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const std::string& line) {
+//           go infinite (although no stop command at the moment, can only be stopped via keyboard
+//           interrupt)
+void UciHandler::parse_go(Board *pos, HashTable *table, SearchInfo *info, const std::string &line) {
     // int movestogo = 30;
     int time = -1, movetime = -1;
     int depth = -1, inc = 0, nodes = -1;
@@ -72,7 +73,7 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
 
     // Extract other "go" options
     // movestogo is inaccurate and will not be supported in DR for the time being
-    // movestogo = get_value_from_line(line, "movestogo"); 
+    // movestogo = get_value_from_line(line, "movestogo");
     movetime = get_value_from_line(line, "movetime");
     depth = get_value_from_line(line, "depth");
     nodes = get_value_from_line(line, "nodes");
@@ -87,33 +88,37 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
 
     // Time Management
     // Add a buffer for handling Engine <-> GUI communication latency (esp. for OpenBench)
-    constexpr int MIN_NETWORK_BUFFER = 100; // in ms 
+    constexpr int MIN_NETWORK_BUFFER = 100;  // in ms
     if (movetime != -1) {
         // No time management, directly use available time (- buffer)
         info->timeset = true;
         int buffered_time = std::max(movetime - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
         info->hard_stop_time = info->soft_stop_time = info->start_time + buffered_time;
-    }
-    else if (time != -1) {
-        
+    } else if (time != -1) {
         info->timeset = true;
 
         // Get hard time limit
-        int buffered_time = std::max((time + inc/2) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
+        int buffered_time =
+            std::max((time + inc / 2) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
         info->hard_stop_time = info->start_time + buffered_time;
 
         // Get soft time limit
-        // buffered_time = std::max((time + inc/2) / 30 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER / 2);
-        // info->soft_stop_time = info->start_time + buffered_time;
+        // buffered_time = std::max((time + inc/2) / 30 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER /
+        // 2); info->soft_stop_time = info->start_time + buffered_time;
 
         // Get soft time limit based on current ply (phase)
-        buffered_time = std::max(allocate_time(pos, (time + inc/2) * 95 / 100) - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER / 2);
+        buffered_time =
+            std::max(allocate_time(pos, (time + inc / 2) * 95 / 100) - MIN_NETWORK_BUFFER,
+                     MIN_NETWORK_BUFFER / 2);
         // Prevent soft limit from exceeding hard limit
-        info->soft_stop_time = std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER);
+        info->soft_stop_time =
+            std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER);
 
-        // std::cout << "Current time: " << get_time_ms() 
-        //    << " | Hard limit: " << info->hard_stop_time << " (" << info->hard_stop_time - get_time_ms() << ") "
-        //    << " | Soft limit: " << info->soft_stop_time << " (" << info->soft_stop_time - get_time_ms() << ") " << "\n";
+        // std::cout << "Current time: " << get_time_ms()
+        //    << " | Hard limit: " << info->hard_stop_time << " (" << info->hard_stop_time -
+        //    get_time_ms() << ") "
+        //    << " | Soft limit: " << info->soft_stop_time << " (" << info->soft_stop_time -
+        //    get_time_ms() << ") " << "\n";
     }
 
     if (depth == -1) {
@@ -124,46 +129,47 @@ void UciHandler::parse_go(Board* pos, HashTable* table, SearchInfo* info, const 
         info->nodes_limit = nodes;
     }
 
-    // std::cout << "time: " << time << " start: " << info->start_time << " soft stop: " << info->soft_stop_time << " hard stop: " << info->hard_stop_time << " depth: " << (int)info->depth << " timeset: " << info->timeset << "\n";
-    // std::cout << "nodeset: " << info->nodesset << " | nodes limit: " << nodes << "\n";
+    // std::cout << "time: " << time << " start: " << info->start_time << " soft stop: " <<
+    // info->soft_stop_time << " hard stop: " << info->hard_stop_time << " depth: " <<
+    // (int)info->depth << " timeset: " << info->timeset << "\n"; std::cout << "nodeset: " <<
+    // info->nodesset << " | nodes limit: " << nodes << "\n";
     search_position(pos, table, info);
 }
 
-void UciHandler::parse_position(Board* pos, const std::string& line) {
-    std::string input = line.substr(9); // Skip "position "
+void UciHandler::parse_position(Board *pos, const std::string &line) {
+    std::string input = line.substr(9);  // Skip "position "
 
     if (input.substr(0, 8) == "startpos") {
         parse_fen(pos, START_POS);
-    }
-    else {
+    } else {
         size_t fen_pos = input.find("fen");
         if (fen_pos == std::string::npos) {
             parse_fen(pos, START_POS);
-        }
-        else {
-            parse_fen(pos, input.substr(fen_pos + 4)); // Skip "fen "
+        } else {
+            parse_fen(pos, input.substr(fen_pos + 4));  // Skip "fen "
         }
     }
 
     size_t moves_pos = input.find("moves");
     if (moves_pos != std::string::npos) {
-        std::string movelist_str = input.substr(moves_pos + 6); // Skip "moves "
+        std::string movelist_str = input.substr(moves_pos + 6);  // Skip "moves "
 
         while (!movelist_str.empty()) {
             size_t space_pos = movelist_str.find(' ');
-            std::string move_str = (space_pos == std::string::npos) ? movelist_str : movelist_str.substr(0, space_pos);
+            std::string move_str =
+                (space_pos == std::string::npos) ? movelist_str : movelist_str.substr(0, space_pos);
             int move = parse_move(pos, move_str);
             if (move == NO_MOVE) break;
             make_move(pos, move);
 
             // Erase the processed move from movesPart
-            movelist_str.erase(0, space_pos == std::string::npos ? movelist_str.length() : space_pos + 1);
+            movelist_str.erase(
+                0, space_pos == std::string::npos ? movelist_str.length() : space_pos + 1);
         }
     }
 }
 
-void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOptions* options) {
-
+void UciHandler::uci_loop(Board *pos, HashTable *table, SearchInfo *info, UciOptions *options) {
     std::string line;
     std::cout << "id name " << ENGINE_NAME << std::endl;
     std::cout << "id author Tamplite Siphron Kents" << std::endl;
@@ -186,15 +192,12 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
         if (line.substr(0, 7) == "isready") {
             std::cout << "readyok" << std::endl;
             continue;
-        }
-        else if (line.substr(0, 8) == "position") {
+        } else if (line.substr(0, 8) == "position") {
             parse_position(pos, line);
-        }
-        else if (line.substr(0, 10) == "ucinewgame") {
+        } else if (line.substr(0, 10) == "ucinewgame") {
             clear_hash_table(table);
             parse_fen(pos, START_POS);
-        }
-        else if (line.substr(0, 2) == "go") {
+        } else if (line.substr(0, 2) == "go") {
             if (line.substr(0, 8) == "go perft") {
                 // Parse depth from "go perft X" command
                 int depth = 0;
@@ -202,52 +205,42 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
                 if (depth_pos != std::string::npos) {
                     try {
                         depth = std::stoi(line.substr(depth_pos + 6));
-                    }
-                    catch (...) {
-                        depth = 5; // Fall back to default depth
+                    } catch (...) {
+                        depth = 5;  // Fall back to default depth
                     }
                 }
                 // parse_fen(pos, CPW_POS5);
                 run_perft(pos, depth, true);
-            }
-            else {
+            } else {
                 // Normal go command
                 parse_go(pos, table, info, line);
-            }  
-        }
-        else if (line.substr(0, 3) == "run") {
+            }
+        } else if (line.substr(0, 3) == "run") {
             parse_go(pos, table, info, "go infinite");
-        }
-        else if (line.substr(0, 4) == "quit") {
+        } else if (line.substr(0, 4) == "quit") {
             info->quit = true;
             break;
-        }
-        else if (line.substr(0, 3) == "uci") {
+        } else if (line.substr(0, 3) == "uci") {
             std::cout << "id name " << ENGINE_NAME << std::endl;
             std::cout << "id author Tamplite Siphron Kents" << std::endl;
             std::cout << "uciok" << std::endl;
-        }
-        else if (line.substr(0, 26) == "setoption name Hash value ") {
-            std::istringstream iss(line.substr(26)); // Extract the relevant substring
+        } else if (line.substr(0, 26) == "setoption name Hash value ") {
+            std::istringstream iss(line.substr(26));  // Extract the relevant substring
             int new_MB;
-            if (iss >> new_MB) { // Attempt to read the integer
+            if (iss >> new_MB) {  // Attempt to read the integer
                 MB = CLAMP(new_MB, 1, (int)MAX_HASH);
                 options->hash_size = MB;
                 init_hash_table(table, MB);
                 std::cout << "info string Set Hash to " << MB << " MB" << std::endl;
-            }
-            else {
+            } else {
                 std::cout << "Invalid Hash value" << std::endl;
             }
-        }
-        else if (line.substr(0, 5) == "print") {
+        } else if (line.substr(0, 5) == "print") {
             print_board(pos);
-        }
-        else if (line.substr(0, 4) == "eval") {
+        } else if (line.substr(0, 4) == "eval") {
             int eval = evaluate_pos(pos);
             std::cout << "Static evaluation: " << eval << "cp\n";
-        }
-        else if (line.substr(0, 9) == "test") {
+        } else if (line.substr(0, 9) == "test") {
             std::string test_fen = "2q1k2r/R2n2b1/3P2p1/2PQp2n/1p3p1p/4BP2/1P3NPP/6K1 b k - 1 26";
             parse_fen(pos, test_fen);
             for (int i = 0; i < 500'000; ++i) {
@@ -257,14 +250,14 @@ void UciHandler::uci_loop(Board* pos, HashTable* table, SearchInfo* info, UciOpt
                 }
             }
             std::cout << "Static evaluation: " << evaluate_pos(pos) << "cp \n";
-        }
-        else if (line.substr(0, 10) == "test2") {
+        } else if (line.substr(0, 10) == "test2") {
             // TODO: Fix hash discrepancy
-            std::string test_fen = "r1b1k1nr/ppqn1pbp/2pp2p1/4pP2/3PP3/3B1N2/PPP3PP/RNBQK2R w KQkq e6 0 1";
+            std::string test_fen =
+                "r1b1k1nr/ppqn1pbp/2pp2p1/4pP2/3PP3/3B1N2/PPP3PP/RNBQK2R w KQkq e6 0 1";
             parse_fen(pos, test_fen);
             print_board(pos);
 
-            int move = 40899869; // f5e6
+            int move = 40899869;  // f5e6
             // MoveList list = MoveList();
             // list.moves[0] = {move, 0};
             // list.length = 1;

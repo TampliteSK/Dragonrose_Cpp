@@ -1,21 +1,20 @@
 // perft.cpp
 
-#include "../timeman.hpp"
-#include "../StaticVector.hpp"
-
 #include "perft.hpp"
-#include "Board.hpp"
-#include "movegen.hpp"
-#include "makemove.hpp"
-#include "moveio.hpp"
-#include "bitboard.hpp"
-#include "attackgen.hpp"
 
-#include <iostream>
 #include <cstdint>
+#include <iostream>
 
-uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
+#include "../StaticVector.hpp"
+#include "../timeman.hpp"
+#include "Board.hpp"
+#include "attackgen.hpp"
+#include "bitboard.hpp"
+#include "makemove.hpp"
+#include "movegen.hpp"
+#include "moveio.hpp"
 
+uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
     if (depth == 0) {
         return 0;
     }
@@ -32,7 +31,6 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
     }
 
     for (int move_count = 0; move_count < (int)move_list.length; ++move_count) {
-
         // Skip illegal moves
         if (!make_move(pos, move_list.moves[move_count].move)) {
             continue;
@@ -42,8 +40,7 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
 
         if (depth == 1) {
             nodes++;
-        }
-        else {
+        } else {
             nodes += run_perft(pos, depth - 1, false);
         }
 
@@ -62,9 +59,9 @@ uint64_t run_perft(Board* pos, uint8_t depth, bool print_info) {
     if (print_info) {
         uint64_t time = get_time_ms() - start;
         std::cout << "\n    Depth: " << (int)depth << "\n"
-            << "    Nodes: " << nodes << "\n"
-            << "     Time: " << time << "ms (" << (double)time / 1000 << "s)\n"
-            << "      NPS: " << int(nodes / (double)time * 1000) << "\n\n";
+                  << "    Nodes: " << nodes << "\n"
+                  << "     Time: " << time << "ms (" << (double)time / 1000 << "s)\n"
+                  << "      NPS: " << int(nodes / (double)time * 1000) << "\n\n";
     }
 
     return nodes;
