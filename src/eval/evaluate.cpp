@@ -21,12 +21,12 @@ static inline int evaluate_knights(const Board *pos, uint8_t pce, int phase);
 static inline int evaluate_bishops(const Board *pos, uint8_t pce, int phase);
 static inline int evaluate_rooks(const Board *pos, uint8_t pce, int phase);
 static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase);
-static inline int evaluate_kings(const Board *pos, uint8_t pce, Bitboard attacks[], int attackers[],
-                                 int phase);
+static inline int evaluate_kings(const Board *pos, uint8_t pce, int phase);
 
 static inline int16_t count_tempi(const Board *pos);
-static inline int16_t count_activity(Bitboard white_attacks[], Bitboard black_attacks[],
-                                     int white_attackers[], int black_attackers[]);
+static inline int16_t count_activity(const Board *pos, Bitboard white_attacks[],
+                                     Bitboard black_attacks[], int white_attackers[],
+                                     int black_attackers[]);
 
 int evaluate_pos(const Board *pos) {
     int score = 0;
@@ -76,9 +76,9 @@ int evaluate_pos(const Board *pos) {
         // std::cout << "    " << ascii_pieces[wQ + col_offset] << ": " << evaluate_queens(pos, wQ +
         // col_offset, phase) * sign << "\n"; int old_score = score;
         if (colour == WHITE) {
-            score += evaluate_kings(pos, wK, black_attacks, black_attackers, phase);
+            score += evaluate_kings(pos, wK, phase);
         } else {
-            score -= evaluate_kings(pos, bK, white_attacks, white_attackers, phase);
+            score -= evaluate_kings(pos, bK, phase);
         }
         // std::cout << "    " << ascii_pieces[wK + col_offset] << ": " << score - old_score <<
         // "\n";
@@ -99,7 +99,7 @@ int evaluate_pos(const Board *pos) {
     /*
             Piece activity / control
     */
-    score += count_activity(white_attacks, black_attacks, white_attackers, black_attackers) * 3 / 2;
+    score += count_activity(pos, white_attacks, black_attacks, white_attackers, black_attackers);
     // std::cout << "Activity: " << count_activity(white_attacks, black_attacks, white_attackers,
     // black_attackers) * 3 / 2 << "\n";
 
@@ -388,32 +388,8 @@ static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase) {
         King evaluation
 */
 
-// Attack units
-static inline int evaluate_king_attacks(const Board *pos, uint8_t king_sq, Bitboard attacks[],
-                                        int attackers[]) {
-    Bitboard virtual_queen = get_queen_attacks(king_sq, pos->occupancies[BOTH]);
-    int attack_units[13] = {0, 1, 2, 2, 3, 5, 0, 1, 2, 2, 3, 5, 0};
-    int total_units = 0;
-
-    for (int i = 0; i < 32; ++i) {
-        if (attackers[i] == EMPTY) {
-            break;
-        }
-
-        Bitboard zone_attacks = attacks[i] & virtual_queen;
-        if (zone_attacks != 0) {
-            total_units += attack_units[attackers[i]] * count_bits(zone_attacks);
-            // std::cout << "        King attacks - " << ascii_pieces[attackers[i]] << " contributes
-            // " << attack_units[attackers[i]] << " * " << (int)count_bits(zone_attacks) << "
-            // units.\n";
-        }
-    }
-
-    // std::cout << "        King attacks: Total " << total_units << " units\n";
-    return -safety_table[std::min(total_units, 99)];
-}
-
-static inline int evaluate_pawn_shield(const Board *pos, uint8_t pce, uint8_t king_sq) {
+static inline int evaluate_pawn_shield(const Board *pos, uint8_t pce, uint8_t king_sq,
+                                       int var_phase) {
     // [0]: starting sq
     // [1]: moved 1 sq
     // [2]: moved 2 sq
@@ -461,16 +437,15 @@ static inline int evaluate_pawn_shield(const Board *pos, uint8_t pce, uint8_t ki
         }
     }
 
-    return score;
+    return score * var_phase / 16;
 }
 
 static inline int evaluate_king_safety(const Board *pos, uint8_t pce, uint8_t king_sq,
-                                       Bitboard attacks[], int attackers[], int var_phase) {
+                                       int var_phase) {
+    // Importance of king safety decreases with less material on the board
     int score = 0;
-    score += evaluate_king_attacks(pos, king_sq, attacks, attackers);
-    score += evaluate_pawn_shield(pos, pce, king_sq);
-    return score * var_phase /
-           16;  // Importance of king safety decreases with less material on the board
+    score += evaluate_pawn_shield(pos, pce, king_sq, var_phase);
+    return score;
 }
 
 // Rewarding active kings and punishing immobile kings to assist mates
@@ -491,8 +466,7 @@ static inline int16_t king_mobility(const Board *pos, uint8_t pce, uint8_t king_
     return mobility_bonus[mobile_squares] * (20 - var_phase) / 16;
 }
 
-static inline int evaluate_kings(const Board *pos, uint8_t pce, Bitboard attacks[], int attackers[],
-                                 int phase) {
+static inline int evaluate_kings(const Board *pos, uint8_t pce, int phase) {
     int score = 0;
     uint8_t sq = pos->king_sq[piece_col[pce]];
     score += compute_PSQT(pce, sq, phase);
@@ -500,7 +474,7 @@ static inline int evaluate_kings(const Board *pos, uint8_t pce, Bitboard attacks
         count_bits(pos->occupancies[BOTH] &
                    ~(pos->bitboards[wP] |
                      pos->bitboards[bP]));  // Better phasing formula in this case than one for PSQT
-    score += evaluate_king_safety(pos, pce, sq, attacks, attackers, var_phase);
+    score += evaluate_king_safety(pos, pce, sq, var_phase);
     if (var_phase <= 12) {
         score += king_mobility(pos, pce, sq, var_phase);
     }
@@ -540,35 +514,63 @@ static inline int16_t count_tempi(const Board *pos) {
     return ((pos->side == WHITE) ? white_adv : 0) + net_developed_pieces * tempo;
 }
 
-// Use the number of squares attack as a proxy for piece activity / mobility
-// Based on jk_182's Lichess article:
+// Using attack bitboards to evaluate piece activity and king safety
+// Activity is based on number of attacked squares, based on jk_182's Lichess article:
 // https://lichess.org/@/jk_182/blog/calculating-piece-activity/FAOY6Ii7
-static inline int16_t count_activity(Bitboard white_attacks[], Bitboard black_attacks[],
-                                     int white_attackers[], int black_attackers[]) {
+static inline int16_t count_activity(const Board *pos, Bitboard white_attacks[],
+                                     Bitboard black_attacks[], int white_attackers[],
+                                     int black_attackers[]) {
     uint8_t activity_weight[13] = {0, 5, 3, 3, 2, 1, 1, 5, 3, 3, 2, 1, 1};
     int white_activity = 0, white_weight_count = 0;
     int black_activity = 0, black_weight_count = 0;
 
-    for (int i = 0; i < 32; ++i) {
-        if (white_attackers[i] == EMPTY) {
-            break;  // End of attacks
-        }
-        white_weight_count += activity_weight[white_attackers[i]];
-        // Double count ones in enemy's side of the board to encourage more forward movement
-        white_activity += (count_bits(white_attacks[i]) + count_bits(white_attacks[i] & TOP_HALF)) *
-                          activity_weight[white_attackers[i]];
-    }
-    white_activity /= white_weight_count;
-    for (int i = 0; i < 32; ++i) {
-        if (black_attackers[i] == EMPTY) {
-            break;
-        }
-        black_weight_count += activity_weight[black_attackers[i]];
-        black_activity +=
-            (count_bits(black_attacks[i]) + count_bits(black_attacks[i] & BOTTOM_HALF)) *
-            activity_weight[black_attackers[i]];
-    }
-    black_activity /= black_weight_count;
+    // Attacks: The attack bitboards
+    // Attackers: Piece types corresponding to each attack bitboard
+    Bitboard virtual_queen_w = get_queen_attacks(pos->king_sq[WHITE], pos->occupancies[BOTH]);
+    Bitboard virtual_queen_b = get_queen_attacks(pos->king_sq[BLACK], pos->occupancies[BOTH]);
+    int attack_units[13] = {0, 1, 2, 2, 3, 5, 0, 1, 2, 2, 3, 5, 0};
+    int total_white_units = 0, total_black_units = 0;
 
-    return white_activity - black_activity;
+    for (int i = 0; i < 32; ++i) {
+        if (white_attackers[i] != EMPTY) {
+            // === ACTIVITY ===
+            // Double count ones in enemy's side of the board to encourage more forward movement
+            white_weight_count += activity_weight[white_attackers[i]];
+            white_activity +=
+                (count_bits(white_attacks[i]) + count_bits(white_attacks[i] & TOP_HALF)) *
+                activity_weight[white_attackers[i]];
+
+            // === KING SAFETY ===
+            Bitboard zone_attacks = white_attacks[i] & virtual_queen_b;
+            if (zone_attacks != 0) {
+                total_white_units += attack_units[white_attackers[i]] * count_bits(zone_attacks);
+            }
+        }
+
+        if (black_attackers[i] != EMPTY) {
+            // === ACTIVITY ===
+            black_weight_count += activity_weight[black_attackers[i]];
+            black_activity +=
+                (count_bits(black_attacks[i]) + count_bits(black_attacks[i] & BOTTOM_HALF)) *
+                activity_weight[black_attackers[i]];
+
+            // === KING SAFETY ===
+            Bitboard zone_attacks = black_attacks[i] & virtual_queen_w;
+            if (zone_attacks != 0) {
+                total_black_units += attack_units[black_attackers[i]] * count_bits(zone_attacks);
+            }
+        }
+    }
+
+    if (white_weight_count != 0) white_activity /= white_weight_count;
+    if (black_weight_count != 0) black_activity /= black_weight_count;
+
+    int var_phase = count_bits(pos->occupancies[BOTH] & ~(pos->bitboards[wP] | pos->bitboards[bP]));
+
+    int activity = (white_activity - black_activity) * 3 / 2;
+    int white_king = -safety_table[std::min(total_black_units, 99)] * var_phase / 16;
+    int black_king = -safety_table[std::min(total_white_units, 99)] * var_phase / 16;
+    int king_attacks = (white_king - black_king);
+
+    return activity + king_attacks;
 }
