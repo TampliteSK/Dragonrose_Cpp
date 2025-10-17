@@ -53,8 +53,8 @@ int evaluate_pos(const Board *pos) {
     // std::cout << "Material: " << count_material(pos) << "\n";
 
     // Get easily-accessible attacks in one-go to save time
-    get_all_attacks(pos, WHITE, white_attacks, white_attackers, true);
-    get_all_attacks(pos, BLACK, black_attacks, black_attackers, true);
+    get_all_attacks(pos, WHITE, white_attacks, white_attackers);
+    get_all_attacks(pos, BLACK, black_attacks, black_attackers);
 
     for (int colour = WHITE; colour <= BLACK; ++colour) {
         int8_t sign = (colour == WHITE) ? 1 : -1;

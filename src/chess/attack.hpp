@@ -47,15 +47,14 @@ static inline Bitboard get_piece_attacks(const Board *pos, uint8_t pce, uint8_t 
 Bitboard get_piece_attacks(const Board *pos, uint8_t pce, uint8_t sq);
 
 // Replace with incremental version in board
-static inline void get_all_attacks(const Board *pos, uint8_t side, Bitboard *list, int *attackers,
-                                   bool king_included) {
+static inline void get_all_attacks(const Board *pos, uint8_t side, Bitboard *list, int *attackers) {
     Bitboard copy = pos->occupancies[side];
     int count = 0;
 
     while (copy) {
         uint8_t sq = pop_ls1b(copy);
         uint8_t pce = pos->pieces[sq];
-        if (king_included || piece_type[pce] != KING) {
+        if (piece_type[pce] != EMPTY && piece_type[pce] != KING && piece_type[pce] != PAWN) {
             list[count] = get_piece_attacks(pos, pce, sq);
             attackers[count] = pce;
             count++;
