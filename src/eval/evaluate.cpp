@@ -521,8 +521,8 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
                                      Bitboard black_attacks[], int white_attackers[],
                                      int black_attackers[], int phase) {
 
-    int mobility_bonus = (static_mobility.mg() * phase + static_mobility.eg() * (64 - phase)) / 64;
-    int activity = 0;
+    // int mobility_bonus = (static_mobility.mg() * phase + static_mobility.eg() * (64 - phase)) / 64;
+    // int activity = 0;
     int mobility = 0;
     uint8_t attack_bits = 0;
 
@@ -539,7 +539,7 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
 
             // === ACTIVITY / STATIC MOBILITY ===
             // Double count ones in enemy's side of the board to encourage more forward movement
-            activity += mobility_bonus * attack_bits;
+            // activity += mobility_bonus * attack_bits;
 
             // === MOBILITY ===
             // Give malus/bonus based on how many squares are controlled by the piece
@@ -560,7 +560,7 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
             attack_bits = count_bits(black_attacks[i]);
 
             // === ACTIVITY ===
-            activity -= mobility_bonus * count_bits(black_attacks[i]);
+            // activity -= mobility_bonus * count_bits(black_attacks[i]);
 
             // === MOBILITY ===
             uint8_t pce = piece_type[black_attackers[i]];
@@ -583,5 +583,5 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
     int black_king = -safety_table[std::min(total_white_units, 99)] * var_phase / 16;
     int king_attacks = white_king - black_king;
 
-    return activity + mobility + king_attacks;
+    return mobility + king_attacks;
 }
