@@ -6,12 +6,16 @@
 #include "../chess/Board.hpp"
 #include "../datatypes.hpp"
 #include "ScorePair.hpp"
+#include <array>
 
 // Functions
 int evaluate_pos(const Board *pos);
 int count_material(const Board *pos, const uint8_t phase);
 
-// Evaluation constants
+/*
+    Evaluation constants
+*/
+
 // indicies:  0  1  2  3  4  5  6  7
 // ranks:    r8 r7 r6 r5 r4 r3 r2 r1
 // 7-ranks:  r1 r2 r3 r4 r5 r6 r7 r8
@@ -40,6 +44,48 @@ const uint8_t battery = 10;  // B+Q, R+R, Q+R
 
 const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL;  // B2-G7 set
 
+// clang-format off
+// (Dynamic) Mobility (values scaled from Clockwork)
+// (Explanation adapted from Weak chess engine)
+// Each piece type can attack at most 28 squares in any given turn. In
+// general, the more squares a piece attacks the better. 
+// Queens may get negative mobility in the opening to prevent early queen moves. 
+// King mobility is used to discourage kings from open rays.
+const std::array<std::array<ScorePair, 28>, 5> MOBILITY_VALUES = {{
+    {{ // KNIGHT (0 ~ 8 attacks)
+        S(-32, -42), S(-15, -23), S(-6, -5), S(-4, 3), S(2, 8), S(7, 11), S(12, 11), 
+           S(18, 4),  S(28, -12),   S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),   S(0, 0), 
+           S(0, 0),      S(0, 0),   S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),   S(0, 0), 
+           S(0, 0),      S(0, 0),   S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),   S(0, 0)
+    }},
+    {{ // BISHOP (0 ~ 13 attacks)
+        S(-32, -41), S(-23, -26), S(-13, -18), S(-6, -12),  S(-2, -2),    S(3, 0),    S(7, 1), 
+            S(8, 5),    S(12, 5),    S(14, 3),   S(21, 0), S(44, -18), S(39, -12), S(61, -32), 
+            S(0, 0),     S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0), 
+            S(0, 0),     S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0)
+    }},
+    {{ // ROOK (0 ~ 14 attacks)
+        S(-28, -14), S(-21, -5), S(-16, -4), S(-13, -5), S(-12, 1), S(-5, 4),  S(0, 2), 
+            S(6, 3),   S(10, 7),   S(17, 6),   S(22, 5),  S(29, 5), S(33, 4), S(34, 3), 
+         S(63, -20),    S(0, 0),    S(0, 0),    S(0, 0),   S(0, 0),  S(0, 0),  S(0, 0), 
+            S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),   S(0, 0),  S(0, 0),  S(0, 0)
+    }},
+    {{ // QUEEN (0 ~ 27 attacks)
+        S(-46, -10), S(-22, -105), S(-21, -104), S(-26, -69),  S(-25, -47), S(-22, -31),  S(-20, -32), 
+        S(-22, -10),  S(-19, -12),  S(-16, -11),   S(-18, 8),   S(-14, 10),   S(-11, 6),    S(-9, 12), 
+          S(-8, 14),    S(-9, 20),   S(-10, 19),   S(-4, 14),      S(3, 9),   S(12, -1),   S(29, -12), 
+         S(32, -19),   S(40, -22),   S(99, -80),  S(92, -60), S(194, -105),  S(66, -33), S(150, -106)
+    }},
+    {{ // KING (0 ~ 8 attacks)
+        S(49, 60), S(24, 79), S(20, 78), S(15, 85), S(6, 83), S(-2, 82), S(-6, 82), 
+        S(-8, 74),  S(5, 53),   S(0, 0),   S(0, 0),  S(0, 0),   S(0, 0),   S(0, 0), 
+          S(0, 0),   S(0, 0),   S(0, 0),   S(0, 0),  S(0, 0),   S(0, 0),   S(0, 0), 
+          S(0, 0),   S(0, 0),   S(0, 0),   S(0, 0),  S(0, 0),   S(0, 0),   S(0, 0)
+    }},
+}};
+// clang-format on
+
+// King safety
 // Attack units table from Stockfish, rescaled to centipawns
 const int safety_table[100] = {
     0,   0,   1,   2,   3,   5,   7,   9,   12,  15,  18,  22,  26,  30,  35,  39,  44,
