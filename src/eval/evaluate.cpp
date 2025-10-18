@@ -543,11 +543,9 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
 
             // === MOBILITY ===
             // Give malus/bonus based on how many squares are controlled by the piece
-            uint8_t pce = piece_type[white_attackers[i]];
-            if (pce >= KNIGHT) {
-                ScorePair pair = MOBILITY_VALUES[pce - 2][attack_bits];
-                mobility += (pair.mg() * phase + pair.eg() * (64 - phase)) / 64;
-            }
+            uint8_t pce = piece_type[white_attackers[i]]; // Guaranteed to be non-pawn, non-EMPTY
+            ScorePair pair = MOBILITY_VALUES[pce - 2][attack_bits];
+            mobility += (pair.mg() * phase + pair.eg() * (64 - phase)) / 64;
 
             // === KING SAFETY ===
             Bitboard zone_attacks = white_attacks[i] & virtual_queen_b;
@@ -564,10 +562,8 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
 
             // === MOBILITY ===
             uint8_t pce = piece_type[black_attackers[i]];
-            if (pce >= KNIGHT) {
-                ScorePair pair = MOBILITY_VALUES[pce - 2][attack_bits];
-                mobility -= (pair.mg() * phase + pair.eg() * (64 - phase)) / 64;
-            }
+            ScorePair pair = MOBILITY_VALUES[pce - 2][attack_bits];
+            mobility -= (pair.mg() * phase + pair.eg() * (64 - phase)) / 64;
 
             // === KING SAFETY ===
             Bitboard zone_attacks = black_attacks[i] & virtual_queen_w;
