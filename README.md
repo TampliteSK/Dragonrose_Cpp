@@ -100,7 +100,7 @@ Others:
 Below are some other metrics:
 |       Metric      |    Rapid   |   Blitz   |   Bullet   |
 |:-----------------:|:----------:|:---------:|:----------:|
-|   Lichess (BOT)   | 2207 ± 57  | 2206 ± 47 | 2193 ± 48  |
+|   Lichess (BOT)   | 2232 ± 63  | 2194 ± 45 | 2210 ± 45  |
 | Chesscom\* (est.) | 2655 ± 109 | 2888 ± 88 | 2675 ± 338 |
 
 \*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
@@ -114,7 +114,7 @@ Below are some other metrics:
 ## Changelogs <br>
 ### 0.x: <br>
 0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
-- Eval: Added more evaluation terms
+- Eval: Reworked structure and more terms
 - Search: Improved NMP, FP/EFP & LMR. Added PVS, RFP, LMP, MDP. Switched to fail-soft entirely. Added TT probing in QS.
 - Other: Patched misc bugs.
 
@@ -127,4 +127,4 @@ Below are some other metrics:
 
 ## Bugs to fix:
 - Illegal PV moves
-- Occasional disconnects on OB in perpetual checks positions
+- Occasional disconnects on OB in perpetual checks positions on specific machines
