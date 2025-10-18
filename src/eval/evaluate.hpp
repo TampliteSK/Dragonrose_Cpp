@@ -22,6 +22,11 @@ const uint8_t isolated_centre_pawn = 10;  // Additional penalty
 const uint8_t stacked_pawn = 5;           // multipled by n-1, where n is no. of stacked pawns
 const uint8_t backwards_pawn = 15;
 
+// Values taken from Clockwork circa commit eec5584, scaled to our scale (based on mean pawn value)
+inline ScorePair static_mobility = S(7, 6);
+// inline ScorePair bishop_pair = S(28, 72);
+// inline tempo = S(9, 2);
+
 const uint8_t bishop_pair = 20;
 const uint8_t bishop_blocks_ctrpawn = 20;
 const uint8_t bishop_attacks_piece = 5;
