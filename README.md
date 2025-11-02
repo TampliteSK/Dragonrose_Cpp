@@ -46,7 +46,7 @@ I would also like to thank:
 
 ## Main Features
 
-Search:
+### Search
 - Iterative deepening + Aspiration windows
 - Negamax alpha-beta search (fail-soft)
   - Mate distance pruning
@@ -61,7 +61,7 @@ Search:
 - Move ordering: MVV/LVA, Killer heuristics, Priority moves (promotions, castling, en passant)
 - Transposition table using "age"
 
-Evaluation (Hand-crafted evaluation, or HCE):
+### Evaluation (Hand-crafted evaluation, or HCE)
 - Tapered eval
   - PesTO Material & Piece-square Table (PST/PSQT) bonuses
   - Piece activity	
@@ -89,7 +89,7 @@ Evaluation (Hand-crafted evaluation, or HCE):
 
 - Basic drawn endgaeme knowledge
 
-Others:
+### Others
 - Attack generation
   - Pre-computed attack tables initialised at startup
   - Plain magic bitboards for slider attacks
