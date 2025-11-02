@@ -11,7 +11,10 @@
 int evaluate_pos(const Board *pos);
 int count_material(const Board *pos, const uint8_t phase);
 
-// Evaluation constants
+/*
+    Evaluation constants
+*/
+
 // indicies:  0  1  2  3  4  5  6  7
 // ranks:    r8 r7 r6 r5 r4 r3 r2 r1
 // 7-ranks:  r1 r2 r3 r4 r5 r6 r7 r8
@@ -38,6 +41,65 @@ const uint8_t battery = 10;  // B+Q, R+R, Q+R
 
 const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL;  // B2-G7 set
 
+// clang-format off
+// ======================================================================
+// MOBILITY BONUS TABLES
+// Values source: Sirius (mcthouacbb / A_randomnoob) | Explanation inspired by Weak chess engine (Dragjon)
+// ======================================================================
+//
+// Mobility is a measure of piece activity based on the number of squares a 
+// piece can attack. Each piece can attack up to 28 squares.
+// In general, the more squares a piece attacks the better. However, queens
+// are given penalties for having high mobility in the opening, to discourage
+// early queen movement.
+// 
+// Table format:
+//   MOBILITY_VALUES[PieceType][AttackCount] → ScorePair(mg, eg)
+//
+//   PieceType:  0 = Knight  | max  8 attacks
+//               1 = Bishop  | max 13 attacks
+//               2 = Rook    | max 14 attacks
+//               3 = Queen   | max 27 attacks
+//
+// Unused entries beyond max attacks per piece are zeroed.
+const ScorePair MOBILITY_VALUES[4][28] = {
+    // ── Knights (0 – 8 attacks) ────────────────────────────────────────
+    {
+        S(  -7,  -22), S( -36,  -55), S( -21,  -18), S( -10,   -2),
+        S(   0,    8), S(   6,   18), S(  14,   22), S(  22,   26),
+        S(  32,   16)
+        // 9–27: unused (0,0)
+    },
+    // ── Bishops (0 – 13 attacks) ───────────────────────────────────────
+    {
+        S( -12,  -31), S( -42,  -62), S( -22,  -32), S( -11,  -11),
+        S(  -4,   -1), S(   0,    9), S(   1,   16), S(   5,   19),
+        S(   4,   21), S(   8,   21), S(   6,   22), S(  12,   15),
+        S(  17,   13), S(  40,  -11)
+        // 14–27: unused
+    },
+    // ── Rooks (0 – 14 attacks) ─────────────────────────────────────────
+    {
+        S( -25,  -62), S( -49,  -63), S( -18,  -43), S( -10,  -26),
+        S(  -2,  -15), S(   3,   -5), S(   2,    6), S(   4,   11),
+        S(   5,   14), S(   7,   21), S(   9,   27), S(   9,   34),
+        S(  10,   38), S(  14,   39), S(  40,   18)
+        // 15–27: unused
+    },
+    // ── Queens (0 – 27 attacks) ────────────────────────────────────────
+    {
+        S( -14,   41), S( -41,    7), S( -60,  -13), S( -41, -125),
+        S( -26, -105), S( -12,  -68), S(  -4,  -51), S(   0,  -33),
+        S(   0,  -15), S(   1,   -1), S(   4,    6), S(   3,   16),
+        S(   6,   22), S(   6,   30), S(   7,   34), S(   9,   34),
+        S(   7,   40), S(   8,   39), S(  10,   40), S(  12,   34),
+        S(  16,   31), S(  20,   17), S(  20,   17), S(  28,    4),
+        S(  22,    9), S(  23,   -9), S(  22,  -37), S( -38,   11)
+    }
+};
+// clang-format on
+
+// King safety
 // Attack units table from Stockfish, rescaled to centipawns
 const int safety_table[100] = {
     0,   0,   1,   2,   3,   5,   7,   9,   12,  15,  18,  22,  26,  30,  35,  39,  44,
