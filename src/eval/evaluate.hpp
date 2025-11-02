@@ -6,7 +6,7 @@
 #include "../chess/Board.hpp"
 #include "../datatypes.hpp"
 #include "ScorePair.hpp"
-#include <array>
+// #include <array>
 
 // Functions
 int evaluate_pos(const Board *pos);
@@ -45,44 +45,21 @@ const uint8_t battery = 10;  // B+Q, R+R, Q+R
 const Bitboard DEVELOPMENT_MASK = 0x7E7E7E7E7E7E00ULL;  // B2-G7 set
 
 // clang-format off
-// (Dynamic) Mobility (values scaled from Clockwork)
+// === MOBILITY BONUS === (values taken from Sirius)
 // (Explanation adapted from Weak chess engine)
 // Each piece type can attack at most 28 squares in any given turn. In
 // general, the more squares a piece attacks the better. 
 // Queens may get negative mobility in the opening to prevent early queen moves. 
-// King mobility is used to discourage kings from open rays.
-const std::array<std::array<ScorePair, 28>, 5> MOBILITY_VALUES = {{
-    {{ // KNIGHT (0 ~ 8 attacks)
-        S(-32, -42), S(-15, -23), S(-6, -5), S(-4, 3), S(2, 8), S(7, 11), S(12, 11), 
-           S(18, 4),  S(28, -12),   S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),   S(0, 0), 
-            S(0, 0),     S(0, 0),   S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),   S(0, 0), 
-            S(0, 0),     S(0, 0),   S(0, 0),  S(0, 0), S(0, 0),  S(0, 0),   S(0, 0)
-    }},
-    {{ // BISHOP (0 ~ 13 attacks)
-        S(-32, -41), S(-23, -26), S(-13, -18), S(-6, -12),  S(-2, -2),    S(3, 0),    S(7, 1), 
-            S(8, 5),    S(12, 5),    S(14, 3),   S(21, 0), S(44, -18), S(39, -12), S(61, -32), 
-            S(0, 0),     S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0), 
-            S(0, 0),     S(0, 0),     S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0)
-    }},
-    {{ // ROOK (0 ~ 14 attacks)
-        S(-28, -14), S(-21, -5), S(-16, -4), S(-13, -5), S(-12, 1), S(-5, 4),  S(0, 2), 
-            S(6, 3),   S(10, 7),   S(17, 6),   S(22, 5),  S(29, 5), S(33, 4), S(34, 3), 
-         S(63, -20),    S(0, 0),    S(0, 0),    S(0, 0),   S(0, 0),  S(0, 0),  S(0, 0), 
-            S(0, 0),    S(0, 0),    S(0, 0),    S(0, 0),   S(0, 0),  S(0, 0),  S(0, 0)
-    }},
-    {{ // QUEEN (0 ~ 27 attacks)
-        S(-46, -10), S(-22, -105), S(-21, -104), S(-26, -69),  S(-25, -47), S(-22, -31),  S(-20, -32), 
-        S(-22, -10),  S(-19, -12),  S(-16, -11),   S(-18, 8),   S(-14, 10),   S(-11, 6),    S(-9, 12), 
-          S(-8, 14),    S(-9, 20),   S(-10, 19),   S(-4, 14),      S(3, 9),   S(12, -1),   S(29, -12), 
-         S(32, -19),   S(40, -22),   S(99, -80),  S(92, -60), S(194, -105),  S(66, -33), S(150, -106)
-    }},
-    {{ // KING (0 ~ 8 attacks)
-        S(49, 60), S(24, 79), S(20, 78), S(15, 85), S(6, 83), S(-2, 82), S(-6, 82), 
-        S(-8, 74),  S(5, 53),   S(0, 0),   S(0, 0),  S(0, 0),   S(0, 0),   S(0, 0), 
-          S(0, 0),   S(0, 0),   S(0, 0),   S(0, 0),  S(0, 0),   S(0, 0),   S(0, 0), 
-          S(0, 0),   S(0, 0),   S(0, 0),   S(0, 0),  S(0, 0),   S(0, 0),   S(0, 0)
-    }},
-}};
+const ScorePair MOBILITY_VALUES[4][28] = {
+    // Knights (0 - 8 attacks)
+    {S(  -7,  -22), S( -36,  -55), S( -21,  -18), S( -10,   -2), S(   0,    8), S(   6,   18), S(  14,   22), S(  22,   26), S(  32,   16), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0)},
+    // Bishops (0 - 13 attacks)
+    {S( -12,  -31), S( -42,  -62), S( -22,  -32), S( -11,  -11), S(  -4,   -1), S(   0,    9), S(   1,   16), S(   5,   19), S(   4,   21), S(   8,   21), S(   6,   22), S(  12,   15), S(  17,   13), S(  40,  -11), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0)},
+    // Rooks   (0 - 14 attacks)
+    {S( -25,  -62), S( -49,  -63), S( -18,  -43), S( -10,  -26), S(  -2,  -15), S(   3,   -5), S(   2,    6), S(   4,   11), S(   5,   14), S(   7,   21), S(   9,   27), S(   9,   34), S(  10,   38), S(  14,   39), S(  40,   18), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0), S(   0,    0)},
+    // Queens  (0 - 27 attacks)
+    {S( -14,   41), S( -41,    7), S( -60,  -13), S( -41, -125), S( -26, -105), S( -12,  -68), S(  -4,  -51), S(   0,  -33), S(   0,  -15), S(   1,   -1), S(   4,    6), S(   3,   16), S(   6,   22), S(   6,   30), S(   7,   34), S(   9,   34), S(   7,   40), S(   8,   39), S(  10,   40), S(  12,   34), S(  16,   31), S(  20,   17), S(  20,   17), S(  28,    4), S(  22,    9), S(  23,   -9), S(  22,  -37), S( -38,   11)}
+};
 // clang-format on
 
 // King safety

@@ -54,7 +54,7 @@ static inline void get_all_attacks(const Board *pos, uint8_t side, Bitboard *lis
     while (copy) {
         uint8_t sq = pop_ls1b(copy);
         uint8_t pce = pos->pieces[sq];
-        if (piece_type[pce] > PAWN) {
+        if (piece_type[pce] > PAWN && piece_type[pce] < KING) {
             list[count] = get_piece_attacks(pos, pce, sq);
             attackers[count] = pce;
             count++;
