@@ -66,20 +66,27 @@ Evaluation (Hand-crafted evaluation, or HCE):
   - PesTO Material & Piece-square Table (PST/PSQT) bonuses
   - Piece activity	
   - Tempi
+
 - King safety
   - Attack units
   - Pawn shield
   - King mobility (in endgames)
+
+- Piece mobility (NBRQ)
+- Piece bonuses / penalties
+  - Mobility (NBRQ)
+  - Bonus for semi-open/open files (RQ)
+  - Bonus for targetting enemy pieces (BRQ)
+  - Bonus for batteries (B+Q, R+Q, R+R)
+  - Penalty for bishops blocking centre pawns
+
 - Pawn structure
   - Passed pawns bonus
   - Isolated pawns penalty (extra penalty for isolated d/e pawns)
   - Stacked pawns penalty
   - Backwards pawns penalty
-- Piece bounses / penalties
-  - Penalty for bishops blocking centre pawns
-  - Bonus for semi-open and open files for rooks and queens
-  - Bonus for sliders to target enemy pieces
-  - Bonus for batteries (bishop + queen, rook + queen, rook + rook)
+  - Phalanx pawns bonus (WIP)
+
 - Basic drawn endgaeme knowledge
 
 Others:
@@ -100,7 +107,7 @@ Others:
 Below are some other metrics:
 |       Metric      |    Rapid   |   Blitz   |   Bullet   |
 |:-----------------:|:----------:|:---------:|:----------:|
-|   Lichess (BOT)   | 2232 ± 63  | 2194 ± 45 | 2210 ± 45  |
+|   Lichess (BOT)   | 2208 ± 62  | 2160 ± 48 | 2158 ± 48  |
 | Chesscom\* (est.) | 2655 ± 109 | 2888 ± 88 | 2675 ± 338 |
 
 \*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
