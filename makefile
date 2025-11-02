@@ -26,12 +26,19 @@ endif
 # Add .exe if Windows
 ifeq ($(OS),Windows_NT)
     EXE := $(EXE).exe
+else
+	# WSL / Linux
+	# Cross-compile option
+	ifdef WINDOWS
+		CXX = x86_64-w64-mingw32-g++
+		EXE := $(EXE).exe
+		LDFLAGS += -static-libgcc -static-libstdc++
+	endif
 endif
-
 
 # Build target
 all:
-	$(CXX) $(CXXFLAGS) $(SRCS) -o $(EXE)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(SRCS) -o $(EXE)
 
 clean:
 	rm -f $(EXE)

@@ -537,10 +537,6 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
         if (white_attackers[i] != EMPTY) {
             attack_bits = count_bits(white_attacks[i]);
 
-            // === ACTIVITY / STATIC MOBILITY ===
-            // Double count ones in enemy's side of the board to encourage more forward movement
-            // activity += mobility_bonus * attack_bits;
-
             // === MOBILITY ===
             // Give malus/bonus based on how many squares are controlled by the piece
             uint8_t pce = piece_type[white_attackers[i]]; // Guaranteed to be non-pawn, non-EMPTY
@@ -556,9 +552,6 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
 
         if (black_attackers[i] != EMPTY) {
             attack_bits = count_bits(black_attacks[i]);
-
-            // === ACTIVITY ===
-            // activity -= mobility_bonus * count_bits(black_attacks[i]);
 
             // === MOBILITY ===
             uint8_t pce = piece_type[black_attackers[i]];
