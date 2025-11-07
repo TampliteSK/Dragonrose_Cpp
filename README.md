@@ -1,3 +1,6 @@
+<p align="center"><img src=Dragonrose.jpg alt="Dragonrose chess engine logo" width="35%"/></p>
+<p align="center"><i>Dragonrose logo created by vividgamer5</i></p>
+
 # Dragonrose_Cpp Chess Engine
 
 ![Build Status](https://github.com/TampliteSK/Dragonrose_Cpp/actions/workflows/build.yml/badge.svg)
@@ -31,6 +34,7 @@ I would also like to thank:
 - [mcthouacbb](https://github.com/mcthouacbb) (better known as A_randomnoob on Discord), developer of the most goated HCE engine Sirius, for looking through `search.cpp` and discovering silly bugs in my engine.
 - [Adam Kulju](https://github.com/Adam-Kulju), developer of Willow and Patricia, for helping out with my code.
 - MattBench (an instance of [OpenBench](https://github.com/AndyGrant/OpenBench)) users for contributing hardware and helping with code as well
+- vividgamer5 for creating the Dragonrose logo
 
 ## How to Use
 - Challenge it on Lichess [here](https://lichess.org/@/DragonroseDev)
