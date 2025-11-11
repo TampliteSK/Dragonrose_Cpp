@@ -250,7 +250,7 @@ static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
         }
 
         // Connected passer bonuses
-        if (file >= FILE_A) {
+        if (file > FILE_A) {
             if (passers[file] && passers[file - 1]) {
                 score += connected_passers;
             }
