@@ -77,6 +77,7 @@ void update_vars(Board *pos) {
 void parse_fen(Board *pos, const std::string FEN) {
     if (FEN.length() <= 0) {
         std::cerr << "Board parse_fen() error: Invalid FEN length.\n";
+        return;  // Don't continue with invalid FEN
     }
 
     reset_board(pos);
@@ -160,7 +161,20 @@ void parse_fen(Board *pos, const std::string FEN) {
 
         // Putting pieces on the board
         for (int i = 0; i < count; i++) {
+            // Validate file and rank are in bounds
+            if (file < FILE_A || file > FILE_H || rank < RANK_8 || rank > RANK_1) {
+                std::cerr << "Board parse_fen() error: File/rank out of bounds\n";
+                return;
+            }
+
             sq = FR2SQ(file, rank);
+
+            // Validate square is in bounds
+            if (sq < 0 || sq > 63) {
+                std::cerr << "Board parse_fen() error: Square out of bounds: " << sq << "\n";
+                return;
+            }
+
             // Skips a file if empty square
             if (piece != EMPTY) {
                 pos->pieces[sq] = piece;
@@ -178,11 +192,16 @@ void parse_fen(Board *pos, const std::string FEN) {
      ****************** */
 
     // Side-to-move parsing
+    if (pfen >= (int)FEN.length()) {
+        std::cerr << "Board parse_fen() error: Unexpected end of FEN string\n";
+        return;
+    }
     pos->side = (FEN[pfen] == 'w') ? WHITE : BLACK;
     pfen += 2;
 
     // Castling perm parsing
     for (int i = 0; i < 4; i++) {
+        if (pfen >= (int)FEN.length()) break;
         if (FEN[pfen] == ' ') {
             break;
         }
@@ -204,32 +223,56 @@ void parse_fen(Board *pos, const std::string FEN) {
         }
         pfen++;
     }
-    pfen++;
+    if (pfen < (int)FEN.length()) pfen++;
 
     // En passant parsing
-    if (FEN[pfen] != '-') {
-        file = FEN[pfen] - 'a';
-        rank = 7 - int(FEN[pfen + 1] - '1');
-        pos->enpas = FR2SQ(file, rank);
-        pfen += 3;
-    } else {
-        pfen += 2;
+    if (pfen < (int)FEN.length()) {
+        if (FEN[pfen] != '-') {
+            // Validate we have enough characters for en passant square
+            if (pfen + 1 >= (int)FEN.length()) {
+                std::cerr << "Board parse_fen() error: Incomplete en passant square\n";
+                return;
+            }
+            file = FEN[pfen] - 'a';
+            rank = 7 - int(FEN[pfen + 1] - '1');
+
+            // Validate en passant square is valid
+            if (file < FILE_A || file > FILE_H || rank < RANK_8 || rank > RANK_1) {
+                std::cerr << "Board parse_fen() error: Invalid en passant square\n";
+                return;
+            }
+
+            pos->enpas = FR2SQ(file, rank);
+            pfen += 3;
+        } else {
+            pfen += 2;
+        }
     }
 
     // Fifty-move counter parsing
     uint16_t half_moves = 0;
     while (pfen < (int)FEN.length() && FEN[pfen] != ' ') {
+        // Validate character is a digit
+        if (FEN[pfen] < '0' || FEN[pfen] > '9') {
+            std::cerr << "Board parse_fen() error: Invalid character in fifty-move counter\n";
+            return;
+        }
         half_moves = half_moves * 10 + (FEN[pfen] - '0');
         pfen++;
     }
     pos->fifty_move = half_moves;
-    pfen++;  // Move past the space
+    if (pfen < (int)FEN.length()) pfen++;  // Move past the space
 
     // Full move number parsing
     uint16_t full_move = 0;
     while (pfen < (int)FEN.length()) {
         if (FEN[pfen] == ' ') {
             break;
+        }
+        // Validate character is a digit
+        if (FEN[pfen] < '0' || FEN[pfen] > '9') {
+            std::cerr << "Board parse_fen() error: Invalid character in full move number\n";
+            return;
         }
         full_move = full_move * 10 + (FEN[pfen] - '0');
         pfen++;
