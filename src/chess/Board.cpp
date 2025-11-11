@@ -304,7 +304,7 @@ bool check_boards(const Board *pos1, const Board *pos2) {
         if (pos1->pieces[i] != pos2->pieces[i]) {
             std::cout << "Discrepancy of piece at square " << i
                       << ": Left board: " << ascii_pieces[pos1->pieces[i]]
-                      << ". Right board: " << ascii_pieces[pos1->pieces[i]] << "\n";
+                      << ". Right board: " << ascii_pieces[pos2->pieces[i]] << "\n";
             return false;
         }
     }
