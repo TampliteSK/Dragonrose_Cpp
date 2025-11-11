@@ -18,12 +18,18 @@
 int main(int argc, char *argv[]) {
     init_all();
 
-    Board *pos = new Board();
+    // Use stack allocation with automatic cleanup (RAII)
+    Board pos_storage;
+    Board *pos = &pos_storage;
     reset_board(pos);
-    SearchInfo *info = new SearchInfo();
+
+    SearchInfo info_storage;
+    SearchInfo *info = &info_storage;
     init_searchinfo(info);
-    HashTable *hash_table = new HashTable();
-    hash_table->pTable = NULL;
+
+    HashTable hash_table_storage;  // Automatic cleanup via destructor
+    HashTable *hash_table = &hash_table_storage;
+
     UciOptions options = UciOptions();
     UciHandler uci = UciHandler();
 
@@ -31,12 +37,7 @@ int main(int argc, char *argv[]) {
     for (int arg_num = 0; arg_num < argc; ++arg_num) {
         if (strncmp(argv[arg_num], "bench", 5) == 0) {
             run_bench(pos, hash_table, info, uci);
-
-            // Quit after benching is finished
-            delete pos;
-            delete info;
-            free(hash_table->pTable);
-            delete hash_table;
+            // No manual cleanup needed - RAII handles it
             return EXIT_SUCCESS;
         }
     }
@@ -67,10 +68,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    delete pos;
-    delete info;
-    free(hash_table->pTable);
-    delete hash_table;
-
+    // No manual cleanup needed - RAII handles everything automatically
     return EXIT_SUCCESS;
 }

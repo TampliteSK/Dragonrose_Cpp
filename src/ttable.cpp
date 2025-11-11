@@ -12,6 +12,11 @@
 // std::string ascii_flags[] = { "None", "Alpha", "Beta", "Exact" };
 
 int probe_PV_move(const Board *pos, const HashTable *table) {
+    // Check for division by zero
+    if (table->max_entries == 0 || table->pTable == nullptr) {
+        return NO_MOVE;
+    }
+
     int index = pos->hash_key % table->max_entries;
 
     if (table->pTable[index].hash_key == pos->hash_key) {
@@ -47,13 +52,13 @@ void get_PV_line(Board *pos, const HashTable *table, const uint8_t depth) {
 }
 
 void clear_hash_table(HashTable *table) {
+    if (table->pTable == nullptr || table->max_entries == 0) {
+        return;
+    }
+
+    // Use default constructor to initialize entries
     for (uint64_t i = 0; i < table->max_entries; ++i) {
-        table->pTable[i].hash_key = 0ULL;
-        table->pTable[i].move = NO_MOVE;
-        table->pTable[i].depth = 0;
-        table->pTable[i].score = 0;
-        table->pTable[i].flags = 0;
-        table->pTable[i].age = 0;
+        table->pTable[i] = HashEntry();
     }
     table->num_entries = 0;
     table->new_write = 0;
@@ -61,25 +66,53 @@ void clear_hash_table(HashTable *table) {
 }
 
 void init_hash_table(HashTable *table, const uint16_t MB) {
-    int hash_size = 0x100000 * MB;
-    table->max_entries = hash_size / sizeof(HashEntry) - 2;
-
-    if (table->pTable != NULL) {
-        free(table->pTable);
+    // Free existing table if present
+    if (table->pTable != nullptr) {
+        delete[] table->pTable;
+        table->pTable = nullptr;
     }
 
-    table->pTable = (HashEntry *)malloc(table->max_entries * sizeof(HashEntry));
-    if (table->pTable == NULL) {
-        std::cout << "malloc failed for " << MB << "MB. retrying\n";
-        init_hash_table(table, MB / 2);  // Retry hash allocation with half size if failed
-    } else {
-        clear_hash_table(table);
-        // std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
+    // Use size_t to avoid integer overflow for large hash tables
+    uint16_t requested_mb = MB;
+    const uint16_t min_mb = 1;  // Minimum 1 MB
+
+    // Iterative retry with decreasing size instead of recursive
+    while (requested_mb >= min_mb) {
+        size_t hash_size = static_cast<size_t>(0x100000) * requested_mb;
+        table->max_entries = hash_size / sizeof(HashEntry) - 2;
+
+        if (table->max_entries == 0) {
+            std::cerr << "Error: Hash table size too small\n";
+            requested_mb /= 2;
+            continue;
+        }
+
+        try {
+            table->pTable = new HashEntry[table->max_entries]();  // () for zero-init
+            clear_hash_table(table);
+            // std::cout << "HashTable init complete with " << table->max_entries << " entries ("
+            //           << requested_mb << " MB)\n";
+            return;  // Success
+        } catch (const std::bad_alloc &e) {
+            std::cout << "Allocation failed for " << requested_mb << "MB. Retrying with "
+                      << requested_mb / 2 << "MB\n";
+            requested_mb /= 2;
+        }
     }
+
+    // If we get here, all allocation attempts failed
+    std::cerr << "Fatal error: Could not allocate hash table (tried down to " << min_mb << "MB)\n";
+    table->max_entries = 0;
+    table->pTable = nullptr;
 }
 
 bool probe_hash_entry(Board *pos, HashTable *table, int &move, int &score, int alpha, int beta,
                       int &entry_depth, int depth) {
+    // Check for division by zero
+    if (table->max_entries == 0 || table->pTable == nullptr) {
+        return false;
+    }
+
     int index = pos->hash_key % table->max_entries;
 
     if (table->pTable[index].hash_key == pos->hash_key) {
@@ -118,6 +151,11 @@ bool probe_hash_entry(Board *pos, HashTable *table, int &move, int &score, int a
 
 void store_hash_entry(Board *pos, HashTable *table, const int move, int score, const uint8_t flags,
                       const uint8_t depth) {
+    // Check for division by zero
+    if (table->max_entries == 0 || table->pTable == nullptr) {
+        return;
+    }
+
     int index = pos->hash_key % table->max_entries;
     bool replace = false;
     HashEntry *entry = &table->pTable[index];
