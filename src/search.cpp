@@ -39,121 +39,105 @@ void search_position(Board *pos, HashTable *table, SearchInfo *info) {
     int best_score = -INF_BOUND;
     int best_move = NO_MOVE;
 
+    clear_search_vars(pos, table, info);  // Initialise searchHistory and killers
+
     // Aspiration windows variables
     uint8_t window_size = 33;
     int guess = -INF_BOUND;
     int alpha = -INF_BOUND;
     int beta = INF_BOUND;
 
-    clear_search_vars(pos, table, info);  // Initialise searchHistory and killers
+    uint8_t curr_depth = 1;
+    do {
+        PVLine *pv = new PVLine;  // Stores the best PV in the search depth so far. Merges with PV of child nodes if it's good
+        init_PVLine(pv);
 
-    // No book move available. Find best move via search.
-    if (best_move == NO_MOVE) {
-        uint8_t curr_depth = 1;
-        do {
-            PVLine *pv = new PVLine;  // Stores the best PV in the search depth so far. Merges with
-                                      // PV of child nodes if it's good
-            init_PVLine(pv);
+        /*
+            Aspiration windows
+        */
 
-            /*
-                    Aspiration windows
-            */
+        // Do a full search first 3 depths as they are unstable
+        if (curr_depth == 3) {
+            best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth,
+                                            pv, true, true);
+        } else {
+            alpha = std::max(-INF_BOUND, guess - window_size);
+            beta = std::min(guess + window_size, INF_BOUND);
+            uint16_t delta = window_size;
 
-            // Do a full search first 3 depths as they are unstable
-            if (curr_depth == 3) {
-                best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth,
-                                               pv, true, true);
-            } else {
-                alpha = std::max(-INF_BOUND, guess - window_size);
-                beta = std::min(guess + window_size, INF_BOUND);
-                uint16_t delta = window_size;
+            // Aspiration windows algorithm adapted from Ethereal by Andrew Grant
+            bool reSearch = true;
+            while (reSearch) {
+                best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv,
+                                                true, true);
 
-                // Aspiration windows algorithm adapted from Ethereal by Andrew Grant
-                bool reSearch = true;
-                while (reSearch) {
-                    best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv,
-                                                   true, true);
-
-                    // Re-search with a wider window on the side that fails
-                    if (best_score <= alpha) {
-                        // Slide the window down
-                        beta = (alpha + beta) / 2;
-                        alpha = std::max(-INF_BOUND, alpha - delta);
-                    } else if (best_score >= beta) {
-                        // Increase beta and not touch alpha
-                        beta = std::min(beta + delta, INF_BOUND);
-                    }
-                    // Search falls within expected bounds
-                    else {
-                        reSearch = false;
-                    }
-
-                    delta = delta + delta / 2;  // Expand the search window
+                // Re-search with a wider window on the side that fails
+                if (best_score <= alpha) {
+                    // Slide the window down
+                    beta = (alpha + beta) / 2;
+                    alpha = std::max(-INF_BOUND, alpha - delta);
+                } else if (best_score >= beta) {
+                    // Increase beta and not touch alpha
+                    beta = std::min(beta + delta, INF_BOUND);
                 }
+                // Search falls within expected bounds
+                else {
+                    reSearch = false;
+                }
+
+                delta = delta + delta / 2;  // Expand the search window
             }
+        }
 
-            update_best_line(pos, pv);
-            delete pv;
-            guess = best_score;
+        update_best_line(pos, pv);
+        delete pv;
+        guess = best_score;
 
-            // Make sure at least depth 1 is completed before breaking
-            if (info->stopped && curr_depth > 1) {
-                // std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?:
-                // " << (get_time_ms() > info->soft_stop_time) << "\n";
-                break;
-            }
+        // Make sure at least depth 1 is completed before breaking
+        if (info->stopped && curr_depth > 1) {
+            // std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?:
+            // " << (get_time_ms() > info->soft_stop_time) << "\n";
+            break;
+        }
 
-            // Search exited early as hash move found
-            if (info->nodes == 0) {
-                // Fallback to getting PV from TT
-                get_PV_line(pos, table, curr_depth);
-            }
-            best_move = pos->PV_array.moves[0];
+        // Search exited early as hash move found
+        if (info->nodes == 0) {
+            // Fallback to getting PV from TT
+            get_PV_line(pos, table, curr_depth);
+        }
+        best_move = pos->PV_array.moves[0];
 
-            // Display mate if there's forced mate
-            uint64_t time = get_time_ms() - info->start_time;  // in ms
-            uint64_t nps = (int)((info->nodes / (time + 0.01)) *
-                                 1000);  // Add 0.01ms to prevent division by zero error
+        // Display mate if there's forced mate
+        uint64_t time = get_time_ms() - info->start_time;  // in ms
+        uint64_t nps = (int)((info->nodes / (time + 0.01)) * 1000);  // Add 0.01ms to prevent division by zero error
 
-            // bool mate_found = false; // Save computation
-            int8_t mate_moves = 0;
+        int8_t mate_moves = 0;
 
-            if (abs(best_score) >= MATE_SCORE) {
-                // mate_found = true;
-                // copysign(1.0, value) outputs +/- 1.0 depending on the sign of "value" (i.e.
-                // sgn(value)) Note that /2 is integer division (e.g. 3/2 = 1)
-                mate_moves =
-                    round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * copysign(1.0, best_score);
-                std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info->seldepth
-                          << " score mate " << (int)mate_moves << " nodes " << info->nodes
-                          << " nps " << nps << " hashfull "
-                          << table->num_entries * 1000 / table->max_entries << " time " << time
-                          << " pv";
-            } else {
-                std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info->seldepth
-                          << " score cp " << best_score << " nodes " << info->nodes << " nps "
-                          << nps << " hashfull " << table->num_entries * 1000 / table->max_entries
-                          << " time " << time << " pv";
-            }
+        if (abs(best_score) >= MATE_SCORE) {
+            #define sgn(value) ((value) >= 0 ? 1 : -1)
+            mate_moves =
+                round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * sgn(best_score);
+            std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info->seldepth
+                        << " score mate " << (int)mate_moves << " nodes " << info->nodes
+                        << " nps " << nps << " hashfull "
+                        << table->num_entries * 1000 / table->max_entries << " time " << time
+                        << " pv";
+        } else {
+            std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info->seldepth
+                        << " score cp " << best_score << " nodes " << info->nodes << " nps "
+                        << nps << " hashfull " << table->num_entries * 1000 / table->max_entries
+                        << " time " << time << " pv";
+        }
 
-            // Print PV
-            // int limit = check_PV_legality(pos);
-            for (int i = 0; i < pos->PV_array.length; ++i) {
-                std::cout << " " << print_move(pos->PV_array.moves[i]);
-            }
-            std::cout << "\n" << std::flush;  // Make sure it outputs depth-by-depth to GUI
+        // Print PV
+        for (int i = 0; i < pos->PV_array.length; ++i) {
+            std::cout << " " << print_move(pos->PV_array.moves[i]);
+        }
+        std::cout << "\n" << std::flush;  // Make sure it outputs depth-by-depth to GUI
 
-            // Exit search if mate at current depth is found, in order to save time
-            /*
-            if (mate_found && (curr_depth > (abs(mate_moves) + 1))) {
-                    break; // Buggy if insufficient search is performed before pruning
-            }
-            */
-
-            curr_depth++;  // Increment depth
-            check_up(info, true);
-        } while (curr_depth <= info->depth && !info->soft_stopped);
-    }
+        curr_depth++;  // Increment depth
+        check_up(info, true);
+    } while (curr_depth <= info->depth && !info->soft_stopped);
 
     std::cout << "bestmove " << print_move(best_move) << "\n" << std::flush;
 }
@@ -470,7 +454,7 @@ if (
             int r = std::max(
                 0, (LMR_reduction_table[depth][move_num][(int)is_quiet]));  // Depth to be reduced
             r += !PV_node;  // Reduce more if not PV-node
-            reduced_depth = std::max(reduced_depth - r - 1, 1);
+            reduced_depth = std::max(reduced_depth - r, 1); // Already initialised at depth - 1 earlier
 
             // Search at reduced depth with null window
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth,
