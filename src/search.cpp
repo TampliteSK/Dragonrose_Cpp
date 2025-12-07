@@ -470,7 +470,7 @@ if (
             int r = std::max(
                 0, (LMR_reduction_table[depth][move_num][(int)is_quiet]));  // Depth to be reduced
             r += !PV_node;  // Reduce more if not PV-node
-            reduced_depth = std::max(reduced_depth - r - 1, 1);
+            reduced_depth = std::max(reduced_depth - r, 1); // Already initialised at depth - 1 earlier
 
             // Search at reduced depth with null window
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth,
