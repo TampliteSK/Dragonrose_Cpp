@@ -18,7 +18,7 @@ uint64_t get_time_ms() {
 // Returns the time allocated in milliseconds
 int allocate_time(const Board *pos, int time) {
     // Time trouble case
-    if (time < 15000) {  // 30s
+    if (time < 15000) {  // 15s
         return time / 35;
     }
 

@@ -14,7 +14,7 @@ class ScorePair {
 
     constexpr int mg() const { return mg_value; }
     constexpr int eg() const { return eg_value; }
-    int interpolate(uint8_t phase) { return (mg_value * phase + eg_value * (64 - phase)) / 64; }
+    int interpolate(uint8_t phase) const { return (mg_value * phase + eg_value * (64 - phase)) / 64; }
 
    private:
     int16_t mg_value;

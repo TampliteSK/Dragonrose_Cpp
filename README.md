@@ -21,7 +21,7 @@ You are free to borrow and/or modify my code if you so wish, as long as you give
 To use the engine, either grab the binary from releases, or build the project locally. In the future I will consider releasing Linux builds. <br>
 
 ## Inspirations and Acknowledgments
-Dragonrose is greatly inspired by [VICE chess engine](https://github.com/bluefeversoft/vice/tree/main/Vice11/src), developed by by Richard Allbert (Bluefever Software), 
+Dragonrose is greatly inspired by [VICE chess engine](https://github.com/bluefeversoft/vice/tree/main/Vice11/src), developed by Richard Allbert (Bluefever Software), 
 which is a didactic chess engine aimed to introduce beginners to the world of chess programming. Huge credits to him for creating the [YouTube series](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg) explaining the engine in great detail. <br>
 
 Aside from VICE, Dragonrose also draws inspiration from other engines such as 
@@ -91,7 +91,7 @@ I would also like to thank:
   - Backwards pawns penalty
   - Phalanx pawns bonus (WIP)
 
-- Basic drawn endgaeme knowledge
+- Basic drawn endgame knowledge
 
 ### Others
 - Attack generation
@@ -116,10 +116,10 @@ Below are some other metrics:
 
 \*: These Chesscom ratings are estimated based on its games against human players (rated 1800 - 2500), though the sample size is fairly small.
 
-## Useful Reesources
+## Useful Resources
 - VICE video playlist (as linked above)
 - [Chess Programming Wiki](https://www.chessprogramming.org/Main_Page). Great resource in general to learn concepts.
-- Analog Hors for [this guide](https://analog-hors.github.io/site/magic-bitboards/) explaining magic bitboards in a understandable format. By far much better than any other resource I have found.
+- Analog Hors for [this guide](https://analog-hors.github.io/site/magic-bitboards/) explaining magic bitboards in an understandable format. By far much better than any other resource I have found.
 - nemequ, mbitsnbites, zhuyie et al. for [TinyCThread](https://github.com/tinycthread/tinycthread/tree/master).
 
 ## Changelogs <br>
