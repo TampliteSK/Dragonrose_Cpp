@@ -1,6 +1,7 @@
 // search.cpp
 
 #include "search.hpp"
+#include "search_params.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -56,8 +57,8 @@ void search_position(Board *pos, HashTable *table, SearchInfo *info) {
             Aspiration windows
         */
 
-        // Do a full-window search for the first 3 depths as they are unstable
-        if (curr_depth <= 3) {
+        // Do a full-window search for the first few depths as they are unstable
+        if (curr_depth < ASP_WIN_DEPTH) {
             best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth,
                                             pv, true, true);
         } else {
