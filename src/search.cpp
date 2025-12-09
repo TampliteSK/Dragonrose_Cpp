@@ -43,7 +43,7 @@ void search_position(Board *pos, HashTable *table, SearchInfo *info) {
     clear_search_vars(pos, table, info);  // Initialise searchHistory and killers
 
     // Aspiration windows variables
-    uint8_t window_size = 33;
+    uint8_t window_size = ASP_WIN_SIZE;
     int guess = -INF_BOUND;
     int alpha = -INF_BOUND;
     int beta = INF_BOUND;
