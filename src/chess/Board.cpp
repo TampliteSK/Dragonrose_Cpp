@@ -77,6 +77,7 @@ void update_vars(Board *pos) {
 void parse_fen(Board *pos, const std::string FEN) {
     if (FEN.length() <= 0) {
         std::cerr << "Board parse_fen() error: Invalid FEN length.\n";
+        return;
     }
 
     reset_board(pos);
@@ -304,7 +305,7 @@ bool check_boards(const Board *pos1, const Board *pos2) {
         if (pos1->pieces[i] != pos2->pieces[i]) {
             std::cout << "Discrepancy of piece at square " << i
                       << ": Left board: " << ascii_pieces[pos1->pieces[i]]
-                      << ". Right board: " << ascii_pieces[pos1->pieces[i]] << "\n";
+                      << ". Right board: " << ascii_pieces[pos2->pieces[i]] << "\n";
             return false;
         }
     }

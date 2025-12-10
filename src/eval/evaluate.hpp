@@ -1,4 +1,4 @@
-// evalaute.hpp
+// evaluate.hpp
 
 #ifndef EVALUATE_HPP
 #define EVALUATE_HPP

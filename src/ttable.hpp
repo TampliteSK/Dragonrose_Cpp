@@ -22,7 +22,7 @@ typedef struct {
     int score;
     uint8_t depth;
     uint8_t flags;
-    uint32_t age;  // indicates how new an entry is
+    uint16_t age;  // indicates how new an entry is
 } HashEntry;
 
 /*
@@ -38,7 +38,7 @@ typedef struct {
     uint64_t num_entries;  // number of entries at any given time
     int new_write;
     int overwrite;
-    int hit;  // tracks the number of entires probed
+    int hit;  // tracks the number of entries probed
     int cut;  // max number of probes allowed before hash table is full (to avoid collision of
               // entries)
     uint32_t table_age;  // increments every move

@@ -11,7 +11,7 @@
 
 // Check if the current square is attacked by a given side
 static inline bool is_square_attacked(const Board *pos, uint8_t sq, uint8_t side) {
-    // Pawns (flip the direction of the atacks)
+    // Pawns (flip the direction of the attacks)
     if ((side == WHITE) && (pawn_attacks[BLACK][sq] & pos->bitboards[wP])) return true;
     if ((side == BLACK) && (pawn_attacks[WHITE][sq] & pos->bitboards[bP])) return true;
 

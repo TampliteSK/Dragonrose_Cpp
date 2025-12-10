@@ -1,6 +1,7 @@
 // search.cpp
 
 #include "search.hpp"
+#include "search_params.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -42,7 +43,7 @@ void search_position(Board *pos, HashTable *table, SearchInfo *info) {
     clear_search_vars(pos, table, info);  // Initialise searchHistory and killers
 
     // Aspiration windows variables
-    uint8_t window_size = 33;
+    uint8_t window_size = ASP_WIN_SIZE;
     int guess = -INF_BOUND;
     int alpha = -INF_BOUND;
     int beta = INF_BOUND;
@@ -56,8 +57,8 @@ void search_position(Board *pos, HashTable *table, SearchInfo *info) {
             Aspiration windows
         */
 
-        // Do a full search first 3 depths as they are unstable
-        if (curr_depth == 3) {
+        // Do a full-window search for the first few depths as they are unstable
+        if (curr_depth < ASP_WIN_DEPTH) {
             best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth,
                                             pv, true, true);
         } else {
@@ -95,8 +96,6 @@ void search_position(Board *pos, HashTable *table, SearchInfo *info) {
 
         // Make sure at least depth 1 is completed before breaking
         if (info->stopped && curr_depth > 1) {
-            // std::cout << "Hard limit reached?: " << info->stopped << " | Soft limit reached?:
-            // " << (get_time_ms() > info->soft_stop_time) << "\n";
             break;
         }
 
@@ -193,7 +192,7 @@ static inline int quiescence(Board *pos, HashTable *table, SearchInfo *info, int
     }
 
     /*
-            Delta pruning (dead lost scenario)
+        Delta pruning (dead lost scenario)
     */
     constexpr uint16_t big_delta = 936;  // Queen eg value
     if (stand_pat + big_delta < alpha) {
@@ -369,12 +368,12 @@ static inline int negamax_alphabeta(Board *pos, HashTable *table, SearchInfo *in
     }
 
     /*
-            Internal iterative reductions (IIR)
+        Internal iterative reductions (IIR)
     */
     // If the position has not been searched yet (i.e. no hash move), we try searching with reduced
     // depth to record a move that we can later re-use.
     /*
-if (
+    if (
             depth >= 8 && !in_check && PV_node
             && (!tt_hit || (hash_move != NO_MOVE && hash_depth <= depth - 5))
     ) {
@@ -410,7 +409,7 @@ if (
         // Move loop pruning
         if (!is_root && !PV_node && is_quiet && !is_killer && !in_check && !is_mate) {
             /*
-                    Late move pruning
+                Late move pruning
             */
             // If we have seen many moves in this position already, and we don't expect
             // anything from this move, we can skip all the remaining quiets
@@ -421,7 +420,7 @@ if (
             }
 
             /*
-                    Futility pruning
+                Futility pruning
             */
             // Don't skip PV move, captures and killers
             if (depth <= 3 && move_num >= 4) {
@@ -441,7 +440,7 @@ if (
         info->nodes++;
 
         /*
-                Late Move Reductions
+            Late Move Reductions
         */
         // We calculate less promising moves at lower depths
 
