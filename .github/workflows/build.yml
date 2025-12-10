@@ -15,8 +15,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build project
-        run: make all
+      - name: Build project and measure time
+        run: |
+          echo "🔨 Building with g++..."
+          START_TIME=$(date +%s%N)
+          make all
+          END_TIME=$(date +%s%N)
+          BUILD_TIME=$(echo "scale=3; ($END_TIME - $START_TIME) / 1000000000" | bc)
+          echo "✅ Build completed in ${BUILD_TIME} seconds"
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
+
+      - name: Display build time
+        run: |
+          echo "### 📊 Build Time Summary (g++)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏱️ **Build Time:** ${BUILD_TIME} seconds" >> $GITHUB_STEP_SUMMARY
 
       - name: Run benchmark
         run: ./Dragonrose_Cpp bench

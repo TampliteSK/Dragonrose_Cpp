@@ -20,8 +20,21 @@ jobs:
         with:
           version: 0.11.0
 
-      - name: Build project with Zig
-        run: make CXX="zig c++" OPT_FLAGS="-O3 -ffast-math -march=native -funroll-loops"
+      - name: Build project with Zig and measure time
+        run: |
+          echo "🔨 Building with Zig..."
+          START_TIME=$(date +%s%N)
+          make CXX="zig c++" OPT_FLAGS="-O3 -ffast-math -march=native -funroll-loops"
+          END_TIME=$(date +%s%N)
+          BUILD_TIME=$(echo "scale=3; ($END_TIME - $START_TIME) / 1000000000" | bc)
+          echo "✅ Build completed in ${BUILD_TIME} seconds"
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
+
+      - name: Display build time
+        run: |
+          echo "### 📊 Build Time Summary (Zig)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏱️ **Build Time:** ${BUILD_TIME} seconds" >> $GITHUB_STEP_SUMMARY
 
       - name: Run benchmark
         run: ./Dragonrose_Cpp bench
