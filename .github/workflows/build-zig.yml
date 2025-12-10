@@ -1,4 +1,4 @@
-name: Build
+name: Build with Zig
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-zig:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,11 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build project and measure time
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.15.2
+
+      - name: Build project with Zig and measure time
         run: |
-          echo "🔨 Building with g++..."
+          echo "🔨 Building with Zig..."
           START_TIME=$(date +%s%N)
-          make all
+          make CXX="zig c++" OPT_FLAGS="-O3 -ffast-math -march=native -funroll-loops"
           END_TIME=$(date +%s%N)
           BUILD_TIME=$(awk "BEGIN {printf \"%.3f\", ($END_TIME - $START_TIME) / 1000000000}")
           echo "✅ Build completed in ${BUILD_TIME} seconds"
@@ -29,7 +34,7 @@ jobs:
 
       - name: Display build time
         run: |
-          echo "### 📊 Build Time Summary (g++)" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Build Time Summary (Zig)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "⏱️ **Build Time:** ${BUILD_TIME} seconds" >> $GITHUB_STEP_SUMMARY
 
