@@ -617,7 +617,7 @@ static inline void clear_search_vars(Board& pos, HashTable& table, SearchInfo& i
     }
     for (int id = 0; id < 2; ++id) {
         for (int depth = 0; depth < MAX_DEPTH; ++depth) {
-            pos.killer_moves[id][depth] = 40000;
+            pos.killer_moves[id][depth] = NO_MOVE;
         }
     }
 

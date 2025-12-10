@@ -175,7 +175,7 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
     std::cout << "id author Tamplite Siphron Kents" << std::endl;
 
     // UCI Options
-    std::cout << "option name Hash type spin default 16 min 1 max " << MAX_HASH << std::endl;
+    std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH << std::endl;
     int MB = 16;
     options->hash_size = 16;
     init_hash_table(table, MB);

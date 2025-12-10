@@ -438,12 +438,12 @@ bool move_exists(Board&pos, const int move) {
     generate_moves(pos, list, false);
 
     for (int i = 0; i < (int)list.length; ++i) {
-        if (!make_move(pos, list.moves[i].move)) {
-            continue;
-        }
-        take_move(pos);
         if (list.moves[i].move == move) {
-            return true;
+            // Verify it's legal
+            if (make_move(pos, move)) {
+                take_move(pos);
+                return true;
+            }
         }
     }
     return false;

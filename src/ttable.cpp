@@ -12,6 +12,11 @@
 // std::string ascii_flags[] = { "None", "Alpha", "Beta", "Exact" };
 
 int probe_PV_move(const Board& pos, const HashTable& table) {
+    // Prevent division-by-zero
+    if (table.max_entries == 0 || table.pTable == nullptr) {
+        return NO_MOVE;
+    }
+
     int index = pos.hash_key % table.max_entries;
 
     if (table.pTable[index].hash_key == pos.hash_key) {
@@ -47,13 +52,12 @@ void get_PV_line(Board& pos, const HashTable& table, const uint8_t depth) {
 }
 
 void clear_hash_table(HashTable& table) {
+    if (table.pTable == nullptr || table.max_entries == 0) {
+        return;
+    }
+
     for (uint64_t i = 0; i < table.max_entries; ++i) {
-        table.pTable[i].hash_key = 0ULL;
-        table.pTable[i].move = NO_MOVE;
-        table.pTable[i].depth = 0;
-        table.pTable[i].score = 0;
-        table.pTable[i].flags = 0;
-        table.pTable[i].age = 0;
+        table.pTable[i] = HashEntry();
     }
     table.num_entries = 0;
     table.new_write = 0;
@@ -61,21 +65,36 @@ void clear_hash_table(HashTable& table) {
 }
 
 void init_hash_table(HashTable& table, const uint16_t MB) {
-    int hash_size = 0x100000 * MB;
-    table.max_entries = hash_size / sizeof(HashEntry) - 2;
-
-    if (table.pTable != NULL) {
-        free(table.pTable);
+    // Free exisitng table if present
+    if (table.pTable != nullptr) {
+        delete[] table.pTable;
+        table.pTable = nullptr;
     }
 
-    table.pTable = (HashEntry *)malloc(table.max_entries * sizeof(HashEntry));
-    if (table.pTable == NULL) {
-        std::cout << "malloc failed for " << MB << "MB. retrying\n";
-        init_hash_table(table, MB / 2);  // Retry hash allocation with half size if failed
-    } else {
-        clear_hash_table(table);
-        // std::cout << "HashTable init complete with " << table.max_entries << " entries\n";
+    uint16_t trying_size = MB;
+
+    // Iteratively retry with smaller sizes if allocation fails
+    while (trying_size >= MIN_HASH) {
+        size_t hash_size = static_cast<size_t>(0x100000) * trying_size;
+        table.max_entries = hash_size / sizeof(HashEntry) - 2;
+
+        try {
+            table.pTable = new HashEntry[table.max_entries]();
+            clear_hash_table(table);
+            return;  // Success
+        }
+        catch (const std::bad_alloc&) {
+            std::cout << "Allocation failed for " << trying_size << "MB. Retrying with " << trying_size / 2 << ".\n";
+            trying_size /= 2;
+            continue;
+
+        }
     }
+
+    std::cerr << "Failed to allocate hash table. Minimum size " << MIN_HASH << "MB exceeded.\n";
+    table.pTable = nullptr;
+    table.max_entries = 0;
+    return;
 }
 
 bool probe_hash_entry(Board& pos, HashTable& table, int& move, int& score, int alpha, int beta,
