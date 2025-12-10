@@ -11,6 +11,6 @@ extern uint64_t side_key;            // random side key
 
 // Functions
 void init_hash_keys();
-uint64_t generate_hash_key(const Board *pos);
+uint64_t generate_hash_key(const Board& pos);
 
 #endif  // ZOBRIST_HPP

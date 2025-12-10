@@ -14,21 +14,21 @@
 #include "endgame.hpp"
 
 // Function prototypes
-static inline uint8_t get_phase(const Board *pos);
+static inline uint8_t get_phase(const Board& pos);
 
-static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase);
-static inline int evaluate_knights(const Board *pos, uint8_t pce, int phase);
-static inline int evaluate_bishops(const Board *pos, uint8_t pce, int phase);
-static inline int evaluate_rooks(const Board *pos, uint8_t pce, int phase);
-static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase);
-static inline int evaluate_kings(const Board *pos, uint8_t pce, int phase);
+static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase);
+static inline int evaluate_knights(const Board& pos, uint8_t pce, int phase);
+static inline int evaluate_bishops(const Board& pos, uint8_t pce, int phase);
+static inline int evaluate_rooks(const Board& pos, uint8_t pce, int phase);
+static inline int evaluate_queens(const Board& pos, uint8_t pce, int phase);
+static inline int evaluate_kings(const Board& pos, uint8_t pce, int phase);
 
-static inline int16_t count_tempi(const Board *pos);
-static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[],
+static inline int16_t count_tempi(const Board& pos);
+static inline int16_t evaluate_attacks(const Board& pos, Bitboard white_attacks[],
                                        Bitboard black_attacks[], int white_attackers[],
                                        int black_attackers[], int phase);
 
-int evaluate_pos(const Board *pos) {
+int evaluate_pos(const Board& pos) {
     int score = 0;
     int phase = get_phase(pos);
 
@@ -38,16 +38,16 @@ int evaluate_pos(const Board *pos) {
         0};  // The pieces corresponding to each attack bitboard in piece_attacks
     int black_attackers[32] = {0};
 
-    Bitboard pawns = pos->bitboards[wP] | pos->bitboards[bP];
+    Bitboard pawns = pos.bitboards[wP] | pos.bitboards[bP];
     bool is_TB_endgame =
-        count_bits(pos->occupancies[BOTH]) - pos->piece_num[wP] - pos->piece_num[bP] < 8;
+        count_bits(pos.occupancies[BOTH]) - pos.piece_num[wP] - pos.piece_num[bP] < 8;
     if (is_TB_endgame && count_bits(pawns) == 0) {
         if (check_material_draw(pos, phase)) {
-            return endgame_noise(pos->hash_key % UINT32_MAX, 3);
+            return endgame_noise(pos.hash_key % UINT32_MAX, 3);
         }
     }
 
-    bool is_endgame = count_bits(pos->occupancies[BOTH]) < 8;
+    bool is_endgame = count_bits(pos.occupancies[BOTH]) < 8;
 
     score += count_material(pos, phase);
     // std::cout << "Material: " << count_material(pos) << "\n";
@@ -87,8 +87,8 @@ int evaluate_pos(const Board *pos) {
 
     // Alternate phase formula for the rest of the function. Works better than one used for PSQT in
     // such cases
-    int var_phase = count_bits(pos->occupancies[BOTH] &
-                               ~(pos->bitboards[wP] | pos->bitboards[bP]));  // Values: [0, 16]
+    int var_phase = count_bits(pos.occupancies[BOTH] &
+                               ~(pos.bitboards[wP] | pos.bitboards[bP]));  // Values: [0, 16]
 
     // Tempi
     if (!is_endgame) {
@@ -105,8 +105,8 @@ int evaluate_pos(const Board *pos) {
     // black_attackers) * 3 / 2 << "\n";
 
     // Bishop pair bonus
-    if (pos->piece_num[wB] >= 2) score += bishop_pair;
-    if (pos->piece_num[bB] >= 2) score -= bishop_pair;
+    if (pos.piece_num[wB] >= 2) score += bishop_pair;
+    if (pos.piece_num[bB] >= 2) score -= bishop_pair;
 
     /*
             Endgame adjustments
@@ -114,7 +114,7 @@ int evaluate_pos(const Board *pos) {
 
     // 50-move rule adjustment
     if (score < MATE_SCORE) {
-        score = (score * (100 - pos->fifty_move)) / 100;
+        score = (score * (100 - pos.fifty_move)) / 100;
     }
 
     // Endgame noise adjustment
@@ -125,7 +125,7 @@ int evaluate_pos(const Board *pos) {
     */
 
     // Perspective adjustment
-    return score * ((pos->side == WHITE) ? 1 : -1);
+    return score * ((pos.side == WHITE) ? 1 : -1);
 }
 
 /*
@@ -134,24 +134,24 @@ int evaluate_pos(const Board *pos) {
 
 // Calculates the middlegame weight for tapered eval.
 // Evaluates to 64 at startpos
-static inline uint8_t get_phase(const Board *pos) {
+static inline uint8_t get_phase(const Board& pos) {
     // Caissa game phase formula (0.11e)
     // ~20 elo better than the original PesTO phase formula
     int game_phase =
-        3 * (pos->piece_num[wN] + pos->piece_num[bN] + pos->piece_num[wB] + pos->piece_num[bB]);
-    game_phase += 5 * (pos->piece_num[wR] + pos->piece_num[bR]);
-    game_phase += 10 * (pos->piece_num[wQ] + pos->piece_num[bQ]);
+        3 * (pos.piece_num[wN] + pos.piece_num[bN] + pos.piece_num[wB] + pos.piece_num[bB]);
+    game_phase += 5 * (pos.piece_num[wR] + pos.piece_num[bR]);
+    game_phase += 10 * (pos.piece_num[wQ] + pos.piece_num[bQ]);
     game_phase = std::min(game_phase, 64);  // Capped in case of early promotion
 
     return game_phase;
 }
 
 // Calculates the material from White's perspective
-int count_material(const Board *pos, const uint8_t phase) {
+int count_material(const Board& pos, const uint8_t phase) {
     int sum = 0;
 
     for (int pce = wP; pce <= bK; ++pce) {
-        int value = pos->piece_num[pce] *
+        int value = pos.piece_num[pce] *
                     (piece_values[pce].mg() * phase + piece_values[pce].eg() * (64 - phase)) / 64;
         sum += value * ((piece_col[pce] == WHITE) ? 1 : -1);
     }
@@ -178,9 +178,9 @@ static inline int compute_PSQT(uint8_t pce, uint8_t sq, int phase) {
         Piece evaluation
 */
 
-static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
+static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
-    Bitboard pawns = pos->bitboards[pce];
+    Bitboard pawns = pos.bitboards[pce];
     uint8_t enemy_pce = (pce == wP) ? bP : wP;
     bool passers[8] = {false};
 
@@ -200,7 +200,7 @@ static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
         // 1) There are no enemy pawns on the same or adjacent file(s)
         // 2) The pawn on the same or adjacent file(s) are behind the pawn
         Bitboard passer_mask = (col == WHITE) ? white_passer_masks[sq] : black_passer_masks[sq];
-        if ((passer_mask & pos->bitboards[enemy_pce]) == 0) {
+        if ((passer_mask & pos.bitboards[enemy_pce]) == 0) {
             passers[file] = true;
             score += passer_bonus[reference_rank];
             // std::cout << "Passer detected at " << ascii_squares[sq] << " | Score: " <<
@@ -210,8 +210,8 @@ static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
         // Isolated and backwards pawn penalties
         // Backwards pawn: No neighbouring pawns or they are further advanced, and square in front
         // is attacked by an opponent's pawn
-        bool is_isolated = (pos->bitboards[pce] & adjacent_files[file]) == 0;
-        bool is_stopped = pos->bitboards[enemy_pce] & pawn_attacks[col][reference_sq];
+        bool is_isolated = (pos.bitboards[pce] & adjacent_files[file]) == 0;
+        bool is_stopped = pos.bitboards[enemy_pce] & pawn_attacks[col][reference_sq];
         bool is_backwards = false;
         if (is_stopped) {
             if (is_isolated) {
@@ -219,7 +219,7 @@ static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
             } else {
                 // There exists neighbouring pawns. Check if they are further advanced.
                 bool advanced_neighbours = false;
-                Bitboard pawn_mask = pos->bitboards[pce] & adjacent_files[file];
+                Bitboard pawn_mask = pos.bitboards[pce] & adjacent_files[file];
                 while (pawn_mask) {
                     uint8_t neighbour = pop_ls1b(pawn_mask);
                     if ((col == WHITE && GET_RANK(neighbour) <= GET_RANK(sq)) ||
@@ -244,7 +244,7 @@ static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
     // File-based features
     for (int file = FILE_A; file <= FILE_H; ++file) {
         // Stacked pawn penalties
-        uint8_t stacked_count = count_bits(pos->bitboards[pce] & file_masks[file]);
+        uint8_t stacked_count = count_bits(pos.bitboards[pce] & file_masks[file]);
         if (stacked_count > 1) {
             score -= stacked_pawn * (stacked_count - 1);  // Scales with the number of pawns stacked
         }
@@ -260,9 +260,9 @@ static inline int evaluate_pawns(const Board *pos, uint8_t pce, int phase) {
     return score;
 }
 
-static inline int evaluate_knights(const Board *pos, uint8_t pce, int phase) {
+static inline int evaluate_knights(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
-    Bitboard knights = pos->bitboards[pce];
+    Bitboard knights = pos.bitboards[pce];
 
     while (knights) {
         uint8_t sq = pop_ls1b(knights);
@@ -272,9 +272,9 @@ static inline int evaluate_knights(const Board *pos, uint8_t pce, int phase) {
     return score;
 }
 
-static inline int evaluate_bishops(const Board *pos, uint8_t pce, int phase) {
+static inline int evaluate_bishops(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
-    Bitboard bishops = pos->bitboards[pce];
+    Bitboard bishops = pos.bitboards[pce];
     uint8_t col = piece_col[pce];
 
     while (bishops) {
@@ -284,7 +284,7 @@ static inline int evaluate_bishops(const Board *pos, uint8_t pce, int phase) {
 
         // Penalty for bishops blocking centre pawns
         if (file == FILE_D || file == FILE_E) {
-            Bitboard pawn_mask = pos->bitboards[pce] & file_masks[file];
+            Bitboard pawn_mask = pos.bitboards[pce] & file_masks[file];
             uint8_t pawn_sq = pop_ls1b(pawn_mask);
             int8_t sign = (piece_col[pce] == WHITE) ? -1 : 1;
             if (sq - pawn_sq == sign * 8) {
@@ -293,13 +293,13 @@ static inline int evaluate_bishops(const Board *pos, uint8_t pce, int phase) {
         }
 
         // Bonus for pressuring enemy pieces
-        Bitboard mask = get_bishop_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
+        Bitboard mask = get_bishop_attacks(sq, pos.occupancies[BOTH]) & pos.occupancies[col ^ 1];
         score += count_bits(mask) * bishop_attacks_piece;
 
         // Bonus for forming a battery with a queen
         uint8_t ally_queen = (col == WHITE) ? wQ : bQ;
         Bitboard queen_mask =
-            pos->bitboards[ally_queen] & get_bishop_attacks(sq, pos->occupancies[BOTH]);
+            pos.bitboards[ally_queen] & get_bishop_attacks(sq, pos.occupancies[BOTH]);
         if (queen_mask) {
             score += battery;
         }
@@ -308,9 +308,9 @@ static inline int evaluate_bishops(const Board *pos, uint8_t pce, int phase) {
     return score;
 }
 
-static inline int evaluate_rooks(const Board *pos, uint8_t pce, int phase) {
+static inline int evaluate_rooks(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
-    Bitboard rooks = pos->bitboards[pce];
+    Bitboard rooks = pos.bitboards[pce];
     uint8_t col = piece_col[pce];
     bool stacked_rooks = false;
 
@@ -322,8 +322,8 @@ static inline int evaluate_rooks(const Board *pos, uint8_t pce, int phase) {
         score += compute_PSQT(pce, sq, phase);
 
         // Bonus for taking semi-open and open files
-        if ((pos->bitboards[ally_pawns] & file_masks[file]) == 0) {
-            Bitboard enemy_pawns_on_file = pos->bitboards[enemy_pawns] & file_masks[file];
+        if ((pos.bitboards[ally_pawns] & file_masks[file]) == 0) {
+            Bitboard enemy_pawns_on_file = pos.bitboards[enemy_pawns] & file_masks[file];
             if (enemy_pawns_on_file == 0) {
                 score += rook_open_file;
             } else {
@@ -332,19 +332,19 @@ static inline int evaluate_rooks(const Board *pos, uint8_t pce, int phase) {
         }
 
         // Bonus for pressuring enemy pieces
-        Bitboard mask = get_rook_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
+        Bitboard mask = get_rook_attacks(sq, pos.occupancies[BOTH]) & pos.occupancies[col ^ 1];
         score += count_bits(mask) * rook_attacks_piece;
 
         // Bonus for forming a battery with a queen or another rook
         uint8_t ally_queen = (col == WHITE) ? wQ : bQ;
         Bitboard queen_mask =
-            pos->bitboards[ally_queen] & get_rook_attacks(sq, pos->occupancies[BOTH]);
+            pos.bitboards[ally_queen] & get_rook_attacks(sq, pos.occupancies[BOTH]);
         if (queen_mask) {
             score += battery;
         }
 
         if (!stacked_rooks) {
-            Bitboard rook_mask = pos->bitboards[pce] & file_masks[file];
+            Bitboard rook_mask = pos.bitboards[pce] & file_masks[file];
             if (count_bits(rook_mask) > 2) {
                 score += battery * (count_bits(rook_mask) - 1);
                 stacked_rooks = true;  // Prevent overcounting
@@ -355,9 +355,9 @@ static inline int evaluate_rooks(const Board *pos, uint8_t pce, int phase) {
     return score;
 }
 
-static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase) {
+static inline int evaluate_queens(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
-    Bitboard queens = pos->bitboards[pce];
+    Bitboard queens = pos.bitboards[pce];
     uint8_t col = piece_col[pce];
 
     while (queens) {
@@ -368,8 +368,8 @@ static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase) {
         score += compute_PSQT(pce, sq, phase);
 
         // Bonus for taking semi-open and open files
-        if ((pos->bitboards[ally_pawns] & file_masks[file]) == 0) {
-            Bitboard enemy_pawns_on_file = pos->bitboards[enemy_pawns] & file_masks[file];
+        if ((pos.bitboards[ally_pawns] & file_masks[file]) == 0) {
+            Bitboard enemy_pawns_on_file = pos.bitboards[enemy_pawns] & file_masks[file];
             if (enemy_pawns_on_file == 0) {
                 score += queen_open_file;
             } else {
@@ -378,7 +378,7 @@ static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase) {
         }
 
         // Bonus for pressuring enemy pieces
-        Bitboard mask = get_queen_attacks(sq, pos->occupancies[BOTH]) & pos->occupancies[col ^ 1];
+        Bitboard mask = get_queen_attacks(sq, pos.occupancies[BOTH]) & pos.occupancies[col ^ 1];
         score += count_bits(mask) * queen_attacks_piece;
     }
 
@@ -389,7 +389,7 @@ static inline int evaluate_queens(const Board *pos, uint8_t pce, int phase) {
         King evaluation
 */
 
-static inline int evaluate_pawn_shield(const Board *pos, uint8_t pce, uint8_t king_sq,
+static inline int evaluate_pawn_shield(const Board& pos, uint8_t pce, uint8_t king_sq,
                                        int var_phase) {
     // [0]: starting sq
     // [1]: moved 1 sq
@@ -414,7 +414,7 @@ static inline int evaluate_pawn_shield(const Board *pos, uint8_t pce, uint8_t ki
     if (!uncastled_king) {
         uint8_t ally_pawns = (king_colour == WHITE) ? wP : bP;
         Bitboard shield_mask =
-            generate_shield_zone(king_sq, king_colour) & pos->bitboards[ally_pawns];
+            generate_shield_zone(king_sq, king_colour) & pos.bitboards[ally_pawns];
 
         for (int file = king_file - 1; file <= king_file + 1; ++file) {
             if (file >= FILE_A && file <= FILE_H) {
@@ -441,7 +441,7 @@ static inline int evaluate_pawn_shield(const Board *pos, uint8_t pce, uint8_t ki
     return score * var_phase / 16;
 }
 
-static inline int evaluate_king_safety(const Board *pos, uint8_t pce, uint8_t king_sq,
+static inline int evaluate_king_safety(const Board& pos, uint8_t pce, uint8_t king_sq,
                                        int var_phase) {
     // Importance of king safety decreases with less material on the board
     int score = 0;
@@ -450,7 +450,7 @@ static inline int evaluate_king_safety(const Board *pos, uint8_t pce, uint8_t ki
 }
 
 // Rewarding active kings and punishing immobile kings to assist mates
-static inline int16_t king_mobility(const Board *pos, uint8_t pce, uint8_t king_sq, int var_phase) {
+static inline int16_t king_mobility(const Board& pos, uint8_t pce, uint8_t king_sq, int var_phase) {
     const int mobility_bonus[9] = {-75, -50, -33, -25, 0, 5, 10, 11, 12};
 
     Bitboard attacks = king_attacks[king_sq];
@@ -467,14 +467,14 @@ static inline int16_t king_mobility(const Board *pos, uint8_t pce, uint8_t king_
     return mobility_bonus[mobile_squares] * (20 - var_phase) / 16;
 }
 
-static inline int evaluate_kings(const Board *pos, uint8_t pce, int phase) {
+static inline int evaluate_kings(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
-    uint8_t sq = pos->king_sq[piece_col[pce]];
+    uint8_t sq = pos.king_sq[piece_col[pce]];
     score += compute_PSQT(pce, sq, phase);
     int var_phase =
-        count_bits(pos->occupancies[BOTH] &
-                   ~(pos->bitboards[wP] |
-                     pos->bitboards[bP]));  // Better phasing formula in this case than one for PSQT
+        count_bits(pos.occupancies[BOTH] &
+                   ~(pos.bitboards[wP] |
+                     pos.bitboards[bP]));  // Better phasing formula in this case than one for PSQT
     score += evaluate_king_safety(pos, pce, sq, var_phase);
     if (var_phase <= 12) {
         score += king_mobility(pos, pce, sq, var_phase);
@@ -491,34 +491,34 @@ static inline int evaluate_kings(const Board *pos, uint8_t pce, int phase) {
 // pieces_BB + central pawns moved The evaluation will be increased based on differences on other
 // factors e.g. The tempo is used to develop the g knight to f3 => 20 + (PSQT_knight_MG[F3] -
 // PSQT_knight_MG[G1]) Only applies to opening / early-middlegame
-static inline int16_t count_tempi(const Board *pos) {
+static inline int16_t count_tempi(const Board& pos) {
     uint8_t white_adv = 20;  // White's first-move advantage
     uint8_t tempo = 8;       // Value of a typical tempo
     Bitboard UNDEVELOPED_WHITE_ROOKS = (1ULL << a1) | (1ULL << h1);
     Bitboard UNDEVELOPED_BLACK_ROOKS = (1ULL << a8) | (1ULL << h8);
 
     int8_t net_developed_pieces = 0;
-    Bitboard white_DE_pawns = pos->bitboards[wP] & (file_masks[FILE_D] | file_masks[FILE_E]);
-    Bitboard white_NBQ = pos->bitboards[wN] | pos->bitboards[wB] | pos->bitboards[wQ];
-    Bitboard black_DE_pawns = pos->bitboards[bP] & (file_masks[FILE_D] | file_masks[FILE_E]);
-    Bitboard black_NBQ = pos->bitboards[bN] | pos->bitboards[bB] | pos->bitboards[bQ];
+    Bitboard white_DE_pawns = pos.bitboards[wP] & (file_masks[FILE_D] | file_masks[FILE_E]);
+    Bitboard white_NBQ = pos.bitboards[wN] | pos.bitboards[wB] | pos.bitboards[wQ];
+    Bitboard black_DE_pawns = pos.bitboards[bP] & (file_masks[FILE_D] | file_masks[FILE_E]);
+    Bitboard black_NBQ = pos.bitboards[bN] | pos.bitboards[bB] | pos.bitboards[bQ];
 
     net_developed_pieces += count_bits(white_NBQ & DEVELOPMENT_MASK);  // wN, wB, wQ
-    net_developed_pieces += count_bits(pos->bitboards[wR] & ~UNDEVELOPED_WHITE_ROOKS);  // wR
+    net_developed_pieces += count_bits(pos.bitboards[wR] & ~UNDEVELOPED_WHITE_ROOKS);  // wR
     net_developed_pieces +=
         count_bits(white_DE_pawns & ~bits_between_squares(d2, e2));    // wP (centre pawns)
     net_developed_pieces -= count_bits(black_NBQ & DEVELOPMENT_MASK);  // bN, bB, bQ
-    net_developed_pieces -= count_bits(pos->bitboards[bR] & ~UNDEVELOPED_BLACK_ROOKS);  // bR
+    net_developed_pieces -= count_bits(pos.bitboards[bR] & ~UNDEVELOPED_BLACK_ROOKS);  // bR
     net_developed_pieces -=
         count_bits(black_DE_pawns & ~bits_between_squares(d7, e7));  // bP (centre pawns)
 
-    return ((pos->side == WHITE) ? white_adv : 0) + net_developed_pieces * tempo;
+    return ((pos.side == WHITE) ? white_adv : 0) + net_developed_pieces * tempo;
 }
 
 // Using attack bitboards to evaluate piece activity and king safety
 // Activity is based on number of attacked squares, based on jk_182's Lichess article:
 // https://lichess.org/@/jk_182/blog/calculating-piece-activity/FAOY6Ii7
-static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[],
+static inline int16_t evaluate_attacks(const Board&pos, Bitboard white_attacks[],
                                        Bitboard black_attacks[], int white_attackers[],
                                        int black_attackers[], int phase) {
     // int mobility_bonus = (static_mobility.mg() * phase + static_mobility.eg() * (64 - phase)) /
@@ -528,8 +528,8 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
 
     // Attacks: The attack bitboards
     // Attackers: Piece types corresponding to each attack bitboard
-    Bitboard virtual_queen_w = get_queen_attacks(pos->king_sq[WHITE], pos->occupancies[BOTH]);
-    Bitboard virtual_queen_b = get_queen_attacks(pos->king_sq[BLACK], pos->occupancies[BOTH]);
+    Bitboard virtual_queen_w = get_queen_attacks(pos.king_sq[WHITE], pos.occupancies[BOTH]);
+    Bitboard virtual_queen_b = get_queen_attacks(pos.king_sq[BLACK], pos.occupancies[BOTH]);
     int attack_units[13] = {0, 1, 2, 2, 3, 5, 0, 1, 2, 2, 3, 5, 0};
     int total_white_units = 0, total_black_units = 0;
 
@@ -566,7 +566,7 @@ static inline int16_t evaluate_attacks(const Board *pos, Bitboard white_attacks[
         }
     }
 
-    int var_phase = count_bits(pos->occupancies[BOTH] & ~(pos->bitboards[wP] | pos->bitboards[bP]));
+    int var_phase = count_bits(pos.occupancies[BOTH] & ~(pos.bitboards[wP] | pos.bitboards[bP]));
 
     int white_king = -safety_table[std::min(total_black_units, 99)] * var_phase / 16;
     int black_king = -safety_table[std::min(total_white_units, 99)] * var_phase / 16;

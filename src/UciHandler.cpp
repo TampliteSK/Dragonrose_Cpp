@@ -46,28 +46,28 @@ UciHandler::UciHandler() {
 //           go nodes <>
 //           go infinite (although no stop command at the moment, can only be stopped via keyboard
 //           interrupt)
-void UciHandler::parse_go(Board *pos, HashTable *table, SearchInfo *info, const std::string &line) {
+void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const std::string &line) {
     // int movestogo = 30;
     int time = -1, movetime = -1;
     int depth = -1, inc = 0, nodes = -1;
-    info->timeset = false;
-    info->nodesset = false;
+    info.timeset = false;
+    info.nodesset = false;
 
     if (line.find("infinite") != std::string::npos) {
         // Nothing to handle
     }
 
     // Extract time control
-    if (pos->side == BLACK) {
+    if (pos.side == BLACK) {
         inc = get_value_from_line(line, "binc");
     }
-    if (pos->side == WHITE) {
+    if (pos.side == WHITE) {
         inc = get_value_from_line(line, "winc");
     }
-    if (pos->side == WHITE) {
+    if (pos.side == WHITE) {
         time = get_value_from_line(line, "wtime");
     }
-    if (pos->side == BLACK) {
+    if (pos.side == BLACK) {
         time = get_value_from_line(line, "btime");
     }
 
@@ -83,60 +83,60 @@ void UciHandler::parse_go(Board *pos, HashTable *table, SearchInfo *info, const 
         // movestogo = 1;
     }
 
-    info->start_time = get_time_ms();
-    info->depth = depth;
+    info.start_time = get_time_ms();
+    info.depth = depth;
 
     // Time Management
     // Add a buffer for handling Engine <-> GUI communication latency (esp. for OpenBench)
     constexpr int MIN_NETWORK_BUFFER = 100;  // in ms
     if (movetime != -1) {
         // No time management, directly use available time (- buffer)
-        info->timeset = true;
+        info.timeset = true;
         int buffered_time = std::max(movetime - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
-        info->hard_stop_time = info->soft_stop_time = info->start_time + buffered_time;
+        info.hard_stop_time = info.soft_stop_time = info.start_time + buffered_time;
     } else if (time != -1) {
-        info->timeset = true;
+        info.timeset = true;
 
         // Get hard time limit
         int buffered_time =
             std::max((time + inc / 2) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
-        info->hard_stop_time = info->start_time + buffered_time;
+        info.hard_stop_time = info.start_time + buffered_time;
 
         // Get soft time limit
         // buffered_time = std::max((time + inc/2) / 30 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER /
-        // 2); info->soft_stop_time = info->start_time + buffered_time;
+        // 2); info.soft_stop_time = info.start_time + buffered_time;
 
         // Get soft time limit based on current ply (phase)
         buffered_time =
             std::max(allocate_time(pos, (time + inc / 2) * 95 / 100) - MIN_NETWORK_BUFFER,
                      MIN_NETWORK_BUFFER / 2);
         // Prevent soft limit from exceeding hard limit
-        info->soft_stop_time =
-            std::min(info->start_time + buffered_time, info->hard_stop_time - MIN_NETWORK_BUFFER);
+        info.soft_stop_time =
+            std::min(info.start_time + buffered_time, info.hard_stop_time - MIN_NETWORK_BUFFER);
 
         // std::cout << "Current time: " << get_time_ms()
-        //    << " | Hard limit: " << info->hard_stop_time << " (" << info->hard_stop_time -
+        //    << " | Hard limit: " << info.hard_stop_time << " (" << info.hard_stop_time -
         //    get_time_ms() << ") "
-        //    << " | Soft limit: " << info->soft_stop_time << " (" << info->soft_stop_time -
+        //    << " | Soft limit: " << info.soft_stop_time << " (" << info.soft_stop_time -
         //    get_time_ms() << ") " << "\n";
     }
 
     if (depth == -1) {
-        info->depth = MAX_DEPTH;
+        info.depth = MAX_DEPTH;
     }
     if (nodes != -1) {
-        info->nodesset = true;
-        info->nodes_limit = nodes;
+        info.nodesset = true;
+        info.nodes_limit = nodes;
     }
 
-    // std::cout << "time: " << time << " start: " << info->start_time << " soft stop: " <<
-    // info->soft_stop_time << " hard stop: " << info->hard_stop_time << " depth: " <<
-    // (int)info->depth << " timeset: " << info->timeset << "\n"; std::cout << "nodeset: " <<
-    // info->nodesset << " | nodes limit: " << nodes << "\n";
+    // std::cout << "time: " << time << " start: " << info.start_time << " soft stop: " <<
+    // info.soft_stop_time << " hard stop: " << info.hard_stop_time << " depth: " <<
+    // (int)info.depth << " timeset: " << info.timeset << "\n"; std::cout << "nodeset: " <<
+    // info.nodesset << " | nodes limit: " << nodes << "\n";
     search_position(pos, table, info);
 }
 
-void UciHandler::parse_position(Board *pos, const std::string &line) {
+void UciHandler::parse_position(Board& pos, const std::string &line) {
     std::string input = line.substr(9);  // Skip "position "
 
     if (input.substr(0, 8) == "startpos") {
@@ -169,7 +169,7 @@ void UciHandler::parse_position(Board *pos, const std::string &line) {
     }
 }
 
-void UciHandler::uci_loop(Board *pos, HashTable *table, SearchInfo *info, UciOptions *options) {
+void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOptions *options) {
     std::string line;
     std::cout << "id name " << ENGINE_NAME << std::endl;
     std::cout << "id author Tamplite Siphron Kents" << std::endl;
@@ -218,7 +218,7 @@ void UciHandler::uci_loop(Board *pos, HashTable *table, SearchInfo *info, UciOpt
         } else if (line.substr(0, 3) == "run") {
             parse_go(pos, table, info, "go infinite");
         } else if (line.substr(0, 4) == "quit") {
-            info->quit = true;
+            info.quit = true;
             break;
         } else if (line.substr(0, 3) == "uci") {
             std::cout << "id name " << ENGINE_NAME << std::endl;
@@ -269,6 +269,6 @@ void UciHandler::uci_loop(Board *pos, HashTable *table, SearchInfo *info, UciOpt
             print_board(pos);
         }
 
-        if (info->quit) break;
+        if (info.quit) break;
     }
 }

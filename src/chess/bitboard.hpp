@@ -84,6 +84,6 @@ static inline Bitboard bits_between_squares(uint8_t sq1, uint8_t sq2) {
 
 Bitboard generate_shield_zone(uint8_t king_sq, uint8_t col);
 void print_bitboard(Bitboard board);
-uint8_t dist_between_squares(uint8_t sq1, uint8_t sq2);
+[[nodiscard]] constexpr uint8_t dist_between_squares(uint8_t sq1, uint8_t sq2);
 
 #endif  // BITBOARD_HPP

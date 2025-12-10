@@ -35,8 +35,8 @@ typedef struct {
 extern int LMR_reduction_table[MAX_DEPTH][MAX_PSEUDO_MOVES][2];  // [ply][move_num][is_quiet]
 
 // Functions
-void search_position(Board *pos, HashTable *table, SearchInfo *info);
-void init_searchinfo(SearchInfo *info);
+void search_position(Board& pos, HashTable& table, SearchInfo& info);
+void init_searchinfo(SearchInfo& info);
 void init_LMR_table();
 
 #endif  // SEARCH_HPP

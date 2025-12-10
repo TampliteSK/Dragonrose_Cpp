@@ -41,17 +41,17 @@ typedef struct {
     int hit;  // tracks the number of entries probed
     int cut;  // max number of probes allowed before hash table is full (to avoid collision of
               // entries)
-    uint32_t table_age;  // increments every move
+    uint16_t table_age;  // increments every move
 } HashTable;
 
 // Functions
-int probe_PV_move(const Board *pos, const HashTable *table);
-void get_PV_line(Board *pos, const HashTable *table, const uint8_t depth);
-void clear_hash_table(HashTable *table);
-void init_hash_table(HashTable *table, const uint16_t MB);
-bool probe_hash_entry(Board *pos, HashTable *table, int &move, int &score, int alpha, int beta,
-                      int &entry_depth, int depth);
-void store_hash_entry(Board *pos, HashTable *table, const int move, int score, const uint8_t flags,
+int probe_PV_move(const Board& pos, const HashTable& table);
+void get_PV_line(Board& pos, const HashTable& table, const uint8_t depth);
+void clear_hash_table(HashTable& table);
+void init_hash_table(HashTable& table, const uint16_t MB);
+bool probe_hash_entry(Board& pos, HashTable& table, int& move, int& score, int alpha, int beta,
+                      int& entry_depth, int depth);
+void store_hash_entry(Board& pos, HashTable& table, const int move, int score, const uint8_t flags,
                       const uint8_t depth);
 
 #endif  // TTABLE_HPP

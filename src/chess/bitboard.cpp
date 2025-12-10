@@ -93,6 +93,7 @@ void print_bitboard(Bitboard board) {
 }
 
 // Manhattan distance
-uint8_t dist_between_squares(uint8_t sq1, uint8_t sq2) {
-    return abs(GET_FILE(sq1) - GET_FILE(sq2)) + abs(GET_RANK(sq1) - GET_RANK(sq2));
+[[nodiscard]] constexpr uint8_t dist_between_squares(uint8_t sq1, uint8_t sq2) {
+    return std::abs(static_cast<int>(GET_FILE(sq1)) - GET_FILE(sq2))
+         + std::abs(static_cast<int>(GET_RANK(sq1)) - GET_RANK(sq2));
 }

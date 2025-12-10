@@ -66,19 +66,19 @@ std::string bench_positions[] = {
 
 constexpr uint8_t BENCH_DEPTH = 8;
 
-static inline void run_bench(Board *pos, HashTable *table, SearchInfo *info, UciHandler uci) {
+static inline void run_bench(Board& pos, HashTable& table, SearchInfo& info, UciHandler uci) {
     init_hash_table(table, 16);
     uint64_t total_nodes = 0;
     uint64_t start = get_time_ms();
 
     for (int index = 0; index < 50; ++index) {
         std::cout << "\n=== Benching position " << index + 1 << "/50 ===\n";
-        info->nodes = 0;
+        info.nodes = 0;
         std::cout << "Position: " << bench_positions[index] << "\n";
         parse_fen(pos, bench_positions[index]);
         std::string command = "go depth " + std::to_string(BENCH_DEPTH);
         uci.parse_go(pos, table, info, command);
-        total_nodes += info->nodes;
+        total_nodes += info.nodes;
     }
 
     uint64_t end = get_time_ms();

@@ -7,9 +7,9 @@
 #include "Board.hpp"
 
 // Functions
-void generate_moves(const Board *pos, MoveList &move_list, bool noisy_only);
-void sort_moves(const Board *pos, MoveList &move_list, int hash_move);
-bool move_exists(Board *pos, const int move);
+void generate_moves(const Board& pos, MoveList &move_list, bool noisy_only);
+void sort_moves(const Board& pos, MoveList &move_list, int hash_move);
+bool move_exists(Board& pos, const int move);
 
 /*
           binary move bits                               hexidecimal constants

@@ -12,10 +12,10 @@
 constexpr uint8_t NO_MOVE = 0;
 
 // Functions
-void take_move(Board *pos);
-bool make_move(Board *pos, int move);
-void make_null_move(Board *pos);
-void take_null_move(Board *pos);
+void take_move(Board& pos);
+bool make_move(Board& pos, int move);
+void make_null_move(Board& pos);
+void take_null_move(Board& pos);
 
 /*
                            castling   move     in      in

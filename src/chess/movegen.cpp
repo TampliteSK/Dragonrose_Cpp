@@ -66,14 +66,14 @@ static inline void add_move(MoveList &move_list, int move, int score) {
     move_list.length++;
 }
 
-static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
+static inline void generate_all_quiets(const Board&pos, MoveList &move_list) {
     uint8_t source_square, target_square;
-    uint8_t side = pos->side;
+    uint8_t side = pos.side;
     uint8_t col_offset = (side == WHITE) ? 0 : 6;
     Bitboard bitboard, attacks;  // define current piece's bitboard copy & it's attacks
 
     for (int piece = wP + col_offset; piece <= wK + col_offset; piece++) {
-        bitboard = pos->bitboards[piece];
+        bitboard = pos.bitboards[piece];
 
         // White pawns
         if (piece == wP) {
@@ -83,7 +83,7 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
                 target_square = source_square - 8;
 
                 // Generate quiet pawn moves
-                if (!GET_BIT(pos->occupancies[BOTH], target_square)) {
+                if (!GET_BIT(pos.occupancies[BOTH], target_square)) {
                     // pawn promotion
                     if (GET_RANK(source_square) == RANK_7) {
                         add_move(move_list,
@@ -106,7 +106,7 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
 
                         // two squares ahead pawn move
                         if (source_square >= a2 && source_square <= h2 &&
-                            !GET_BIT(pos->occupancies[BOTH], target_square - 8)) {
+                            !GET_BIT(pos.occupancies[BOTH], target_square - 8)) {
                             add_move(
                                 move_list,
                                 encode_move(source_square, target_square - 8, piece, 0, 0, 1, 0, 0),
@@ -124,7 +124,7 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
                 target_square = source_square + 8;
 
                 // Generate quiet pawn moves
-                if (!GET_BIT(pos->occupancies[BOTH], target_square)) {
+                if (!GET_BIT(pos.occupancies[BOTH], target_square)) {
                     // pawn promotion
                     if (GET_RANK(source_square) == RANK_2) {
                         add_move(move_list,
@@ -147,7 +147,7 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
 
                         // two squares ahead pawn move
                         if (source_square >= a7 && source_square <= h7 &&
-                            !GET_BIT(pos->occupancies[BOTH], target_square + 8)) {
+                            !GET_BIT(pos.occupancies[BOTH], target_square + 8)) {
                             add_move(
                                 move_list,
                                 encode_move(source_square, target_square + 8, piece, 0, 0, 1, 0, 0),
@@ -163,8 +163,8 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
             // White castling moves
             if (piece == wK) {
                 // King side castling
-                if (pos->castle_perms & WKCA) {
-                    if (pos->pieces[f1] == EMPTY && pos->pieces[g1] == EMPTY) {
+                if (pos.castle_perms & WKCA) {
+                    if (pos.pieces[f1] == EMPTY && pos.pieces[g1] == EMPTY) {
                         if (!is_square_attacked(pos, e1, BLACK) &&
                             !is_square_attacked(pos, f1, BLACK)) {
                             add_move(move_list, encode_move(e1, g1, piece, 0, 0, 0, 0, 1), 750'000);
@@ -172,9 +172,9 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
                     }
                 }
                 // Queen side castling
-                if (pos->castle_perms & WQCA) {
-                    if (pos->pieces[d1] == EMPTY && pos->pieces[c1] == EMPTY &&
-                        pos->pieces[b1] == EMPTY) {
+                if (pos.castle_perms & WQCA) {
+                    if (pos.pieces[d1] == EMPTY && pos.pieces[c1] == EMPTY &&
+                        pos.pieces[b1] == EMPTY) {
                         if (!is_square_attacked(pos, e1, BLACK) &&
                             !is_square_attacked(pos, d1, BLACK)) {
                             add_move(move_list, encode_move(e1, c1, piece, 0, 0, 0, 0, 1), 750'000);
@@ -185,8 +185,8 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
             // Black castling moves
             else if (piece == bK) {
                 // King side castling
-                if (pos->castle_perms & BKCA) {
-                    if (pos->pieces[f8] == EMPTY && pos->pieces[g8] == EMPTY) {
+                if (pos.castle_perms & BKCA) {
+                    if (pos.pieces[f8] == EMPTY && pos.pieces[g8] == EMPTY) {
                         if (!is_square_attacked(pos, e8, WHITE) &&
                             !is_square_attacked(pos, f8, WHITE)) {
                             add_move(move_list, encode_move(e8, g8, piece, 0, 0, 0, 0, 1), 750'000);
@@ -194,9 +194,9 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
                     }
                 }
                 // Queen side castling
-                if (pos->castle_perms & BQCA) {
-                    if (pos->pieces[d8] == EMPTY && pos->pieces[c8] == EMPTY &&
-                        pos->pieces[b8] == EMPTY) {
+                if (pos.castle_perms & BQCA) {
+                    if (pos.pieces[d8] == EMPTY && pos.pieces[c8] == EMPTY &&
+                        pos.pieces[b8] == EMPTY) {
                         if (!is_square_attacked(pos, e8, WHITE) &&
                             !is_square_attacked(pos, d8, WHITE)) {
                             add_move(move_list, encode_move(e8, c8, piece, 0, 0, 0, 0, 1), 750'000);
@@ -208,11 +208,11 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
             while (bitboard) {
                 source_square = pop_ls1b(bitboard);
                 attacks = get_piece_attacks(pos, piece, source_square) &
-                          ((side == WHITE) ? ~pos->occupancies[WHITE] : ~pos->occupancies[BLACK]);
+                          ((side == WHITE) ? ~pos.occupancies[WHITE] : ~pos.occupancies[BLACK]);
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
-                    if (pos->pieces[target_square] == EMPTY) {
+                    if (pos.pieces[target_square] == EMPTY) {
                         add_move(move_list,
                                  encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0),
                                  0);
@@ -223,14 +223,14 @@ static inline void generate_all_quiets(const Board *pos, MoveList &move_list) {
     }
 }
 
-static inline void generate_all_captures(const Board *pos, MoveList &move_list) {
+static inline void generate_all_captures(const Board&pos, MoveList &move_list) {
     uint8_t source_square, target_square;
-    uint8_t side = pos->side;
+    uint8_t side = pos.side;
     uint8_t col_offset = (side == WHITE) ? 0 : 6;
     Bitboard bitboard, attacks;  // define current piece's bitboard copy & it's attacks
 
     for (int piece = wP + col_offset; piece <= wK + col_offset; piece++) {
-        bitboard = pos->bitboards[piece];
+        bitboard = pos.bitboards[piece];
 
         // White pawns
         if (piece == wP) {
@@ -238,12 +238,12 @@ static inline void generate_all_captures(const Board *pos, MoveList &move_list) 
             while (bitboard) {
                 source_square = pop_ls1b(bitboard);
                 target_square = source_square - 8;
-                attacks = pawn_attacks[side][source_square] & pos->occupancies[BLACK];
+                attacks = pawn_attacks[side][source_square] & pos.occupancies[BLACK];
 
                 // generate pawn captures
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
-                    int target_pce = pos->pieces[target_square];
+                    int target_pce = pos.pieces[target_square];
 
                     // pawn promotion
                     if (GET_RANK(source_square) == RANK_7) {
@@ -273,10 +273,10 @@ static inline void generate_all_captures(const Board *pos, MoveList &move_list) 
                 }
 
                 // generate enpassant captures
-                if (pos->enpas != NO_SQ) {
+                if (pos.enpas != NO_SQ) {
                     Bitboard enpassant_attacks =
                         pawn_attacks[side][source_square] &
-                        (1ULL << pos->enpas);  // Check if enpassant is a valid capture
+                        (1ULL << pos.enpas);  // Check if enpassant is a valid capture
                     if (enpassant_attacks) {
                         int target_enpassant = pop_ls1b(enpassant_attacks);
                         add_move(
@@ -292,12 +292,12 @@ static inline void generate_all_captures(const Board *pos, MoveList &move_list) 
             while (bitboard) {
                 source_square = pop_ls1b(bitboard);
                 target_square = source_square + 8;
-                attacks = pawn_attacks[side][source_square] & pos->occupancies[WHITE];
+                attacks = pawn_attacks[side][source_square] & pos.occupancies[WHITE];
 
                 // generate pawn captures
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
-                    int target_pce = pos->pieces[target_square];
+                    int target_pce = pos.pieces[target_square];
 
                     // pawn promotion
                     if (GET_RANK(source_square) == RANK_2) {
@@ -327,9 +327,9 @@ static inline void generate_all_captures(const Board *pos, MoveList &move_list) 
                 }
 
                 // generate enpassant captures
-                if (pos->enpas != NO_SQ) {
+                if (pos.enpas != NO_SQ) {
                     Bitboard enpassant_attacks =
-                        pawn_attacks[side][source_square] & (1ULL << pos->enpas);
+                        pawn_attacks[side][source_square] & (1ULL << pos.enpas);
                     if (enpassant_attacks) {
                         int target_enpassant = pop_ls1b(enpassant_attacks);
                         add_move(
@@ -345,11 +345,11 @@ static inline void generate_all_captures(const Board *pos, MoveList &move_list) 
             while (bitboard) {
                 source_square = pop_ls1b(bitboard);
                 attacks = get_piece_attacks(pos, piece, source_square) &
-                          ((side == WHITE) ? ~pos->occupancies[WHITE] : ~pos->occupancies[BLACK]);
+                          ((side == WHITE) ? ~pos.occupancies[WHITE] : ~pos.occupancies[BLACK]);
 
                 while (attacks) {
                     target_square = pop_ls1b(attacks);
-                    int target_pce = pos->pieces[target_square];
+                    int target_pce = pos.pieces[target_square];
 
                     if (piece_col[target_pce] == (side ^ 1)) {
                         add_move(move_list,
@@ -365,7 +365,7 @@ static inline void generate_all_captures(const Board *pos, MoveList &move_list) 
 
 // Movegen function forked from BBC by Maksim Korzh (Code Monkey King)
 // Split into two functions to avoid multiple noisy_only branch checks
-void generate_moves(const Board *pos, MoveList &move_list, bool noisy_only) {
+void generate_moves(const Board&pos, MoveList &move_list, bool noisy_only) {
     move_list.length = 0;
 
     if (!noisy_only) {
@@ -390,7 +390,7 @@ void generate_moves(const Board *pos, MoveList &move_list, bool noisy_only) {
 */
 
 // score moves
-static inline int score_move(const Board *pos, int move, int hash_move) {
+static inline int score_move(const Board&pos, int move, int hash_move) {
     // Score hash move (PV move)
     if (hash_move != NO_MOVE && move == hash_move) {
         return 10'000'000;
@@ -403,15 +403,15 @@ static inline int score_move(const Board *pos, int move, int hash_move) {
     }
 
     // Score quiet move
-    if (pos->killer_moves[0][pos->ply] == move) return 950'000;  // Score 1st killer move
-    if (pos->killer_moves[1][pos->ply] == move) return 900'000;  // Score 2nd killer move
+    if (pos.killer_moves[0][pos.ply] == move) return 950'000;  // Score 1st killer move
+    if (pos.killer_moves[1][pos.ply] == move) return 900'000;  // Score 2nd killer move
 
-    int history_score = pos->history_moves[get_move_piece(move)][get_move_target(move)];
+    int history_score = pos.history_moves[get_move_piece(move)][get_move_target(move)];
     return history_score;
 }
 
 // Sort moves in descending order
-void sort_moves(const Board *pos, MoveList &move_list, int hash_move) {
+void sort_moves(const Board&pos, MoveList &move_list, int hash_move) {
     // Score all the moves
     for (int i = 0; i < (int)move_list.length; ++i) {
         move_list.moves[i].score += score_move(pos, move_list.moves[i].move, hash_move);
@@ -433,7 +433,7 @@ void sort_moves(const Board *pos, MoveList &move_list, int hash_move) {
 }
 
 // Determine is a move is possible in a given position
-bool move_exists(Board *pos, const int move) {
+bool move_exists(Board&pos, const int move) {
     MoveList list;
     generate_moves(pos, list, false);
 

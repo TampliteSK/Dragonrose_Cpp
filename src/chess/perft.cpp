@@ -14,7 +14,7 @@
 #include "movegen.hpp"
 #include "moveio.hpp"
 
-uint64_t run_perft(Board *pos, uint8_t depth, bool print_info) {
+uint64_t run_perft(Board& pos, uint8_t depth, bool print_info) {
     if (depth == 0) {
         return 0;
     }

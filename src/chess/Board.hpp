@@ -47,12 +47,12 @@ typedef struct {
 } Board;
 
 // Board functions
-void reset_board(Board *pos);
-void update_vars(Board *pos);
-void parse_fen(Board *pos, const std::string FEN);
+void reset_board(Board& pos);
+void update_vars(Board& pos);
+void parse_fen(Board& pos, const std::string FEN);
 
-void print_board(const Board *pos);
-void print_move_history(const Board *pos);
-bool check_boards(const Board *pos1, const Board *pos2);
+void print_board(const Board& pos);
+void print_move_history(const Board& pos);
+bool check_boards(const Board& pos1, const Board& pos2);
 
 #endif  // BOARD_HPP

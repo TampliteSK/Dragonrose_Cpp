@@ -11,13 +11,13 @@
 
 // std::string ascii_flags[] = { "None", "Alpha", "Beta", "Exact" };
 
-int probe_PV_move(const Board *pos, const HashTable *table) {
-    int index = pos->hash_key % table->max_entries;
+int probe_PV_move(const Board& pos, const HashTable& table) {
+    int index = pos.hash_key % table.max_entries;
 
-    if (table->pTable[index].hash_key == pos->hash_key) {
+    if (table.pTable[index].hash_key == pos.hash_key) {
         // std::cout << "Probed entry index " << index << " with depth " <<
-        // (int)table->pTable[index].depth << "\n";
-        return table->pTable[index].move;
+        // (int)table.pTable[index].depth << "\n";
+        return table.pTable[index].move;
     }
 
     return NO_MOVE;
@@ -25,7 +25,7 @@ int probe_PV_move(const Board *pos, const HashTable *table) {
 
 // Fills the PV by iteratively probing TT
 // Should only be used as a fallback option - not as reliable as tracking PV via extraction
-void get_PV_line(Board *pos, const HashTable *table, const uint8_t depth) {
+void get_PV_line(Board& pos, const HashTable& table, const uint8_t depth) {
     int move = probe_PV_move(pos, table);
     int count = 0;
 
@@ -33,69 +33,69 @@ void get_PV_line(Board *pos, const HashTable *table, const uint8_t depth) {
     while (move != NO_MOVE && count < depth) {
         if (move_exists(pos, move)) {
             make_move(pos, move);
-            pos->PV_array.moves[count++] = move;
+            pos.PV_array.moves[count++] = move;
         } else {
             break;
         }
         move = probe_PV_move(pos, table);
     }
-    pos->PV_array.length = count;
+    pos.PV_array.length = count;
 
-    while (pos->ply > 0) {
+    while (pos.ply > 0) {
         take_move(pos);
     }
 }
 
-void clear_hash_table(HashTable *table) {
-    for (uint64_t i = 0; i < table->max_entries; ++i) {
-        table->pTable[i].hash_key = 0ULL;
-        table->pTable[i].move = NO_MOVE;
-        table->pTable[i].depth = 0;
-        table->pTable[i].score = 0;
-        table->pTable[i].flags = 0;
-        table->pTable[i].age = 0;
+void clear_hash_table(HashTable& table) {
+    for (uint64_t i = 0; i < table.max_entries; ++i) {
+        table.pTable[i].hash_key = 0ULL;
+        table.pTable[i].move = NO_MOVE;
+        table.pTable[i].depth = 0;
+        table.pTable[i].score = 0;
+        table.pTable[i].flags = 0;
+        table.pTable[i].age = 0;
     }
-    table->num_entries = 0;
-    table->new_write = 0;
-    table->table_age = 0;
+    table.num_entries = 0;
+    table.new_write = 0;
+    table.table_age = 0;
 }
 
-void init_hash_table(HashTable *table, const uint16_t MB) {
+void init_hash_table(HashTable& table, const uint16_t MB) {
     int hash_size = 0x100000 * MB;
-    table->max_entries = hash_size / sizeof(HashEntry) - 2;
+    table.max_entries = hash_size / sizeof(HashEntry) - 2;
 
-    if (table->pTable != NULL) {
-        free(table->pTable);
+    if (table.pTable != NULL) {
+        free(table.pTable);
     }
 
-    table->pTable = (HashEntry *)malloc(table->max_entries * sizeof(HashEntry));
-    if (table->pTable == NULL) {
+    table.pTable = (HashEntry *)malloc(table.max_entries * sizeof(HashEntry));
+    if (table.pTable == NULL) {
         std::cout << "malloc failed for " << MB << "MB. retrying\n";
         init_hash_table(table, MB / 2);  // Retry hash allocation with half size if failed
     } else {
         clear_hash_table(table);
-        // std::cout << "HashTable init complete with " << table->max_entries << " entries\n";
+        // std::cout << "HashTable init complete with " << table.max_entries << " entries\n";
     }
 }
 
-bool probe_hash_entry(Board *pos, HashTable *table, int &move, int &score, int alpha, int beta,
-                      int &entry_depth, int depth) {
-    int index = pos->hash_key % table->max_entries;
+bool probe_hash_entry(Board& pos, HashTable& table, int& move, int& score, int alpha, int beta,
+                      int& entry_depth, int depth) {
+    int index = pos.hash_key % table.max_entries;
 
-    if (table->pTable[index].hash_key == pos->hash_key) {
-        move = table->pTable[index].move;
-        entry_depth = table->pTable[index].depth;
+    if (table.pTable[index].hash_key == pos.hash_key) {
+        move = table.pTable[index].move;
+        entry_depth = table.pTable[index].depth;
         if (entry_depth >= depth) {
-            table->hit++;
+            table.hit++;
 
-            score = table->pTable[index].score;
+            score = table.pTable[index].score;
             if (score > MATE_SCORE)
-                score -= pos->ply;
+                score -= pos.ply;
             else if (score < -MATE_SCORE)
-                score += pos->ply;
+                score += pos.ply;
 
             // Transposition table cutoffs
-            switch (table->pTable[index].flags) {
+            switch (table.pTable[index].flags) {
                 case HFALPHA:
                     if (score <= alpha) {
                         return true;
@@ -116,21 +116,21 @@ bool probe_hash_entry(Board *pos, HashTable *table, int &move, int &score, int a
     return false;
 }
 
-void store_hash_entry(Board *pos, HashTable *table, const int move, int score, const uint8_t flags,
+void store_hash_entry(Board& pos, HashTable& table, const int move, int score, const uint8_t flags,
                       const uint8_t depth) {
-    int index = pos->hash_key % table->max_entries;
+    int index = pos.hash_key % table.max_entries;
     bool replace = false;
-    HashEntry *entry = &table->pTable[index];
+    HashEntry *entry = &table.pTable[index];
 
     // Store entry if it doesn't exist
     if (entry->hash_key == 0) {
-        table->new_write++;
-        table->num_entries++;
+        table.new_write++;
+        table.num_entries++;
         replace = true;
     }
     // Find the worst entry with the same hash key
     else {
-        if (table->table_age > entry->age || depth >= entry->depth) {
+        if (table.table_age > entry->age || depth >= entry->depth) {
             replace = true;
         }
     }
@@ -138,21 +138,19 @@ void store_hash_entry(Board *pos, HashTable *table, const int move, int score, c
     if (!replace) return;  // No need to overwrite the entry
 
     if (score > MATE_SCORE)
-        score += pos->ply;
+        score += pos.ply;
     else if (score < -MATE_SCORE)
-        score -= pos->ply;
+        score -= pos.ply;
 
     entry->move = move;
-    entry->hash_key = pos->hash_key;
+    entry->hash_key = pos.hash_key;
     entry->flags = flags;
     entry->score = score;
     entry->depth = depth;
-    entry->age = table->table_age;
+    entry->age = table.table_age;
     // std::cout << "Storing move | Index: " << index << " Move: " << print_move(entry->move) << "
-    // Score: " << entry->score << " Depth: " << (int)entry->depth << "\n";
-}
-
-// Function prototype
+// Score: " << entry->score << " Depth: " << (int)entry->depth << "\n";
+}// Function prototype
 // void print_hash_bucket(HashBucket bucket, int index);
 
 /*

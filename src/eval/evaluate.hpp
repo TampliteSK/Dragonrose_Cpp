@@ -8,8 +8,8 @@
 #include "ScorePair.hpp"
 
 // Functions
-int evaluate_pos(const Board *pos);
-int count_material(const Board *pos, const uint8_t phase);
+int evaluate_pos(const Board& pos);
+int count_material(const Board& pos, const uint8_t phase);
 
 /*
     Evaluation constants
@@ -20,9 +20,9 @@ int count_material(const Board *pos, const uint8_t phase);
 // 7-ranks:  r1 r2 r3 r4 r5 r6 r7 r8
 const int passer_bonus[8] = {0, 5, 10, 20, 35, 60, 100, 200};
 const uint8_t connected_passers = 50;
-const uint8_t isolated_pawn = 10;
-const uint8_t isolated_centre_pawn = 10;  // Additional penalty
-const uint8_t stacked_pawn = 5;           // multipled by n-1, where n is no. of stacked pawns
+const uint8_t isolated_pawn = 10;         // Base penalty of isolated pawns
+const uint8_t isolated_centre_pawn = 10;  // Additional penalty for isolated pawns on d/e files
+const uint8_t stacked_pawn = 5;           // Multiplied by n-1, where n is no. of stacked pawns
 const uint8_t backwards_pawn = 15;
 
 // inline ScorePair bishop_pair = S(28, 72);
