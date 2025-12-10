@@ -9,7 +9,7 @@
 #include "Board.hpp"
 
 const uint32_t MAX_HASH = 262144;
-const uint8_t  MIN_HASH = 1;
+const uint16_t MIN_HASH = 1;
 // const uint8_t BUCKET_SIZE = 4;
 
 // Hash entry flags
