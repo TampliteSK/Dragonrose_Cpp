@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build project and measure time
         run: |
@@ -23,7 +23,7 @@ jobs:
           START_TIME=$(date +%s%N)
           make all
           END_TIME=$(date +%s%N)
-          BUILD_TIME=$(echo "scale=3; ($END_TIME - $START_TIME) / 1000000000" | bc)
+          BUILD_TIME=$(awk "BEGIN {printf \"%.3f\", ($END_TIME - $START_TIME) / 1000000000}")
           echo "✅ Build completed in ${BUILD_TIME} seconds"
           echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
 

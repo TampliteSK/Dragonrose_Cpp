@@ -15,12 +15,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Zig
         uses: goto-bus-stop/setup-zig@v2
         with:
-          version: 0.11.0
+          version: master
 
       - name: Build project with Zig and measure time
         run: |
@@ -28,7 +28,7 @@ jobs:
           START_TIME=$(date +%s%N)
           make CXX="zig c++" OPT_FLAGS="-O3 -ffast-math -march=native -funroll-loops"
           END_TIME=$(date +%s%N)
-          BUILD_TIME=$(echo "scale=3; ($END_TIME - $START_TIME) / 1000000000" | bc)
+          BUILD_TIME=$(awk "BEGIN {printf \"%.3f\", ($END_TIME - $START_TIME) / 1000000000}")
           echo "✅ Build completed in ${BUILD_TIME} seconds"
           echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
 
