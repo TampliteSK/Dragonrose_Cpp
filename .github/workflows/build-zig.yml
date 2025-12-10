@@ -1,0 +1,27 @@
+name: Build with Zig
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-zig:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.11.0
+
+      - name: Build project with Zig
+        run: make CXX="zig c++" OPT_FLAGS="-O3 -ffast-math -march=native -funroll-loops"
+
+      - name: Run benchmark
+        run: ./Dragonrose_Cpp bench
