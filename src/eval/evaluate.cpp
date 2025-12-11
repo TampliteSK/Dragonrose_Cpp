@@ -284,7 +284,8 @@ static inline int evaluate_bishops(const Board& pos, uint8_t pce, int phase) {
 
         // Penalty for bishops blocking centre pawns
         if (file == FILE_D || file == FILE_E) {
-            Bitboard pawn_mask = pos.bitboards[pce] & file_masks[file];
+            uint8_t ally_pawns = (pce == wB) ? wP : bP;
+            Bitboard pawn_mask = pos.bitboards[ally_pawns] & file_masks[file];
             uint8_t pawn_sq = pop_ls1b(pawn_mask);
             int8_t sign = (piece_col[pce] == WHITE) ? -1 : 1;
             if (sq - pawn_sq == sign * 8) {
@@ -363,8 +364,8 @@ static inline int evaluate_queens(const Board& pos, uint8_t pce, int phase) {
     while (queens) {
         uint8_t sq = pop_ls1b(queens);
         uint8_t file = GET_FILE(sq);
-        uint8_t ally_pawns = (pce == wR) ? wP : bP;
-        uint8_t enemy_pawns = (pce == wR) ? bP : wP;
+        uint8_t ally_pawns = (pce == wQ) ? wP : bP;
+        uint8_t enemy_pawns = (pce == wQ) ? bP : wP;
         score += compute_PSQT(pce, sq, phase);
 
         // Bonus for taking semi-open and open files
