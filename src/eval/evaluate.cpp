@@ -337,13 +337,13 @@ static inline int evaluate_rooks(const Board& pos, uint8_t pce, int phase) {
         }
 
         // Bonus for pressuring enemy pieces
-        Bitboard mask = get_rook_attacks(sq, pos.occupancies[BOTH]) & pos.occupancies[col ^ 1];
+        Bitboard rook_attacks = get_rook_attacks(sq, pos.occupancies[BOTH]);
+        Bitboard mask = rook_attacks & pos.occupancies[col ^ 1];
         score += count_bits(mask) * rook_attacks_piece;
 
         // Bonus for forming a battery with a queen or another rook
         uint8_t ally_queen = (col == WHITE) ? wQ : bQ;
-        Bitboard queen_mask =
-            pos.bitboards[ally_queen] & get_rook_attacks(sq, pos.occupancies[BOTH]);
+        Bitboard queen_mask = pos.bitboards[ally_queen] & rook_attacks;
         if (queen_mask) {
             score += battery;
         }
