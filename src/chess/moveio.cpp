@@ -33,12 +33,12 @@ std::string print_move(int move) {
 
 // Parses user/GUI move string input (e.g. "e7e8q") and checks if its valid.
 // Returns the move if valid.
-int parse_move(const Board&pos, std::string move_string) {
+int parse_move(const Board& pos, std::string move_string) {
     // Invalid move length
     if (move_string.length() < 4) {
         return 0;
-     }
-    
+    }
+
     MoveList move_list;
     generate_moves(pos, move_list, false);
 

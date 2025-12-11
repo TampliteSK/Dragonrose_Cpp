@@ -1,7 +1,6 @@
 // search.cpp
 
 #include "search.hpp"
-#include "search_params.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -16,6 +15,7 @@
 #include "makemove.hpp"
 #include "movegen.hpp"
 #include "moveio.hpp"
+#include "search_params.hpp"
 #include "timeman.hpp"
 #include "ttable.hpp"
 
@@ -26,11 +26,11 @@ static inline void check_up(SearchInfo& info, bool soft_limit);
 static inline int check_draw(const Board& pos, bool qsearch);
 static void clear_search_vars(Board& pos, HashTable& table, SearchInfo& info);
 
-static inline void init_PVLine(PVLine *line);
-static inline void update_best_line(Board& pos, PVLine *pv);
+static inline void init_PVLine(PVLine* line);
+static inline void update_best_line(Board& pos, PVLine* pv);
 
 static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& info, int alpha,
-                                    int beta, int depth, PVLine *line, bool do_null, bool PV_node);
+                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node);
 
 /*
         Iterative deepening loop
@@ -50,7 +50,8 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
     uint8_t curr_depth = 1;
     do {
-        PVLine *pv = new PVLine;  // Stores the best PV in the search depth so far. Merges with PV of child nodes if it's good
+        PVLine* pv = new PVLine;  // Stores the best PV in the search depth so far. Merges with PV
+                                  // of child nodes if it's good
         init_PVLine(pv);
 
         /*
@@ -59,8 +60,8 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
         // Do a full-window search for the first few depths as they are unstable
         if (curr_depth < ASP_WIN_DEPTH) {
-            best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth,
-                                            pv, true, true);
+            best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv,
+                                           true, true);
         } else {
             alpha = std::max(-INF_BOUND, guess - window_size);
             beta = std::min(guess + window_size, INF_BOUND);
@@ -69,8 +70,8 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
             // Aspiration windows algorithm adapted from Ethereal by Andrew Grant
             bool reSearch = true;
             while (reSearch) {
-                best_score = negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv,
-                                                true, true);
+                best_score =
+                    negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true, true);
 
                 // Re-search with a wider window on the side that fails
                 if (best_score <= alpha) {
@@ -108,24 +109,23 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
         // Display mate if there's forced mate
         uint64_t time = get_time_ms() - info.start_time;  // in ms
-        uint64_t nps = (int)((info.nodes / (time + 0.01)) * 1000);  // Add 0.01ms to prevent division by zero error
+        uint64_t nps = (int)((info.nodes / (time + 0.01)) *
+                             1000);  // Add 0.01ms to prevent division by zero error
 
         int8_t mate_moves = 0;
 
         if (abs(best_score) >= MATE_SCORE) {
-            #define sgn(value) ((value) >= 0 ? 1 : -1)
-            mate_moves =
-                round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * sgn(best_score);
+#define sgn(value) ((value) >= 0 ? 1 : -1)
+            mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * sgn(best_score);
             std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info.seldepth
-                        << " score mate " << (int)mate_moves << " nodes " << info.nodes
-                        << " nps " << nps << " hashfull "
-                        << table.num_entries * 1000 / table.max_entries << " time " << time
-                        << " pv";
+                      << " score mate " << (int)mate_moves << " nodes " << info.nodes << " nps "
+                      << nps << " hashfull " << table.num_entries * 1000 / table.max_entries
+                      << " time " << time << " pv";
         } else {
             std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info.seldepth
-                        << " score cp " << best_score << " nodes " << info.nodes << " nps "
-                        << nps << " hashfull " << table.num_entries * 1000 / table.max_entries
-                        << " time " << time << " pv";
+                      << " score cp " << best_score << " nodes " << info.nodes << " nps " << nps
+                      << " hashfull " << table.num_entries * 1000 / table.max_entries << " time "
+                      << time << " pv";
         }
 
         // Print PV
@@ -147,7 +147,7 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
 // Quiescence search
 static inline int quiescence(Board& pos, HashTable& table, SearchInfo& info, int alpha, int beta,
-                             PVLine *line) {
+                             PVLine* line) {
     check_up(info, false);  // Check if time is up
 
     int flag = check_draw(pos, true);
@@ -261,7 +261,7 @@ static inline int quiescence(Board& pos, HashTable& table, SearchInfo& info, int
 
 // Negamax Search with Alpha-beta Pruning
 static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& info, int alpha,
-                                    int beta, int depth, PVLine *line, bool do_null, bool PV_node) {
+                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node) {
     check_up(info, false);  // Check if time is up
 
     // const bool is_leaf = depth == 0;
@@ -399,8 +399,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         int score = -INF_BOUND;
         int curr_move = list.moves[move_num].move;
 
-        bool is_killer = curr_move == pos.killer_moves[0][pos.ply] ||
-                         curr_move == pos.killer_moves[1][pos.ply];
+        bool is_killer =
+            curr_move == pos.killer_moves[0][pos.ply] || curr_move == pos.killer_moves[1][pos.ply];
         bool is_capture = (bool)get_move_captured(curr_move);
         bool is_promotion = (bool)get_move_promoted(curr_move);
         bool is_quiet = !is_capture && !is_promotion;
@@ -453,7 +453,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
             int r = std::max(
                 0, (LMR_reduction_table[depth][move_num][(int)is_quiet]));  // Depth to be reduced
             r += !PV_node;  // Reduce more if not PV-node
-            reduced_depth = std::max(reduced_depth - r, 1); // Already initialised at depth - 1 earlier
+            reduced_depth =
+                std::max(reduced_depth - r, 1);  // Already initialised at depth - 1 earlier
 
             // Search at reduced depth with null window
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth,
@@ -558,7 +559,7 @@ static inline void check_up(SearchInfo& info, bool soft_limit) {
     // Check if time is up
     uint64_t time_limit = info.hard_stop_time;
     uint64_t nodes_limit = info.nodes_limit;
-    bool &stopper = info.stopped;
+    bool& stopper = info.stopped;
     if (soft_limit) {
         time_limit = info.soft_stop_time;
         stopper = info.soft_stopped;
@@ -675,7 +676,7 @@ void init_LMR_table() {
         PV management
 */
 
-static inline void init_PVLine(PVLine *line) {
+static inline void init_PVLine(PVLine* line) {
     line->length = 0;
     line->score = -INF_BOUND;
     for (int i = 0; i < MAX_DEPTH; ++i) {
@@ -683,10 +684,9 @@ static inline void init_PVLine(PVLine *line) {
     }
 }
 
-static inline void update_best_line(Board& pos, PVLine *pv) {
+static inline void update_best_line(Board& pos, PVLine* pv) {
     if (pv->score > pos.PV_array.score) {
         pos.PV_array.length = pv->length;
         memcpy(pos.PV_array.moves, pv->moves, sizeof(int) * pv->length);
     }
 }
-

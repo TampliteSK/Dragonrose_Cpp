@@ -82,12 +82,11 @@ void init_hash_table(HashTable& table, const uint16_t MB) {
             table.pTable = new HashEntry[table.max_entries]();
             clear_hash_table(table);
             return;  // Success
-        }
-        catch (const std::bad_alloc&) {
-            std::cout << "Allocation failed for " << trying_size << "MB. Retrying with " << trying_size / 2 << ".\n";
+        } catch (const std::bad_alloc&) {
+            std::cout << "Allocation failed for " << trying_size << "MB. Retrying with "
+                      << trying_size / 2 << ".\n";
             trying_size /= 2;
             continue;
-
         }
     }
 
@@ -139,7 +138,7 @@ void store_hash_entry(Board& pos, HashTable& table, const int move, int score, c
                       const uint8_t depth) {
     int index = pos.hash_key % table.max_entries;
     bool replace = false;
-    HashEntry *entry = &table.pTable[index];
+    HashEntry* entry = &table.pTable[index];
 
     // Store entry if it doesn't exist
     if (entry->hash_key == 0) {
@@ -168,8 +167,8 @@ void store_hash_entry(Board& pos, HashTable& table, const int move, int score, c
     entry->depth = depth;
     entry->age = table.table_age;
     // std::cout << "Storing move | Index: " << index << " Move: " << print_move(entry->move) << "
-// Score: " << entry->score << " Depth: " << (int)entry->depth << "\n";
-}// Function prototype
+    // Score: " << entry->score << " Depth: " << (int)entry->depth << "\n";
+}  // Function prototype
 // void print_hash_bucket(HashBucket bucket, int index);
 
 /*

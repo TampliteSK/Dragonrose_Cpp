@@ -53,7 +53,7 @@ void reset_board(Board& pos) {
         pos.PV_array.moves[i] = 0;  // NO_MOVE
     }
 
-    for (UndoBox &box : pos.move_history) {
+    for (UndoBox& box : pos.move_history) {
         box.castle_perms = 0;
         box.enpas = 0;
         box.fifty_move = 0;
@@ -236,7 +236,7 @@ void parse_fen(Board& pos, const std::string FEN) {
         pfen++;
     }
     pos.ply = (full_move - 1) * 2 +
-               (pos.side == BLACK ? 1 : 0);  // FEN fullmove starts at 1 → ply starts at 0
+              (pos.side == BLACK ? 1 : 0);  // FEN fullmove starts at 1 → ply starts at 0
     pos.his_ply = pos.ply;
 
     pos.hash_key = generate_hash_key(pos);  // Get Zobrist key for the position
@@ -273,8 +273,7 @@ void print_board(const Board& pos) {
 
     // Print castling rights
     std::cout << "       Castling: " << ((pos.castle_perms & WKCA) ? 'K' : '-')
-              << ((pos.castle_perms & WQCA) ? 'Q' : '-')
-              << ((pos.castle_perms & BKCA) ? 'k' : '-')
+              << ((pos.castle_perms & WQCA) ? 'Q' : '-') << ((pos.castle_perms & BKCA) ? 'k' : '-')
               << ((pos.castle_perms & BQCA) ? 'q' : '-') << "\n";
 
     std::cout << "       Hash key: " << std::hex << pos.hash_key << "\n\n";
@@ -339,8 +338,7 @@ bool check_boards(const Board& pos1, const Board& pos2) {
     // Compare other attributes
     if (pos1.side != pos2.side || pos1.enpas != pos2.enpas ||
         pos1.castle_perms != pos2.castle_perms || pos1.fifty_move != pos2.fifty_move ||
-        pos1.ply != pos2.ply || pos1.his_ply != pos2.his_ply ||
-        pos1.hash_key != pos2.hash_key) {
+        pos1.ply != pos2.ply || pos1.his_ply != pos2.his_ply || pos1.hash_key != pos2.hash_key) {
         std::cout
             << "Either side, enpas, castle_perms, fiftymove, ply, hisply or hashkey is different\n";
         return false;

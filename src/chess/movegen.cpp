@@ -66,7 +66,7 @@ static inline void add_move(MoveList &move_list, int move, int score) {
     move_list.length++;
 }
 
-static inline void generate_all_quiets(const Board&pos, MoveList &move_list) {
+static inline void generate_all_quiets(const Board &pos, MoveList &move_list) {
     uint8_t source_square, target_square;
     uint8_t side = pos.side;
     uint8_t col_offset = (side == WHITE) ? 0 : 6;
@@ -223,7 +223,7 @@ static inline void generate_all_quiets(const Board&pos, MoveList &move_list) {
     }
 }
 
-static inline void generate_all_captures(const Board&pos, MoveList &move_list) {
+static inline void generate_all_captures(const Board &pos, MoveList &move_list) {
     uint8_t source_square, target_square;
     uint8_t side = pos.side;
     uint8_t col_offset = (side == WHITE) ? 0 : 6;
@@ -365,7 +365,7 @@ static inline void generate_all_captures(const Board&pos, MoveList &move_list) {
 
 // Movegen function forked from BBC by Maksim Korzh (Code Monkey King)
 // Split into two functions to avoid multiple noisy_only branch checks
-void generate_moves(const Board&pos, MoveList &move_list, bool noisy_only) {
+void generate_moves(const Board &pos, MoveList &move_list, bool noisy_only) {
     move_list.length = 0;
 
     if (!noisy_only) {
@@ -390,7 +390,7 @@ void generate_moves(const Board&pos, MoveList &move_list, bool noisy_only) {
 */
 
 // score moves
-static inline int score_move(const Board&pos, int move, int hash_move) {
+static inline int score_move(const Board &pos, int move, int hash_move) {
     // Score hash move (PV move)
     if (hash_move != NO_MOVE && move == hash_move) {
         return 10'000'000;
@@ -411,7 +411,7 @@ static inline int score_move(const Board&pos, int move, int hash_move) {
 }
 
 // Sort moves in descending order
-void sort_moves(const Board&pos, MoveList &move_list, int hash_move) {
+void sort_moves(const Board &pos, MoveList &move_list, int hash_move) {
     // Score all the moves
     for (int i = 0; i < (int)move_list.length; ++i) {
         move_list.moves[i].score += score_move(pos, move_list.moves[i].move, hash_move);
@@ -433,7 +433,7 @@ void sort_moves(const Board&pos, MoveList &move_list, int hash_move) {
 }
 
 // Determine is a move is possible in a given position
-bool move_exists(Board&pos, const int move) {
+bool move_exists(Board &pos, const int move) {
     MoveList list;
     generate_moves(pos, list, false);
 

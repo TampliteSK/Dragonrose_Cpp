@@ -4,6 +4,7 @@
 #define STATICVECTOR_HPP
 
 #include <cstdint>
+#include <cstddef>
 
 /*
     The highest number of legal moves for a reachable position is 218,

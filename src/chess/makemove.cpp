@@ -17,18 +17,18 @@
         Helper hashing functions
 */
 
-static inline void HASH_PCE(Board&pos, uint8_t pce, uint8_t sq) {
+static inline void HASH_PCE(Board &pos, uint8_t pce, uint8_t sq) {
     pos.hash_key ^= piece_keys[pce][sq];
 }
-static inline void HASH_CA(Board&pos) { pos.hash_key ^= castle_keys[pos.castle_perms]; }
-static inline void HASH_SIDE(Board&pos) { pos.hash_key ^= side_key; }
-static inline void HASH_EP(Board&pos) { pos.hash_key ^= piece_keys[EMPTY][pos.enpas]; }
+static inline void HASH_CA(Board &pos) { pos.hash_key ^= castle_keys[pos.castle_perms]; }
+static inline void HASH_SIDE(Board &pos) { pos.hash_key ^= side_key; }
+static inline void HASH_EP(Board &pos) { pos.hash_key ^= piece_keys[EMPTY][pos.enpas]; }
 
 /*
         Piece manipulation
 */
 
-static inline void clear_piece(Board&pos, const int sq) {
+static inline void clear_piece(Board &pos, const int sq) {
     int pce = pos.pieces[sq];
     int col = piece_col[pce];
     HASH_PCE(pos, pce, sq);
@@ -41,7 +41,7 @@ static inline void clear_piece(Board&pos, const int sq) {
     CLR_BIT(pos.occupancies[BOTH], sq);
 }
 
-static void add_piece(Board&pos, const int sq, const int pce) {
+static void add_piece(Board &pos, const int sq, const int pce) {
     int col = piece_col[pce];
     HASH_PCE(pos, pce, sq);
 
@@ -53,7 +53,7 @@ static void add_piece(Board&pos, const int sq, const int pce) {
     SET_BIT(pos.occupancies[BOTH], sq);
 }
 
-static void move_piece(Board&pos, const int from, const int to) {
+static void move_piece(Board &pos, const int from, const int to) {
     int pce = pos.pieces[from];
     int col = piece_col[pce];
 
@@ -74,7 +74,7 @@ static void move_piece(Board&pos, const int from, const int to) {
         Move manipulation
 */
 
-void take_move(Board&pos) {
+void take_move(Board &pos) {
     pos.ply--;
     pos.his_ply--;
 
@@ -148,7 +148,7 @@ void take_move(Board&pos) {
 
 // Makes a move on the board
 // Returns true if legal, and false if illegal
-bool make_move(Board&pos, int move) {
+bool make_move(Board &pos, int move) {
     int from = get_move_source(move);
     int to = get_move_target(move);
     int side = pos.side;
@@ -256,7 +256,7 @@ bool make_move(Board&pos, int move) {
         Null move manipulation
 */
 
-void make_null_move(Board&pos) {
+void make_null_move(Board &pos) {
     pos.ply++;
     UndoBox &box = pos.move_history[pos.his_ply];
     box.hash_key = pos.hash_key;
@@ -276,7 +276,7 @@ void make_null_move(Board&pos) {
     HASH_SIDE(pos);
 }
 
-void take_null_move(Board&pos) {
+void take_null_move(Board &pos) {
     pos.ply--;
     pos.his_ply--;
 

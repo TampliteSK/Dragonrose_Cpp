@@ -22,7 +22,7 @@
     Private methods
 */
 
-int UciHandler::get_value_from_line(const std::string &line, const std::string &key) {
+int UciHandler::get_value_from_line(const std::string& line, const std::string& key) {
     auto pos = line.find(key);
     if (pos != std::string::npos) {
         return std::atoi(line.substr(pos + key.length() + 1).c_str());
@@ -46,7 +46,7 @@ UciHandler::UciHandler() {
 //           go nodes <>
 //           go infinite (although no stop command at the moment, can only be stopped via keyboard
 //           interrupt)
-void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const std::string &line) {
+void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const std::string& line) {
     // int movestogo = 30;
     int time = -1, movetime = -1;
     int depth = -1, inc = 0, nodes = -1;
@@ -136,7 +136,7 @@ void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const 
     search_position(pos, table, info);
 }
 
-void UciHandler::parse_position(Board& pos, const std::string &line) {
+void UciHandler::parse_position(Board& pos, const std::string& line) {
     std::string input = line.substr(9);  // Skip "position "
 
     if (input.substr(0, 8) == "startpos") {
@@ -169,13 +169,14 @@ void UciHandler::parse_position(Board& pos, const std::string &line) {
     }
 }
 
-void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOptions *options) {
+void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOptions* options) {
     std::string line;
     std::cout << "id name " << ENGINE_NAME << std::endl;
     std::cout << "id author Tamplite Siphron Kents" << std::endl;
 
     // UCI Options
-    std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH << std::endl;
+    std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH
+              << std::endl;
     int MB = 16;
     options->hash_size = 16;
     init_hash_table(table, MB);

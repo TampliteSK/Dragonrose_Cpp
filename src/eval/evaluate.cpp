@@ -284,25 +284,29 @@ static inline int evaluate_bishops(const Board& pos, uint8_t pce, int phase) {
 
         // Penalty for bishops blocking centre pawns
         if (file == FILE_D || file == FILE_E) {
-            uint8_t ally_pawns = (pce == wB) ? wP : bP;
+            uint8_t ally_pawns = (col == WHITE) ? wP : bP;
             Bitboard pawn_mask = pos.bitboards[ally_pawns] & file_masks[file];
-            uint8_t pawn_sq = pop_ls1b(pawn_mask);
-            int8_t sign = (piece_col[pce] == WHITE) ? -1 : 1;
-            if (sq - pawn_sq == sign * 8) {
-                score -= bishop_blocks_ctrpawn;
+
+            while (pawn_mask) {
+                uint8_t pawn_sq = pop_ls1b(pawn_mask);
+                int8_t rank_diff = (col == WHITE) ? (GET_RANK(pawn_sq) - GET_RANK(sq))
+                                             : (GET_RANK(sq) - GET_RANK(pawn_sq));
+                if (rank_diff == 1) {
+                    score -= bishop_blocks_ctrpawn;
+                }
             }
         }
 
         // Bonus for pressuring enemy pieces
-        Bitboard mask = get_bishop_attacks(sq, pos.occupancies[BOTH]) & pos.occupancies[col ^ 1];
+        Bitboard bishop_attacks = get_bishop_attacks(sq, pos.occupancies[BOTH]);
+        Bitboard mask = bishop_attacks & pos.occupancies[col ^ 1];
         score += count_bits(mask) * bishop_attacks_piece;
 
         // Bonus for forming a battery with a queen
         uint8_t ally_queen = (col == WHITE) ? wQ : bQ;
-        Bitboard queen_mask =
-            pos.bitboards[ally_queen] & get_bishop_attacks(sq, pos.occupancies[BOTH]);
+        Bitboard queen_mask = pos.bitboards[ally_queen] & bishop_attacks;
         if (queen_mask) {
-            score += battery;
+            score += battery * count_bits(queen_mask);
         }
     }
 
@@ -504,7 +508,7 @@ static inline int16_t count_tempi(const Board& pos) {
     Bitboard black_DE_pawns = pos.bitboards[bP] & (file_masks[FILE_D] | file_masks[FILE_E]);
     Bitboard black_NBQ = pos.bitboards[bN] | pos.bitboards[bB] | pos.bitboards[bQ];
 
-    net_developed_pieces += count_bits(white_NBQ & DEVELOPMENT_MASK);  // wN, wB, wQ
+    net_developed_pieces += count_bits(white_NBQ & DEVELOPMENT_MASK);                  // wN, wB, wQ
     net_developed_pieces += count_bits(pos.bitboards[wR] & ~UNDEVELOPED_WHITE_ROOKS);  // wR
     net_developed_pieces +=
         count_bits(white_DE_pawns & ~bits_between_squares(d2, e2));    // wP (centre pawns)
@@ -519,7 +523,7 @@ static inline int16_t count_tempi(const Board& pos) {
 // Using attack bitboards to evaluate piece activity and king safety
 // Activity is based on number of attacked squares, based on jk_182's Lichess article:
 // https://lichess.org/@/jk_182/blog/calculating-piece-activity/FAOY6Ii7
-static inline int16_t evaluate_attacks(const Board&pos, Bitboard white_attacks[],
+static inline int16_t evaluate_attacks(const Board& pos, Bitboard white_attacks[],
                                        Bitboard black_attacks[], int white_attackers[],
                                        int black_attackers[], int phase) {
     // int mobility_bonus = (static_mobility.mg() * phase + static_mobility.eg() * (64 - phase)) /

@@ -16,8 +16,7 @@ static inline bool is_square_attacked(const Board& pos, uint8_t sq, uint8_t side
     if ((side == BLACK) && (pawn_attacks[WHITE][sq] & pos.bitboards[bP])) return true;
 
     // Knights and Kings
-    if (knight_attacks[sq] & ((side == WHITE) ? pos.bitboards[wN] : pos.bitboards[bN]))
-        return true;
+    if (knight_attacks[sq] & ((side == WHITE) ? pos.bitboards[wN] : pos.bitboards[bN])) return true;
     if (king_attacks[sq] & ((side == WHITE) ? pos.bitboards[wK] : pos.bitboards[bK])) return true;
 
     // Bishops, Rooks and Queens
@@ -45,7 +44,7 @@ static inline Bitboard get_piece_attacks(const Board& pos, uint8_t pce, uint8_t 
 }
 
 // Replace with incremental version in board
-static inline void get_all_attacks(const Board& pos, uint8_t side, Bitboard *list, int *attackers) {
+static inline void get_all_attacks(const Board& pos, uint8_t side, Bitboard* list, int* attackers) {
     Bitboard copy = pos.occupancies[side];
     int count = 0;
 

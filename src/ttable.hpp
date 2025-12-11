@@ -34,7 +34,7 @@ typedef struct {
 
 // Hash table struct
 typedef struct {
-    HashEntry *pTable;
+    HashEntry* pTable;
     uint64_t max_entries;  // maximum entries based on given hash size
     uint64_t num_entries;  // number of entries at any given time
     int new_write;

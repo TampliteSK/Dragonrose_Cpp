@@ -17,7 +17,7 @@ int16_t endgame_noise(unsigned int seed, uint8_t width) {
 }
 
 // Determines if the position is a drawn endgame (exc. pawns)
-bool check_material_draw(const Board&pos, uint8_t phase) {
+bool check_material_draw(const Board& pos, uint8_t phase) {
     constexpr uint16_t draw_threshold = 365;  // Value of a bishop in the opening
 
     // Exception to the rule
