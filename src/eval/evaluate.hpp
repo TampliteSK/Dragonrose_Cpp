@@ -25,6 +25,11 @@ const uint8_t isolated_centre_pawn = 10;  // Additional penalty for isolated paw
 const uint8_t stacked_pawn = 5;           // Multiplied by n-1, where n is no. of stacked pawns
 const uint8_t backwards_pawn = 15;
 
+// Rescaled from Clockwork 40552d7
+const ScorePair PAWN_PHALANX[8] = {
+    S(0, 0), S(0, -5), S(3, 2), S(23, 16), S(59, 35), S(103, 209), S(325, 383), S(0, 0)
+};
+
 // inline ScorePair bishop_pair = S(28, 72);
 // inline tempo = S(9, 2);
 

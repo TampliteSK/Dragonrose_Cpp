@@ -243,8 +243,10 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
 
     // File-based features
     for (int file = FILE_A; file <= FILE_H; ++file) {
+        Bitboard pawn_file = pos.bitboards[pce] & file_masks[file];
+
         // Stacked pawn penalties
-        uint8_t stacked_count = count_bits(pos.bitboards[pce] & file_masks[file]);
+        uint8_t stacked_count = count_bits(pawn_file);
         if (stacked_count > 1) {
             score -= stacked_pawn * (stacked_count - 1);  // Scales with the number of pawns stacked
         }
@@ -254,6 +256,18 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
             if (passers[file] && passers[file - 1]) {
                 score += connected_passers;
             }
+        }
+    }
+
+    // Phalanx pawns bonusses
+    Bitboard phalanx_mask = pos.bitboards[pce] & (pos.bitboards[pce] >> 1);
+    while (phalanx_mask) {
+        uint8_t sq = pop_ls1b(phalanx_mask);
+        if (piece_col[pce] == WHITE) {
+            score += PAWN_PHALANX[GET_RANK(sq)].interpolate(phase);
+        }
+        else {
+            score += PAWN_PHALANX[7 - GET_RANK(sq)].interpolate(phase);
         }
     }
 
