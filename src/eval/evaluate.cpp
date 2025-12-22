@@ -264,10 +264,10 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
     while (phalanx_mask) {
         uint8_t sq = pop_ls1b(phalanx_mask);
         if (piece_col[pce] == WHITE) {
-            score += PAWN_PHALANX[GET_RANK(sq)].interpolate(phase);
+            score += PAWN_PHALANX[7 - GET_RANK(sq)].interpolate(phase);
         }
         else {
-            score += PAWN_PHALANX[7 - GET_RANK(sq)].interpolate(phase);
+            score += PAWN_PHALANX[GET_RANK(sq)].interpolate(phase);
         }
     }
 
