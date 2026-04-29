@@ -50,9 +50,8 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
     uint8_t curr_depth = 1;
     do {
-        PVLine* pv = new PVLine;  // Stores the best PV in the search depth so far. Merges with PV
-                                  // of child nodes if it's good
-        init_PVLine(pv);
+        PVLine pv;  // Stores the best PV in the search depth so far. Merges with PV of child nodes if it's good
+        init_PVLine(&pv);
 
         /*
             Aspiration windows
@@ -60,7 +59,7 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
         // Do a full-window search for the first few depths as they are unstable
         if (curr_depth < ASP_WIN_DEPTH) {
-            best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, pv,
+            best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, &pv,
                                            true, true);
         } else {
             alpha = std::max(-INF_BOUND, guess - window_size);
@@ -71,7 +70,7 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
             bool reSearch = true;
             while (reSearch) {
                 best_score =
-                    negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, pv, true, true);
+                    negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, &pv, true, true);
 
                 // Re-search with a wider window on the side that fails
                 if (best_score <= alpha) {
@@ -91,14 +90,13 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
             }
         }
 
-        update_best_line(pos, pv);
-        delete pv;
-        guess = best_score;
-
         // Make sure at least depth 1 is completed before breaking
         if (info.stopped && curr_depth > 1) {
             break;
         }
+
+        update_best_line(pos, &pv);
+        guess = best_score;
 
         // Search exited early as hash move found
         if (info.nodes == 0) {
@@ -109,13 +107,12 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
 
         // Display mate if there's forced mate
         uint64_t time = get_time_ms() - info.start_time;  // in ms
-        uint64_t nps = (int)((info.nodes / (time + 0.01)) *
-                             1000);  // Add 0.01ms to prevent division by zero error
+        uint64_t nps = static_cast<uint64_t>((info.nodes / (time + 0.01)) * 1000.0);  // Add 0.01ms to prevent division by zero error
 
         int8_t mate_moves = 0;
 
         if (abs(best_score) >= MATE_SCORE) {
-#define sgn(value) ((value) >= 0 ? 1 : -1)
+            auto sgn = [](int v) { return v >= 0 ? 1 : -1; };
             mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * sgn(best_score);
             std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info.seldepth
                       << " score mate " << (int)mate_moves << " nodes " << info.nodes << " nps "
@@ -377,8 +374,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
             depth >= 8 && !in_check && PV_node
             && (!tt_hit || (hash_move != NO_MOVE && hash_depth <= depth - 5))
     ) {
-    depth--;
-}
+        depth--;
+    }
     */
 
     MoveList list;
@@ -613,7 +610,7 @@ static inline int check_draw(const Board& pos, bool qsearch) {
 static inline void clear_search_vars(Board& pos, HashTable& table, SearchInfo& info) {
     for (int pce = 0; pce < 13; ++pce) {
         for (int sq = 0; sq < 64; ++sq) {
-            pos.history_moves[pce][sq] = 40000;
+            pos.history_moves[pce][sq] = 0;
         }
     }
     for (int id = 0; id < 2; ++id) {
