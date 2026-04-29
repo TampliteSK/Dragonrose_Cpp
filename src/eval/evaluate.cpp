@@ -350,7 +350,7 @@ static inline int evaluate_rooks(const Board& pos, uint8_t pce, int phase) {
 
         if (!stacked_rooks) {
             Bitboard rook_mask = pos.bitboards[pce] & file_masks[file];
-            if (count_bits(rook_mask) > 2) {
+            if (count_bits(rook_mask) >= 2) {
                 score += battery * (count_bits(rook_mask) - 1);
                 stacked_rooks = true;  // Prevent overcounting
             }
