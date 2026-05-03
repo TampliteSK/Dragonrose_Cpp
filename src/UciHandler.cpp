@@ -88,7 +88,7 @@ void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const 
 
     // Time Management
     // Add a buffer for handling Engine <-> GUI communication latency (esp. for OpenBench)
-    constexpr int MIN_NETWORK_BUFFER = 100;  // in ms
+    constexpr int MIN_NETWORK_BUFFER = 75;  // in ms
     if (movetime != -1) {
         // No time management, directly use available time (- buffer)
         info.timeset = true;
@@ -99,16 +99,12 @@ void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const 
 
         // Get hard time limit
         int buffered_time =
-            std::max((time + inc / 2) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
+            std::max((time + inc * 3 / 4) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
         info.hard_stop_time = info.start_time + buffered_time;
-
-        // Get soft time limit
-        // buffered_time = std::max((time + inc/2) / 30 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER /
-        // 2); info.soft_stop_time = info.start_time + buffered_time;
 
         // Get soft time limit based on current ply (phase)
         buffered_time =
-            std::max(allocate_time(pos, (time + inc / 2) * 95 / 100) - MIN_NETWORK_BUFFER,
+            std::max(allocate_time(pos, (time + inc * 3 / 4) * 95 / 100) - MIN_NETWORK_BUFFER,
                      MIN_NETWORK_BUFFER / 2);
         // Prevent soft limit from exceeding hard limit
         info.soft_stop_time =
@@ -242,16 +238,6 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
             int eval = evaluate_pos(pos);
             std::cout << "Static evaluation: " << eval << "cp\n";
         } else if (line.substr(0, 9) == "test") {
-            std::string test_fen = "2q1k2r/R2n2b1/3P2p1/2PQp2n/1p3p1p/4BP2/1P3NPP/6K1 b k - 1 26";
-            parse_fen(pos, test_fen);
-            for (int i = 0; i < 500'000; ++i) {
-                evaluate_pos(pos);
-                if (i % 100'000 == 99'999) {
-                    std::cout << "Evaluation #" << i << "\n";
-                }
-            }
-            std::cout << "Static evaluation: " << evaluate_pos(pos) << "cp \n";
-        } else if (line.substr(0, 10) == "test2") {
             // TODO: Fix hash discrepancy
             std::string test_fen =
                 "r1b1k1nr/ppqn1pbp/2pp2p1/4pP2/3PP3/3B1N2/PPP3PP/RNBQK2R w KQkq e6 0 1";

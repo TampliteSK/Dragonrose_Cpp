@@ -5,6 +5,11 @@
 
 #include "Board.hpp"
 
+struct Phase { 
+    int limit; 
+    int weight; 
+};
+
 uint64_t get_time_ms();
 int allocate_time(const Board& pos, int time);
 
