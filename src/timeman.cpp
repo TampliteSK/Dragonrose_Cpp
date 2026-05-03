@@ -18,15 +18,17 @@ uint64_t get_time_ms() {
 
 // Allocate time based on the current ply, which is used to determine the phase of the game
 // Returns the time allocated in milliseconds
-int allocate_time(const Board& pos, int time) {
+int allocate_time(const Board& pos, int base_time, int inc) {
+    int time = (base_time + inc * 3 / 4) * 95 / 100;
 
     // TIME TROUBLE CAES: Allocate time dynamically based on time left
-    const int TIME_TROUBLE_THRESHOLD = 15000; // in ms
+    const int TIME_TROUBLE_THRESHOLD = 30000; // in ms
     if (time < TIME_TROUBLE_THRESHOLD) {
         // Linear interpolation formula:
         // start_val + (end_val - start_val) * (1.0 - (current_time / max_time))
-        const double START = 10.0;
-        const double END = 20.0;
+        // Can be more aggressive with increment
+        const double START = std::max(40.0 - inc / 5.0, 10.0);
+        const double END = std::max(120.0 - inc / 2.0, 20.0);
         double dynamic_divisor = START + (END - START) * (1.0 - (double)std::max(0, time) / TIME_TROUBLE_THRESHOLD);
         return time / (int)dynamic_divisor;
     }
@@ -47,5 +49,5 @@ int allocate_time(const Board& pos, int time) {
     }
 
     // ENDGAME PHASE: Flat divisor until time trouble
-    return time / 35;
+    return time / 40;
 }
