@@ -28,7 +28,7 @@ int allocate_time(const Board& pos, int base_time, int inc) {
         // start_val + (end_val - start_val) * (1.0 - (current_time / max_time))
         // Can be more aggressive with increment
         const double START = std::max(40.0 - inc / 5.0, 10.0);
-        const double END = std::max(120.0 - inc / 2.0, 20.0);
+        const double END = std::max(60.0 - inc / 5.0, 20.0);
         double dynamic_divisor = START + (END - START) * (1.0 - (double)std::max(0, time) / TIME_TROUBLE_THRESHOLD);
         return time / (int)dynamic_divisor;
     }

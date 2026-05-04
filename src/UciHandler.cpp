@@ -46,7 +46,7 @@ UciHandler::UciHandler() {
 //           go nodes <>
 //           go infinite (although no stop command at the moment, can only be stopped via keyboard
 //           interrupt)
-void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const std::string& line) {
+void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, UciOptions* options, const std::string& line) {
     // int movestogo = 30;
     int time = -1, movetime = -1;
     int depth = -1, inc = 0, nodes = -1;
@@ -87,27 +87,25 @@ void UciHandler::parse_go(Board& pos, HashTable& table, SearchInfo& info, const 
     info.depth = depth;
 
     // Time Management
-    // Add a buffer for handling Engine <-> GUI communication latency (esp. for OpenBench)
-    constexpr int MIN_NETWORK_BUFFER = 100;  // in ms
     if (movetime != -1) {
         // No time management, directly use available time (- buffer)
         info.timeset = true;
-        int buffered_time = std::max(movetime - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
+        int buffered_time = std::max(movetime - (int)options->move_overhead, (int)options->move_overhead);
         info.hard_stop_time = info.soft_stop_time = info.start_time + buffered_time;
     } else if (time != -1) {
         info.timeset = true;
 
         // Get hard time limit
         int buffered_time =
-            std::max((time + inc * 3 / 4) / 10 - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER);
+            std::max((time + inc * 3 / 4) / 10 - (int)options->move_overhead, (int)options->move_overhead);
         info.hard_stop_time = info.start_time + buffered_time;
 
         // Get soft time limit based on current ply (phase)
         buffered_time =
-            std::max(allocate_time(pos, time, inc) - MIN_NETWORK_BUFFER, MIN_NETWORK_BUFFER / 10);
+            std::max(allocate_time(pos, time, inc) - (int)options->move_overhead, (int)options->move_overhead / 10);
         // Prevent soft limit from exceeding hard limit
         info.soft_stop_time =
-            std::min(info.start_time + buffered_time, info.hard_stop_time - MIN_NETWORK_BUFFER);
+            std::min(info.start_time + buffered_time, info.hard_stop_time - (int)options->move_overhead);
 
         // std::cout << "Current time: " << get_time_ms()
         //    << " | Hard limit: " << info.hard_stop_time << " (" << info.hard_stop_time -
@@ -172,11 +170,15 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
     // UCI Options
     std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH
               << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+    std::cout << "option name Move Overhead type spin default 75 min 0 max 5000" << std::endl;
+    std::cout << "uciok" << std::endl;
+
     int MB = 16;
     options->hash_size = 16;
+    options->threads = 1;
+    options->move_overhead = 75;
     init_hash_table(table, MB);
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "uciok" << std::endl;
 
     parse_fen(pos, START_POS);
 
@@ -209,10 +211,10 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
                 run_perft(pos, depth, true);
             } else {
                 // Normal go command
-                parse_go(pos, table, info, line);
+                parse_go(pos, table, info, options, line);
             }
         } else if (line.substr(0, 3) == "run") {
-            parse_go(pos, table, info, "go infinite");
+            parse_go(pos, table, info, options, "go infinite");
         } else if (line.substr(0, 4) == "quit") {
             info.quit = true;
             break;
@@ -229,7 +231,17 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
                 init_hash_table(table, MB);
                 std::cout << "info string Set Hash to " << MB << " MB" << std::endl;
             } else {
-                std::cout << "Invalid Hash value" << std::endl;
+                std::cout << "info string Invalid Hash value" << std::endl;
+            }
+        } else if (line.substr(0, 35) == "setoption name Move Overhead value ") {
+            std::istringstream iss(line.substr(35));
+            int new_overhead;
+            if (iss >> new_overhead) { 
+                options->move_overhead = CLAMP(new_overhead, 0, 5000);
+                std::cout << "info string Set Move Overhead to " << options->move_overhead << " ms"
+                          << std::endl;
+            } else {
+                std::cout << "info string Invalid Move Overhead value" << std::endl;
             }
         } else if (line.substr(0, 5) == "print") {
             print_board(pos);
