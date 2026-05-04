@@ -67,7 +67,12 @@ std::string bench_positions[] = {
 constexpr uint8_t BENCH_DEPTH = 8;
 
 static inline void run_bench(Board& pos, HashTable& table, SearchInfo& info, UciHandler uci) {
+    UciOptions options;
+    options.hash_size = 16;
+    options.threads = 1;
+    options.move_overhead = 75;
     init_hash_table(table, 16);
+
     uint64_t total_nodes = 0;
     uint64_t start = get_time_ms();
 
@@ -77,7 +82,7 @@ static inline void run_bench(Board& pos, HashTable& table, SearchInfo& info, Uci
         std::cout << "Position: " << bench_positions[index] << "\n";
         parse_fen(pos, bench_positions[index]);
         std::string command = "go depth " + std::to_string(BENCH_DEPTH);
-        uci.parse_go(pos, table, info, command);
+        uci.parse_go(pos, table, info, &options, command);
         total_nodes += info.nodes;
     }
 

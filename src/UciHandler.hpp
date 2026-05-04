@@ -31,16 +31,16 @@
 
 // UCI options struct
 typedef struct {
-    uint16_t hash_size;  // type spin
-    uint16_t threads;    // type spin
-                         // bool use_book; // type check
+    uint32_t hash_size;     // type spin
+    uint16_t threads;       // type spin
+    uint16_t move_overhead; // type spin
 } UciOptions;
 
 class UciHandler {
    public:
     UciHandler();  // Blank constructor
 
-    void parse_go(Board& pos, HashTable& table, SearchInfo& info, const std::string& line);
+    void parse_go(Board& pos, HashTable& table, SearchInfo& info, UciOptions* options, const std::string& line);
     void parse_position(Board& pos, const std::string& line);
     void uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOptions* options);
 
