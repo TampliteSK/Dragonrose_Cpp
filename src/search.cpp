@@ -269,11 +269,18 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         info.seldepth = pos.ply;
     }
 
+    uint8_t US = pos.side;
+    uint8_t THEM = US ^ 1;
+    bool in_check = is_square_attacked(pos, pos.king_sq[US], THEM);
+
     // Drop to qsearch at depth 0 or lower
-    if (depth <= 0) {
+    if (depth <= 0 && !in_check) {
         return quiescence(pos, table, info, alpha, beta, line);
     }
 
+    depth = std::max(depth, 0); // Ensure depth is non-negative
+
+    // Check draw
     if (!is_root) {
         // Check draw
         int flag = check_draw(pos, false);
@@ -299,11 +306,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     PVLine candidate_PV;
     init_PVLine(&candidate_PV);
 
-    uint8_t US = pos.side;
-    uint8_t THEM = US ^ 1;
-
     // Check extension to avoid horizon effect
-    bool in_check = is_square_attacked(pos, pos.king_sq[US], THEM);
     if (in_check) {
         depth++;
     }
