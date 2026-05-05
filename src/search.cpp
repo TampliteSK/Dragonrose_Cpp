@@ -307,7 +307,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     init_PVLine(&candidate_PV);
 
     // Check extension to avoid horizon effect
-    if (in_check) {
+    if (in_check && !is_root) {
         depth++;
     }
 
