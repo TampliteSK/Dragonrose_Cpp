@@ -196,6 +196,14 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
             passers[file] = true;
             score += passer_bonus[reference_rank];
         }
+        
+        // Phalanx pawns bonuses
+        uint64_t east_neighbor = (file < FILE_H) ? (1ULL << (sq + 1)) : 0ULL;
+        if (pos.bitboards[pce] & east_neighbor) {
+            ScorePair phalanx_bonus = PAWN_PHALANX[reference_rank];
+            int scaled_bonus = (phalanx_bonus.mg() * phase + phalanx_bonus.eg() * (64 - phase)) / 64;
+            score += scaled_bonus;
+        }
 
         // Isolated and backwards pawn penalties
         // Backwards pawn: No neighbouring pawns or they are further advanced, and square in front
