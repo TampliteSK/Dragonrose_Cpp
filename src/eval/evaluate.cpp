@@ -34,8 +34,7 @@ int evaluate_pos(const Board& pos) {
 
     Bitboard white_attacks[32] = {0ULL};
     Bitboard black_attacks[32] = {0ULL};
-    int white_attackers[32] = {
-        0};  // The pieces corresponding to each attack bitboard in piece_attacks
+    int white_attackers[32] = {0};  // The pieces corresponding to each attack bitboard in piece_attacks
     int black_attackers[32] = {0};
 
     Bitboard pawns = pos.bitboards[wP] | pos.bitboards[bP];
@@ -117,13 +116,6 @@ int evaluate_pos(const Board& pos) {
         score = (score * (100 - pos.fifty_move)) / 100;
     }
 
-    // Endgame noise adjustment
-    /*
-    if (is_endgame) {
-            score += check_material_win(pos)
-    }
-    */
-
     // Perspective adjustment
     return score * ((pos.side == WHITE) ? 1 : -1);
 }
@@ -203,8 +195,6 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
         if ((passer_mask & pos.bitboards[enemy_pce]) == 0) {
             passers[file] = true;
             score += passer_bonus[reference_rank];
-            // std::cout << "Passer detected at " << ascii_squares[sq] << " | Score: " <<
-            // passer_bonus[reference_rank] << "\n";
         }
 
         // Isolated and backwards pawn penalties
@@ -526,8 +516,6 @@ static inline int16_t count_tempi(const Board& pos) {
 static inline int16_t evaluate_attacks(const Board& pos, Bitboard white_attacks[],
                                        Bitboard black_attacks[], int white_attackers[],
                                        int black_attackers[], int phase) {
-    // int mobility_bonus = (static_mobility.mg() * phase + static_mobility.eg() * (64 - phase)) /
-    // 64; int activity = 0;
     int mobility = 0;
     uint8_t attack_bits = 0;
 
