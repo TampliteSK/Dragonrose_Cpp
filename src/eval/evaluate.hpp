@@ -11,8 +11,8 @@
 int evaluate_pos(const Board& pos);
 int count_material(const Board& pos, const uint8_t phase);
 
-/*
-    Evaluation constants
+    /*
+        Evaluation constants
 */
 
 // indicies:  0  1  2  3  4  5  6  7
@@ -20,9 +20,9 @@ int count_material(const Board& pos, const uint8_t phase);
 // 7-ranks:  r1 r2 r3 r4 r5 r6 r7 r8
 const int passer_bonus[8] = {0, 5, 10, 20, 35, 60, 100, 200};
 // Scaled down from Clockwork values 
-// (as of https://github.com/official-clockwork/Clockwork/commit/40552d7270cbb09bad39951efbfb6df1d679031d)
+// (as of https://github.com/official-clockwork/Clockwork/blob/7d7248b47d3d95040f37255a09c013ec10668558/src/eval_constants.hpp)
 const ScorePair PAWN_PHALANX[8] = {
-    S(0, 0), S(-1, -15), S(11, 6), S(22, 16), S(58, 35), S(100, 204), S(317, 374), S(0, 0)
+    S(0, 0), S(7, 1), S(13, 16), S(26, 27), S(57, 77), S(179, 109), S(209, 228), S(0, 0)
 };
 const uint8_t connected_passers = 50;
 const uint8_t isolated_pawn = 10;         // Base penalty of isolated pawns
