@@ -103,9 +103,9 @@ I would also like to thank:
 ## Playing Strength
 |   Version   | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
 |:-----------:|:-------------:|:-----:|
-| v0.29 (dev) |     ~2330     |   -   |
+| v0.29 (dev) |     ~2455     |   -   |
 |    v0.25    |     ~2136     | 2157  |
-- CCRL rating estimates are obtained from tests against Stash v17 (rated 2295 CCRL 2+1).
+- CCRL 2+1 rating estimates are obtained from tests against various versions of Stash (v17 - 2295, v20 - 2509).
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
 
 Below are some other metrics:

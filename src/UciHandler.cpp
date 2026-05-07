@@ -164,16 +164,8 @@ void UciHandler::parse_position(Board& pos, const std::string& line) {
 
 void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOptions* options) {
     std::string line;
-    std::cout << "id name " << ENGINE_NAME << std::endl;
-    std::cout << "id author Tamplite Siphron Kents" << std::endl;
 
-    // UCI Options
-    std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH
-              << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "option name Move Overhead type spin default 75 min 0 max 5000" << std::endl;
-    std::cout << "uciok" << std::endl;
-
+    // Init options
     int MB = 16;
     options->hash_size = 16;
     options->threads = 1;
@@ -221,6 +213,13 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
         } else if (line.substr(0, 3) == "uci") {
             std::cout << "id name " << ENGINE_NAME << std::endl;
             std::cout << "id author Tamplite Siphron Kents" << std::endl;
+            std::cout << "uciok" << std::endl;
+
+            // UCI Options
+            std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH
+                    << std::endl;
+            std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+            std::cout << "option name Move Overhead type spin default 75 min 0 max 5000" << std::endl;
             std::cout << "uciok" << std::endl;
         } else if (line.substr(0, 26) == "setoption name Hash value ") {
             std::istringstream iss(line.substr(26));  // Extract the relevant substring
