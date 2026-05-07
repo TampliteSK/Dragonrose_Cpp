@@ -322,6 +322,12 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         return hash_score;
     }
 
+    // Get static eval
+    int static_eval = 0;
+    if (!in_check) {
+        static_eval = evaluate_pos(pos);
+    }
+
     // Whole node pruning
     if (!in_check && !is_root) {
         /*
@@ -330,9 +336,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         // We prune branches that are too good for us (i.e. too bad for the opponent). The opponent
         // will likely avoid these branches entirely. If the static eval is significantly better
         // than beta, then it is likely below alpha for the opponent. Although this is only an
-        // apporximation of actual search, static eval is usually a good enough estimate.
+        // approximation of actual search, static eval is usually a good enough estimate.
 
-        int static_eval = evaluate_pos(pos);
         int RFP_margin = beta + 80 * depth;
         if (depth <= 4 && static_eval >= RFP_margin) {
             return static_eval;
@@ -388,8 +393,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     int best_move = NO_MOVE;
     int best_score = -INF_BOUND;
 
-    // Futility pruning variables
-    int static_eval = evaluate_pos(pos);
+    // Futility pruning variable
     int futility_margin = 300 * depth;  // Scale margin with depth
 
     sort_moves(pos, list, hash_move);
