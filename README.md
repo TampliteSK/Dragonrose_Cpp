@@ -137,5 +137,4 @@ Below are some other metrics:
 - Add Chess960 support
 
 ## Bugs to fix:
-- Illegal PV moves
 - Occasional disconnects on OB in perpetual checks positions on specific machines

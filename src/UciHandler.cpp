@@ -213,7 +213,6 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
         } else if (line.substr(0, 3) == "uci") {
             std::cout << "id name " << ENGINE_NAME << std::endl;
             std::cout << "id author Tamplite Siphron Kents" << std::endl;
-            std::cout << "uciok" << std::endl;
 
             // UCI Options
             std::cout << "option name Hash type spin default 16 min " << MIN_HASH << " max " << MAX_HASH
