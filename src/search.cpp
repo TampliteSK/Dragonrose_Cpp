@@ -64,13 +64,18 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
         } else {
             alpha = std::max(-INF_BOUND, guess - window_size);
             beta = std::min(guess + window_size, INF_BOUND);
-            uint16_t delta = window_size;
+            int delta = window_size;
 
             // Aspiration windows algorithm adapted from Ethereal by Andrew Grant
             bool reSearch = true;
             while (reSearch) {
                 best_score =
                     negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, &pv, true, true);
+
+                // Stop researches when out of time
+                if (info.stopped && curr_depth > 1) {
+                    break;
+                }
 
                 // Re-search with a wider window on the side that fails
                 if (best_score <= alpha) {
