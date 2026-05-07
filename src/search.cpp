@@ -304,7 +304,6 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
 
     line->length = 0;
     PVLine candidate_PV;
-    init_PVLine(&candidate_PV);
 
     // Check extension to avoid horizon effect
     if (in_check && !is_root) {
@@ -396,6 +395,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     sort_moves(pos, list, hash_move);
 
     for (int move_num = 0; move_num < (int)list.length; ++move_num) {
+        init_PVLine(&candidate_PV);
         int score = -INF_BOUND;
         int curr_move = list.moves[move_num].move;
 
@@ -514,10 +514,12 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
                 alpha = score;
 
                 // Copy child's PV and prepend the current move (extraction idea from Ethereal)
-                line->score = score;
-                line->length = 1 + candidate_PV.length;
-                line->moves[0] = curr_move;
-                std::memcpy(line->moves + 1, candidate_PV.moves, sizeof(int) * candidate_PV.length);
+                if (PV_node) {
+                    line->score = score;
+                    line->length = 1 + candidate_PV.length;
+                    line->moves[0] = curr_move;
+                    std::memcpy(line->moves + 1, candidate_PV.moves, sizeof(int) * candidate_PV.length);
+                }
             }
         }
     }
