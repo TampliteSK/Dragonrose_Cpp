@@ -137,30 +137,28 @@ bool probe_hash_entry(Board& pos, HashTable& table, int& move, int& score, int a
 void store_hash_entry(Board& pos, HashTable& table, const int move, int score, const uint8_t flags,
                       const uint8_t depth) {
     int index = pos.hash_key % table.max_entries;
-    bool replace = false;
     HashEntry* entry = &table.pTable[index];
+    const int age_delta = table.table_age - entry->age;
 
-    // Store entry if it doesn't exist
-    if (entry->hash_key == 0) {
-        table.new_write++;
-        table.num_entries++;
-        replace = true;
+    if (move || (entry->hash_key != pos.hash_key)) {
+        entry->move = move;
     }
-    // Find the worst entry with the same hash key
-    else {
-        if (table.table_age > entry->age || depth >= entry->depth) {
-            replace = true;
-        }
-    }
+
+    const int replace = (entry->hash_key != pos.hash_key) ||
+                         age_delta > 0 ||
+                         depth + 4 > entry->depth ||
+                         flags == HFEXACT;
 
     if (!replace) return;  // No need to overwrite the entry
+
+    table.new_write++;
+    table.num_entries++;
 
     if (score > MATE_SCORE)
         score += pos.ply;
     else if (score < -MATE_SCORE)
         score -= pos.ply;
 
-    entry->move = move;
     entry->hash_key = pos.hash_key;
     entry->flags = flags;
     entry->score = score;
@@ -168,7 +166,9 @@ void store_hash_entry(Board& pos, HashTable& table, const int move, int score, c
     entry->age = table.table_age;
     // std::cout << "Storing move | Index: " << index << " Move: " << print_move(entry->move) << "
     // Score: " << entry->score << " Depth: " << (int)entry->depth << "\n";
-}  // Function prototype
+}
+
+// Function prototype
 // void print_hash_bucket(HashBucket bucket, int index);
 
 /*
