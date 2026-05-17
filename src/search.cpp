@@ -381,8 +381,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     */
     // If the position has not been searched yet (i.e. no hash move), we assume it's not a good node 
     if (
-            depth >= 4 && !in_check && !PV_node
-            && (!tt_hit || (hash_move != NO_MOVE && hash_depth <= depth - 3))
+            !is_root && depth >= 4 && PV_node
+            && (!tt_hit || (hash_move == NO_MOVE) || (hash_depth <= depth - 3))
     ) {
         depth--;
     }
