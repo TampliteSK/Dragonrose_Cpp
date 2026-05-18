@@ -341,7 +341,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         // For low depths, if the eval is so bad that a large margin scaled
         // with depth is still not able to raise alpha, we can be almost sure 
         // that it will not be able to in the next few depths
-        int razoring_margin = alpha - 291 * depth;
+        int razoring_margin = alpha - 400 * depth;
         if (!PV_node && !in_check && depth <= 3 && static_eval < razoring_margin) {
             const int16_t razor_score = quiescence(pos, table, info, alpha, beta, line);
             if (razor_score <= alpha) {
