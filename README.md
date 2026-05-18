@@ -49,6 +49,7 @@ I would also like to thank:
 | Bench |  CLI Argument   |    -    |        -       | Run `./Dragonrose_Cpp bench` (or whatever you named the binary) from a CLI to check nodes and NPS, based on a 50-position suite (from [Heimdall](https://git.nocturn9x.space/nocturn9x/heimdall)).|
 
 ## Main Features
+Dragonrose does not yet support FRC (Fischer Random Chess / Chess960) or Double FRC. The support will be added at a later date.
 
 ### Search
 - Iterative deepening + Aspiration windows
@@ -130,7 +131,10 @@ Below are some other metrics:
 - Other: Patched misc bugs.
 
 ## To-do list
-- Release at 2500 CCRL (vs. Stash), and then next big release at 3000.
+- Fix PV extending past threefold
+- Split search-uci thread
+- Search extensions?
+- Release at ~2500 CCRL (vs. Stash), and then next big release at 3000.
 - Search / Eval progression
 - ...
 - Search thread / LazySMP
