@@ -336,20 +336,6 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     // Whole node pruning
     if (!in_check && !is_root) {
         /*
-            Razoring / Alpha pruning
-        */
-        // For low depths, if the eval is so bad that a large margin scaled
-        // with depth is still not able to raise alpha, we can be almost sure 
-        // that it will not be able to in the next few depths
-        int razoring_margin = alpha - 500 * depth;
-        if (!PV_node && !in_check && depth <= 3 && static_eval < razoring_margin) {
-            const int16_t razor_score = quiescence(pos, table, info, alpha, beta, line);
-            if (razor_score <= alpha) {
-                return razor_score;
-            }
-        }
-
-        /*
                 Reverse futility pruning
         */
         // We prune branches that are too good for us (i.e. too bad for the opponent). The opponent
@@ -360,6 +346,17 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         int RFP_margin = beta + 80 * depth;
         if (depth <= 4 && static_eval >= RFP_margin) {
             return static_eval;
+        }
+
+        /*
+            Razoring / Alpha pruning
+        */
+        // For low depths, if the eval is so bad that a large margin scaled
+        // with depth is still not able to raise alpha, we can be almost sure 
+        // that it will not be able to in the next few depths
+        int razoring_margin = alpha - 630 - 305 * depth * depth;
+        if (!PV_node && !in_check && depth <= 3 && static_eval <= razoring_margin) {
+            return quiescence(pos, table, info, alpha, beta, line);
         }
 
         /*
