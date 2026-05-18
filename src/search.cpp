@@ -383,8 +383,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     // depth to record a move that we can later re-use.
     /*
     if (
-            depth >= 8 && !in_check && PV_node
-            && (!tt_hit || (hash_move != NO_MOVE && hash_depth <= depth - 5))
+            !is_root && depth >= 6 && PV_node
+            && (!tt_hit || (hash_move == NO_MOVE) || (hash_depth <= depth - 4))
     ) {
         depth--;
     }
