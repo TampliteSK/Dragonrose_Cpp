@@ -23,6 +23,7 @@ int LMR_reduction_table[MAX_DEPTH][MAX_PSEUDO_MOVES][2];
 
 // Function prototypes
 static inline void check_up(SearchInfo& info, bool soft_limit);
+static inline bool check_repetition(const Board& pos);
 static inline int check_draw(const Board& pos, bool qsearch);
 static void clear_search_vars(Board& pos, HashTable& table, SearchInfo& info);
 
@@ -323,8 +324,11 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     bool tt_hit =
         probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, hash_depth, depth);
     if (tt_hit && !is_root) {
-        table.cut++;
-        return hash_score;
+        // Skip TT cutoff if this position is a draw by repetition
+        if (!check_repetition(pos)) {
+            table.cut++;
+            return hash_score;
+        }
     }
 
     // Get static eval
