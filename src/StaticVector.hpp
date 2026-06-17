@@ -3,6 +3,7 @@
 #ifndef STATICVECTOR_HPP
 #define STATICVECTOR_HPP
 
+#include <cstddef>
 #include <cstdint>
 #include <cstddef>
 
