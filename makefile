@@ -14,6 +14,13 @@ ifeq ($(findstring g++,$(CXX)),g++)
     OPT_FLAGS = -Ofast -ffast-math -march=native -funroll-loops -flto=auto
 endif
 
+# If compiling with clang on Windows, force it to use lld to handle LTO bitcode
+ifeq ($(findstring clang++,$(CXX)),clang++)
+    ifeq ($(OS),Windows_NT)
+        OPT_FLAGS += -fuse-ld=lld
+    endif
+endif
+
 MISC_FLAGS ?=
 CXXFLAGS = $(STD_FLAGS) $(WARN_FLAGS) $(OPT_FLAGS) $(INC_DIRS) $(MISC_FLAGS)
 
