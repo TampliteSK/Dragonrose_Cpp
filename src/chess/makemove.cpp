@@ -199,11 +199,13 @@ bool make_move(Board &pos, int move) {
     HASH_CA(pos);
     pos.fifty_move++;
 
-    // Handle captures
+    // Handle captures (en passant capture was already removed at the top)
     int captured = get_move_captured(move);
-    if (captured) {
+    if (captured && !get_move_enpassant(move)) {
         clear_piece(pos, to);
-        pos.fifty_move = 0;  // A capture is played - reset 50-move counter
+    }
+    if (captured) {
+        pos.fifty_move = 0;  // capture (incl. EP) resets the 50-move counter
     }
 
     pos.ply++;
