@@ -259,7 +259,7 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
             // list.length = 1;
             // print_move_list(list, true);
             make_move(pos, move);
-            print_board(pos);
+            // print_board(pos);
 
             take_move(pos);
             print_board(pos);
