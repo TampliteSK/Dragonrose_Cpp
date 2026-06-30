@@ -199,13 +199,15 @@ bool make_move(Board &pos, int move) {
     HASH_CA(pos);
     pos.fifty_move++;
 
-    // Handle captures (en passant capture was already removed at the top)
+    // Handle other captures
     int captured = get_move_captured(move);
+    // We exclude en passant here since it was handled earlier
     if (captured && !get_move_enpassant(move)) {
         clear_piece(pos, to);
     }
+    // Captures reset 50-move counter
     if (captured) {
-        pos.fifty_move = 0;  // capture (incl. EP) resets the 50-move counter
+        pos.fifty_move = 0;
     }
 
     pos.ply++;
@@ -213,14 +215,26 @@ bool make_move(Board &pos, int move) {
 
     if (piece_type[pos.pieces[from]] == PAWN) {
         pos.fifty_move = 0;  // A pawn is moved - reset 50-move counter
-        // Check if it's double advance
+
+        // Check if it's a double advance
         if (get_move_double(move)) {
+            uint8_t enemy_pawn;
             if (side == WHITE) {
                 pos.enpas = from - 8;
+                enemy_pawn = bP;
             } else {
                 pos.enpas = from + 8;
+                enemy_pawn = wP;
             }
-            HASH_EP(pos);
+
+            // Only register/hash the EP square if an enemy pawn can actually
+            // capture en passant. Otherwise two FIDE-identical positions hash
+            // differently and repetitions are missed.
+            if (pawn_attacks[side][pos.enpas] & pos.bitboards[enemy_pawn]) {
+                HASH_EP(pos);
+            } else {
+                pos.enpas = NO_SQ;  // keep take_move's EP hashing symmetric
+            }
         }
     }
 
