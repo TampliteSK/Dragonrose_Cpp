@@ -446,6 +446,11 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         legal++;
         info.nodes++;
 
+        // Determine the correct cut_node flag for the child:
+        // - The first move (legal == 1) flips the parent's expectation (!cut_node)
+        // - All subsequent moves (legal > 1) are Cut nodes (true)
+        bool next_cut_node = (legal > 1) ? true : !cut_node;
+
         /*
             Late Move Reductions
         */
@@ -465,12 +470,12 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
 
             // Search at reduced depth with null window
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth,
-                                       &candidate_PV, true, false, !cut_node);
+                                       &candidate_PV, true, false, next_cut_node);
 
             // Re-search at full depth still with null window
             if (score > alpha) {
                 score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1,
-                                           &candidate_PV, true, false, !cut_node);
+                                           &candidate_PV, true, false, next_cut_node);
             }
         }
         // Principal variation search (based on Stoat shogi engine by Ciekce)
@@ -479,7 +484,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         else if (!PV_node || legal > 1) {
             // Perform zero-window search (ZWS) on non-PV nodes
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1,
-                                       &candidate_PV, true, false, !cut_node);
+                                       &candidate_PV, true, false, next_cut_node);
         }
         // If we're in a PV node and searching the first move, or the score from reduced search beat
         // alpha, then we search with full depth and alpha-beta window.
