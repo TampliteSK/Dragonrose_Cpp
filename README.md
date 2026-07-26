@@ -135,6 +135,3 @@ Below are some other metrics:
 - ...
 - Search thread / LazySMP
 - Add Chess960 support
-
-## Bugs to fix:
-- Occasional disconnects on OB in perpetual checks positions on specific machines
