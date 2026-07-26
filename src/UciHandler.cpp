@@ -247,22 +247,7 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
             int eval = evaluate_pos(pos);
             std::cout << "Static evaluation: " << eval << "cp\n";
         } else if (line.substr(0, 9) == "test") {
-            // TODO: Fix hash discrepancy
-            std::string test_fen =
-                "r1b1k1nr/ppqn1pbp/2pp2p1/4pP2/3PP3/3B1N2/PPP3PP/RNBQK2R w KQkq e6 0 1";
-            parse_fen(pos, test_fen);
-            print_board(pos);
-
-            int move = 40899869;  // f5e6
-            // MoveList list = MoveList();
-            // list.moves[0] = {move, 0};
-            // list.length = 1;
-            // print_move_list(list, true);
-            make_move(pos, move);
-            // print_board(pos);
-
-            take_move(pos);
-            print_board(pos);
+            // No tests
         }
 
         if (info.quit) break;
