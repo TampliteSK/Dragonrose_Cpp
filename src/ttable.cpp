@@ -96,12 +96,13 @@ void init_hash_table(HashTable& table, const uint16_t MB) {
     return;
 }
 
-bool probe_hash_entry(Board& pos, HashTable& table, int& move, int& score, int alpha, int beta,
+bool probe_hash_entry(Board& pos, HashTable& table, int& move, int& score, uint8_t& hash_flag, int alpha, int beta,
                       int& entry_depth, int depth) {
     int index = pos.hash_key % table.max_entries;
 
     if (table.pTable[index].hash_key == pos.hash_key) {
         move = table.pTable[index].move;
+        hash_flag = table.pTable[index].flags;
         entry_depth = table.pTable[index].depth;
         if (entry_depth >= depth) {
             table.hit++;

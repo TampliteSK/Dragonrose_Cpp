@@ -30,7 +30,8 @@ static inline void init_PVLine(PVLine* line);
 static inline void update_best_line(Board& pos, PVLine* pv);
 
 static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& info, int alpha,
-                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node);
+                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node,
+                                    int excluded_move = NO_MOVE);
 
 /*
         Iterative deepening loop
@@ -188,7 +189,8 @@ static inline int quiescence(Board& pos, HashTable& table, SearchInfo& info, int
     int hash_move = NO_MOVE;
     int hash_score = -INF_BOUND;
     int hash_depth = -1;
-    if (probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, hash_depth, 0)) {
+    uint8_t hash_flag = HFNONE;
+    if (probe_hash_entry(pos, table, hash_move, hash_score, hash_flag, alpha, beta, hash_depth, 0)) {
         table.cut++;
         return hash_score;
     }
@@ -250,7 +252,6 @@ static inline int quiescence(Board& pos, HashTable& table, SearchInfo& info, int
     }
 
     // Store move and score to TT
-    uint8_t hash_flag = HFNONE;
     if (best_score >= beta) {
         hash_flag = HFBETA;
     } else {
@@ -263,13 +264,13 @@ static inline int quiescence(Board& pos, HashTable& table, SearchInfo& info, int
 
 // Negamax Search with Alpha-beta Pruning
 static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& info, int alpha,
-                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node) {
-    check_up(info, false);  // Check if time is up
+                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node,
+                                    int excluded_move) {
+    check_up(info, false);
 
-    // const bool is_leaf = depth == 0;
     const bool is_root = pos.ply == 0;
+    const bool is_singular_search = (excluded_move != NO_MOVE);
 
-    // Update selective depth (seldepth)
     if (pos.ply > info.seldepth) {
         info.seldepth = pos.ply;
     }
@@ -278,29 +279,24 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     uint8_t THEM = US ^ 1;
     bool in_check = is_square_attacked(pos, pos.king_sq[US], THEM);
 
-    // Drop to qsearch at depth 0 or lower
     if (depth <= 0 && !in_check) {
         return quiescence(pos, table, info, alpha, beta, line);
     }
 
-    depth = std::max(depth, 0); // Ensure depth is non-negative
+    depth = std::max(depth, 0);
 
-    // Check draw
     if (!is_root) {
-        // Check draw
         int flag = check_draw(pos, false);
         if (flag != -1) {
             return flag;
         }
     }
 
-    // Max depth reached
     if (pos.ply >= MAX_DEPTH) {
         return evaluate_pos(pos);
     }
 
     // Mate distance pruning
-    // If we have already found a mate, prune nodes where no shorter mate is possible
     alpha = std::max(alpha, -INF_BOUND + (int)pos.ply);
     beta = std::min(beta, INF_BOUND - (int)pos.ply);
     if (alpha >= beta) {
@@ -310,56 +306,43 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     line->length = 0;
     PVLine candidate_PV;
 
-    // Check extension to avoid horizon effect
+    // Check extension
     if (in_check && !is_root) {
         depth++;
     }
 
-    // Transposition table cutoffs
-    // Probe before considering cutoff if it is not root
+    // Transposition table probe.
     int hash_move = NO_MOVE;
     int hash_score = -INF_BOUND;
     int hash_depth = -1;
-    bool tt_hit =
-        probe_hash_entry(pos, table, hash_move, hash_score, alpha, beta, hash_depth, depth);
-    if (tt_hit && !is_root) {
+    uint8_t tt_flag = HFNONE;  // >>> SE
+    bool tt_hit = probe_hash_entry(pos, table, hash_move, hash_score, tt_flag, alpha, beta,
+                                   hash_depth, depth);
+
+    if (tt_hit && !is_root && !is_singular_search) {
         table.cut++;
         return hash_score;
     }
 
-    // Get static eval
     int static_eval = 0;
     if (!in_check) {
         static_eval = evaluate_pos(pos);
     }
 
-    // Whole node pruning
-    if (!in_check && !is_root) {
-        /*
-                Reverse futility pruning
-        */
-        // We prune branches that are too good for us (i.e. too bad for the opponent). The opponent
-        // will likely avoid these branches entirely. If the static eval is significantly better
-        // than beta, then it is likely below alpha for the opponent. Although this is only an
-        // approximation of actual search, static eval is usually a good enough estimate.
-
+    if (!in_check && !is_root && !is_singular_search) {
+        // Reverse futility pruning
         int RFP_margin = beta + 80 * depth;
         if (depth <= 4 && static_eval >= RFP_margin) {
             return static_eval;
         }
 
-        /*
-                Null-move Pruning
-        */
-
-        // Depth thresold and phase check. Null move fails to detect zugzwangs, which are common in
-        // endgames.
+        // Null-move pruning
         if (do_null && depth >= 3) {
             uint8_t big_pieces =
                 count_bits(pos.occupancies[US] ^ pos.bitboards[(US == WHITE) ? wP : bP]);
             if (big_pieces > 1) {
                 make_null_move(pos);
-                uint8_t R = 3 + depth / 3;  // Reduction based on depth
+                uint8_t R = 3 + depth / 3;
                 int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - R,
                                                     &candidate_PV, false, false);
                 take_null_move(pos);
@@ -368,27 +351,12 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
                     return 0;
                 }
 
-                // change these to null_score
                 if (null_score >= beta && abs(null_score) < MATE_SCORE) {
                     return null_score;
                 }
             }
         }
     }
-
-    /*
-        Internal iterative reductions (IIR)
-    */
-    // If the position has not been searched yet (i.e. no hash move), we try searching with reduced
-    // depth to record a move that we can later re-use.
-    /*
-    if (
-            !is_root && depth >= 6 && PV_node
-            && (!tt_hit || (hash_move == NO_MOVE) || (hash_depth <= depth - 4))
-    ) {
-        depth--;
-    }
-    */
 
     MoveList list;
     generate_moves(pos, list, false);
@@ -398,8 +366,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     int best_move = NO_MOVE;
     int best_score = -INF_BOUND;
 
-    // Futility pruning variable
-    int futility_margin = 300 * depth;  // Scale margin with depth
+    int futility_margin = 300 * depth;
 
     sort_moves(pos, list, hash_move);
 
@@ -407,6 +374,11 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         init_PVLine(&candidate_PV);
         int score = -INF_BOUND;
         int curr_move = list.moves[move_num].move;
+
+        // Skip the move we're proving singular
+        if (curr_move == excluded_move) {
+            continue;
+        }
 
         bool is_killer =
             curr_move == pos.killer_moves[0][pos.ply] || curr_move == pos.killer_moves[1][pos.ply];
@@ -417,31 +389,50 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
 
         // Move loop pruning
         if (!is_root && !PV_node && is_quiet && !is_killer && !in_check && !is_mate) {
-            /*
-                Late move pruning
-            */
-            // If we have seen many moves in this position already, and we don't expect
-            // anything from this move, we can skip all the remaining quiets
             uint8_t LMP_offset = 4;
             uint8_t LMP_multiplier = 3;
             if (move_num >= LMP_offset + LMP_multiplier * depth * depth) {
                 continue;
             }
-
-            /*
-                Futility pruning
-            */
-            // Don't skip PV move, captures and killers
             if (depth <= 3 && move_num >= 4) {
-                // Discard moves with no potential to raise alpha
                 if (static_eval + futility_margin <= alpha) {
                     continue;
                 }
             }
         }
 
-        // Check if it's a legal move
-        // The move will be made for the rest of the code if it is
+        /*
+            Singular extensions
+        */
+        int extension = 0;
+        if (!is_root
+            && !is_singular_search
+            && depth >= 8
+            && curr_move == hash_move
+            && hash_depth >= depth - 3
+            && (tt_flag == HFEXACT || tt_flag == HFBETA)
+            && abs(hash_score) < MATE_SCORE) {
+
+            int singular_beta  = hash_score - 3 * depth;
+            int singular_depth = (depth - 1) / 2;
+
+            // Search all moves EXCEPT curr_move at reduced depth, null window.
+            int singular_score = negamax_alphabeta(pos, table, info,
+                                                   singular_beta - 1, singular_beta,
+                                                   singular_depth, &candidate_PV,
+                                                   false, false, curr_move);
+
+            if (singular_score < singular_beta) {
+                extension = 1;                 // TT move is singular → extend
+            } else if (singular_beta >= beta) {
+                return singular_beta;          // Multi-cut: node likely fails high
+            }
+
+            init_PVLine(&candidate_PV);        // reset after the verification search
+        }
+
+        int new_depth = depth - 1 + extension;
+
         if (!make_move(pos, curr_move)) {
             continue;
         }
@@ -451,42 +442,26 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         /*
             Late Move Reductions
         */
-        // We calculate less promising moves at lower depths
+        int reduced_depth = new_depth;
 
-        int reduced_depth = depth - 1;  // We move further into the tree
-
-        // Do not reduce if it's near mating position
-        // Late move: later in the list (in this case move_num >= 4)
         if (depth >= 3 && move_num >= 4 && !is_mate) {
-            // Base reduction based on depth, move number and whether the move is quiet or not
-            int r = std::max(
-                0, (LMR_reduction_table[depth][move_num][(int)is_quiet]));  // Depth to be reduced
-            r += !PV_node;  // Reduce more if not PV-node
-            reduced_depth =
-                std::max(reduced_depth - r, 1);  // Already initialised at depth - 1 earlier
+            int r = std::max(0, (LMR_reduction_table[depth][move_num][(int)is_quiet]));
+            r += !PV_node;
+            reduced_depth = std::max(new_depth - r, 1);
 
-            // Search at reduced depth with null window
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth,
                                        &candidate_PV, true, false);
 
-            // Re-search at full depth still with null window
             if (score > alpha) {
-                score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1,
+                score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, new_depth,
                                            &candidate_PV, true, false);
             }
-        }
-        // Principal variation search (based on Stoat shogi engine by Ciekce)
-        // If we are in a non-PV node, OR we are in a PV-node examining moves after the 1st legal
-        // move
-        else if (!PV_node || legal > 1) {
-            // Perform zero-window search (ZWS) on non-PV nodes
-            score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1,
+        } else if (!PV_node || legal > 1) {
+            score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, new_depth,
                                        &candidate_PV, true, false);
         }
-        // If we're in a PV node and searching the first move, or the score from reduced search beat
-        // alpha, then we search with full depth and alpha-beta window.
         if (PV_node && (legal == 1 || score > alpha)) {
-            score = -negamax_alphabeta(pos, table, info, -beta, -alpha, depth - 1,
+            score = -negamax_alphabeta(pos, table, info, -beta, -alpha, new_depth,
                                        &candidate_PV, true, true);
         }
 
@@ -496,7 +471,6 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
             return 0;
         }
 
-        // Update best_score and best_move
         if (score > best_score) {
             best_score = score;
             best_move = curr_move;
@@ -508,53 +482,52 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
                     }
                     info.fh++;
 
-                    // If the move that caused the beta cutoff is quiet we have a killer move
                     if (!is_capture) {
                         pos.killer_moves[1][pos.ply] = pos.killer_moves[0][pos.ply];
                         pos.killer_moves[0][pos.ply] = curr_move;
-
                         pos.history_moves[get_move_piece(best_move)][get_move_target(best_move)] +=
-                        depth * depth;
+                            depth * depth;
                     }
-
-                    break;  // Fail-high
+                    break;
                 }
 
                 alpha = score;
 
-                // Copy child's PV and prepend the current move (extraction idea from Ethereal)
                 if (PV_node) {
                     line->score = score;
                     line->length = 1 + candidate_PV.length;
                     line->moves[0] = curr_move;
-                    std::memcpy(line->moves + 1, candidate_PV.moves, sizeof(int) * candidate_PV.length);
+                    std::memcpy(line->moves + 1, candidate_PV.moves,
+                                sizeof(int) * candidate_PV.length);
                 }
             }
         }
     }
 
     if (legal == 0) {
+        if (is_singular_search) {
+            return alpha;
+        }
         if (in_check) {
-            // Checkmate
-            return -INF_BOUND + pos.ply;
+            return -INF_BOUND + pos.ply;  // Checkmate
         } else {
-            // Stalemate
-            return 0;
+            return 0;                     // Stalemate
         }
     }
 
-    // Store move and score to TT
-    uint8_t hash_flag = HFNONE;
-    if (best_score >= beta) {
-        hash_flag = HFBETA;
-    } else if (best_score > old_alpha) {
-        hash_flag = HFEXACT;
-    } else {
-        hash_flag = HFALPHA;
+    // Don't pollute the TT with a partial (excluded-move) search.
+    if (!is_singular_search) {
+        uint8_t hash_flag = HFNONE;
+        if (best_score >= beta) {
+            hash_flag = HFBETA;
+        } else if (best_score > old_alpha) {
+            hash_flag = HFEXACT;
+        } else {
+            hash_flag = HFALPHA;
+        }
+        store_hash_entry(pos, table, best_move, best_score, hash_flag, depth);
     }
-    store_hash_entry(pos, table, best_move, best_score, hash_flag, depth);
 
-    // Fail-low
     return best_score;
 }
 
