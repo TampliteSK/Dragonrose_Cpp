@@ -30,7 +30,7 @@ static inline void init_PVLine(PVLine* line);
 static inline void update_best_line(Board& pos, PVLine* pv);
 
 static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& info, int alpha,
-                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node);
+                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node, bool cut_node);
 
 /*
         Iterative deepening loop
@@ -60,7 +60,7 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
         // Do a full-window search for the first few depths as they are unstable
         if (curr_depth < ASP_WIN_DEPTH) {
             best_score = negamax_alphabeta(pos, table, info, -INF_BOUND, INF_BOUND, curr_depth, &pv,
-                                           true, true);
+                                           true, true, false);
         } else {
             alpha = std::max(-INF_BOUND, guess - window_size);
             beta = std::min(guess + window_size, INF_BOUND);
@@ -70,7 +70,7 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
             bool reSearch = true;
             while (reSearch) {
                 best_score =
-                    negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, &pv, true, true);
+                    negamax_alphabeta(pos, table, info, alpha, beta, curr_depth, &pv, true, true, false);
 
                 // Stop researches when out of time
                 if (info.stopped && curr_depth > 1) {
@@ -263,7 +263,7 @@ static inline int quiescence(Board& pos, HashTable& table, SearchInfo& info, int
 
 // Negamax Search with Alpha-beta Pruning
 static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& info, int alpha,
-                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node) {
+                                    int beta, int depth, PVLine* line, bool do_null, bool PV_node, bool cut_node) {
     check_up(info, false);  // Check if time is up
 
     // const bool is_leaf = depth == 0;
@@ -361,7 +361,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
                 make_null_move(pos);
                 uint8_t R = 3 + depth / 3;  // Reduction based on depth
                 int null_score = -negamax_alphabeta(pos, table, info, -beta, -beta + 1, depth - R,
-                                                    &candidate_PV, false, false);
+                                                    &candidate_PV, false, false, !cut_node);
                 take_null_move(pos);
 
                 if (info.stopped) {
@@ -381,7 +381,8 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     */
     // If the position has not been searched yet (i.e. no hash move), we assume it's not a good node 
     if (
-            !is_root && depth >= 6 && PV_node
+            !is_root && depth >= 6 
+            && (PV_node || cut_node)
             && (!tt_hit || (hash_move == NO_MOVE) || (hash_depth <= depth - 4))
     ) {
         depth--;
@@ -464,12 +465,12 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
 
             // Search at reduced depth with null window
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, reduced_depth,
-                                       &candidate_PV, true, false);
+                                       &candidate_PV, true, false, !cut_node);
 
             // Re-search at full depth still with null window
             if (score > alpha) {
                 score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1,
-                                           &candidate_PV, true, false);
+                                           &candidate_PV, true, false, !cut_node);
             }
         }
         // Principal variation search (based on Stoat shogi engine by Ciekce)
@@ -478,13 +479,13 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         else if (!PV_node || legal > 1) {
             // Perform zero-window search (ZWS) on non-PV nodes
             score = -negamax_alphabeta(pos, table, info, -alpha - 1, -alpha, depth - 1,
-                                       &candidate_PV, true, false);
+                                       &candidate_PV, true, false, !cut_node);
         }
         // If we're in a PV node and searching the first move, or the score from reduced search beat
         // alpha, then we search with full depth and alpha-beta window.
         if (PV_node && (legal == 1 || score > alpha)) {
             score = -negamax_alphabeta(pos, table, info, -beta, -alpha, depth - 1,
-                                       &candidate_PV, true, true);
+                                       &candidate_PV, true, true, false);
         }
 
         take_move(pos);
