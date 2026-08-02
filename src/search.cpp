@@ -405,28 +405,35 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
             Singular extensions
         */
         int extension = 0;
-        if (!is_root
+        bool do_singular_search = !is_root
             && !is_singular_search
-            && depth >= 8
+            && depth >= 6
             && curr_move == hash_move
             && hash_depth >= depth - 3
             && (tt_flag == HFEXACT || tt_flag == HFBETA)
-            && abs(hash_score) < MATE_SCORE) {
+            && abs(hash_score) < MATE_SCORE;
+        if (do_singular_search) {
 
-            int singular_beta  = hash_score - 3 * depth;
+            int singular_beta  = hash_score - depth;
             int singular_depth = (depth - 1) / 2;
 
             // Search all moves EXCEPT curr_move at reduced depth, null window.
+            // Set excluded_move to curr_move
             int singular_score = negamax_alphabeta(pos, table, info,
                                                    singular_beta - 1, singular_beta,
                                                    singular_depth, &candidate_PV,
                                                    false, false, curr_move);
 
+            // TT move is singular so we extend
             if (singular_score < singular_beta) {
-                extension = 1;                 // TT move is singular → extend
-            } else if (singular_beta >= beta) {
-                return singular_beta;          // Multi-cut: node likely fails high
+                extension = 1;             
             }
+            /* 
+            // Multi-cut: node likely fails high
+            else if (singular_beta >= beta) {
+                return singular_beta; 
+            }
+            */
 
             init_PVLine(&candidate_PV);        // reset after the verification search
         }
