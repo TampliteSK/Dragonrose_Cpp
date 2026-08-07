@@ -46,6 +46,10 @@ typedef struct {
 } HashTable;
 
 // Functions
+static inline int get_hashfull(const HashTable& table) {
+    return table.num_entries * 1000 / table.max_entries;
+}
+
 int probe_PV_move(const Board& pos, const HashTable& table);
 void get_PV_line(Board& pos, const HashTable& table, const uint8_t depth);
 void clear_hash_table(HashTable& table);

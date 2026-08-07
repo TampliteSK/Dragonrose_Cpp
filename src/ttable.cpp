@@ -151,13 +151,19 @@ void store_hash_entry(Board& pos, HashTable& table, const int move, int score, c
 
     if (!replace) return;  // No need to overwrite the entry
 
+    // Do not increment if overwriting an existing entry
+    if (entry->hash_key == 0) {
+        table.num_entries++;
+    }
     table.new_write++;
-    table.num_entries++;
 
-    if (score > MATE_SCORE)
+
+    if (score > MATE_SCORE) {
         score += pos.ply;
-    else if (score < -MATE_SCORE)
+    }
+    else if (score < -MATE_SCORE) {
         score -= pos.ply;
+    }
 
     entry->hash_key = pos.hash_key;
     entry->flags = flags;

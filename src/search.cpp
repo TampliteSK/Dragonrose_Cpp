@@ -121,12 +121,12 @@ void search_position(Board& pos, HashTable& table, SearchInfo& info) {
             mate_moves = round((INF_BOUND - abs(best_score) - 1) / 2 + 1) * sgn(best_score);
             std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info.seldepth
                       << " score mate " << (int)mate_moves << " nodes " << info.nodes << " nps "
-                      << nps << " hashfull " << table.num_entries * 1000 / table.max_entries
-                      << " time " << time << " pv";
+                      << nps << " hashfull " << get_hashfull(table) << " time " 
+                      << time << " pv";
         } else {
             std::cout << "info depth " << (int)curr_depth << " seldepth " << (int)info.seldepth
                       << " score cp " << best_score << " nodes " << info.nodes << " nps " << nps
-                      << " hashfull " << table.num_entries * 1000 / table.max_entries << " time "
+                      << " hashfull " << get_hashfull(table) << " time "
                       << time << " pv";
         }
 
