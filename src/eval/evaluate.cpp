@@ -174,7 +174,6 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
     int score = 0;
     Bitboard pawns = pos.bitboards[pce];
     uint8_t enemy_pce = (pce == wP) ? bP : wP;
-    bool passers[8] = {false};
 
     while (pawns) {
         uint8_t sq = pop_ls1b(pawns);
@@ -193,7 +192,6 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
         // 2) The pawn on the same or adjacent file(s) are behind the pawn
         Bitboard passer_mask = (col == WHITE) ? white_passer_masks[sq] : black_passer_masks[sq];
         if ((passer_mask & pos.bitboards[enemy_pce]) == 0) {
-            passers[file] = true;
             score += passer_bonus[reference_rank];
         }
 
@@ -237,13 +235,6 @@ static inline int evaluate_pawns(const Board& pos, uint8_t pce, int phase) {
         uint8_t stacked_count = count_bits(pos.bitboards[pce] & file_masks[file]);
         if (stacked_count > 1) {
             score -= stacked_pawn * (stacked_count - 1);  // Scales with the number of pawns stacked
-        }
-
-        // Connected passer bonuses
-        if (file > FILE_A) {
-            if (passers[file] && passers[file - 1]) {
-                score += connected_passers;
-            }
         }
     }
 
