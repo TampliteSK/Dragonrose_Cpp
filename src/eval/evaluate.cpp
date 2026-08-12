@@ -12,6 +12,7 @@
 #include "../datatypes.hpp"
 #include "ScorePair.hpp"
 #include "endgame.hpp"
+#include "nnue.hpp"
 
 // Function prototypes
 static inline uint8_t get_phase(const Board& pos);
@@ -32,11 +33,6 @@ int evaluate_pos(const Board& pos) {
     int score = 0;
     int phase = get_phase(pos);
 
-    Bitboard white_attacks[32] = {0ULL};
-    Bitboard black_attacks[32] = {0ULL};
-    int white_attackers[32] = {0};  // The pieces corresponding to each attack bitboard in piece_attacks
-    int black_attackers[32] = {0};
-
     Bitboard pawns = pos.bitboards[wP] | pos.bitboards[bP];
     bool is_TB_endgame =
         count_bits(pos.occupancies[BOTH]) - pos.piece_num[wP] - pos.piece_num[bP] < 8;
@@ -45,6 +41,24 @@ int evaluate_pos(const Board& pos) {
             return endgame_noise(pos.hash_key % UINT32_MAX, 3);
         }
     }
+
+    // NNUE: cuando esta activada sustituye por completo a la eval clasica.
+    // Se conserva la deteccion de tablas por material de arriba (es una
+    // cuestion de correccion, no de gusto evaluativo) y el amortiguado por
+    // la regla de 50 jugadas. La salida de la red ya viene relativa al lado
+    // que mueve, asi que NO lleva el ajuste de perspectiva del final.
+    if (nnue::is_enabled()) {
+        int nn = nnue::evaluate(pos);
+        if (nn < MATE_SCORE && nn > -MATE_SCORE) {
+            nn = (nn * (100 - pos.fifty_move)) / 100;
+        }
+        return nn;
+    }
+
+    Bitboard white_attacks[32] = {0ULL};
+    Bitboard black_attacks[32] = {0ULL};
+    int white_attackers[32] = {0};  // The pieces corresponding to each attack bitboard in piece_attacks
+    int black_attackers[32] = {0};
 
     bool is_endgame = count_bits(pos.occupancies[BOTH]) < 8;
 

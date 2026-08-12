@@ -15,6 +15,7 @@
 #include "chess/perft.hpp"
 #include "datatypes.hpp"
 #include "eval/evaluate.hpp"
+#include "eval/nnue.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 
@@ -219,6 +220,8 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
                     << std::endl;
             std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
             std::cout << "option name Move Overhead type spin default 75 min 0 max 5000" << std::endl;
+            std::cout << "option name UseNNUE type check default false" << std::endl;
+            std::cout << "option name NNUEFile type string default <empty>" << std::endl;
             std::cout << "uciok" << std::endl;
         } else if (line.substr(0, 26) == "setoption name Hash value ") {
             std::istringstream iss(line.substr(26));  // Extract the relevant substring
@@ -241,6 +244,20 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
             } else {
                 std::cout << "info string Invalid Move Overhead value" << std::endl;
             }
+        } else if (line.substr(0, 30) == "setoption name NNUEFile value ") {
+            std::string path = line.substr(30);
+            while (!path.empty() && (path.back() == '\r' || path.back() == '\n' || path.back() == ' '))
+                path.pop_back();
+            nnue::load(path);
+        } else if (line.substr(0, 29) == "setoption name UseNNUE value ") {
+            bool on = line.find("true") != std::string::npos;
+            if (on && !nnue::is_loaded()) {
+                std::cout << "info string UseNNUE: no hay red cargada, sigue la eval clasica"
+                          << std::endl;
+            }
+            nnue::set_enabled(on);
+            std::cout << "info string UseNNUE = " << (nnue::is_enabled() ? "true" : "false")
+                      << std::endl;
         } else if (line.substr(0, 5) == "print") {
             print_board(pos);
         } else if (line.substr(0, 4) == "eval") {
