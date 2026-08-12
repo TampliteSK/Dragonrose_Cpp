@@ -10,6 +10,8 @@
 #include "movegen.hpp"
 #include "zobrist.hpp"
 
+#include "../eval/nnue.hpp"
+
 // Functions based on VICE makemove.c by Richard Allbert
 // Incrementally updating Board class move by move for better efficiency
 
@@ -28,10 +30,19 @@ static inline void HASH_EP(Board &pos) { pos.hash_key ^= piece_keys[EMPTY][pos.e
         Piece manipulation
 */
 
+// Nota sobre el acumulador NNUE: clear_piece/add_piece/move_piece son las
+// TRES unicas primitivas que tocan piezas, y las usan tanto make_move como
+// take_move (undo). Igual que el hash Zobrist (HASH_PCE, un XOR autoinverso)
+// ya se mantiene incremental desde aqui, el acumulador NNUE se mantiene con
+// suma/resta (tambien autoinversas, ver nnue::on_add_piece/on_remove_piece):
+// no hace falta ninguna pila de "deshacer" aparte, porque take_move llama a
+// estas mismas funciones con los argumentos que revierten exactamente lo que
+// hizo make_move.
 static inline void clear_piece(Board &pos, const int sq) {
     int pce = pos.pieces[sq];
     int col = piece_col[pce];
     HASH_PCE(pos, pce, sq);
+    nnue::on_remove_piece(pce, sq);
 
     pos.pieces[sq] = EMPTY;
     pos.piece_num[pce]--;
@@ -44,6 +55,7 @@ static inline void clear_piece(Board &pos, const int sq) {
 static void add_piece(Board &pos, const int sq, const int pce) {
     int col = piece_col[pce];
     HASH_PCE(pos, pce, sq);
+    nnue::on_add_piece(pce, sq);
 
     pos.pieces[sq] = pce;
     pos.piece_num[pce]++;
@@ -58,12 +70,14 @@ static void move_piece(Board &pos, const int from, const int to) {
     int col = piece_col[pce];
 
     HASH_PCE(pos, pce, from);
+    nnue::on_remove_piece(pce, from);
     pos.pieces[from] = EMPTY;
     CLR_BIT(pos.bitboards[pce], from);
     CLR_BIT(pos.occupancies[col], from);
     CLR_BIT(pos.occupancies[BOTH], from);
 
     HASH_PCE(pos, pce, to);
+    nnue::on_add_piece(pce, to);
     pos.pieces[to] = pce;
     SET_BIT(pos.bitboards[pce], to);
     SET_BIT(pos.occupancies[col], to);

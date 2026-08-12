@@ -10,6 +10,8 @@
 #include "moveio.hpp"
 #include "zobrist.hpp"
 
+#include "../eval/nnue.hpp"
+
 /*
         Macro board manipulation
 */
@@ -242,6 +244,14 @@ void parse_fen(Board& pos, const std::string FEN) {
     pos.hash_key = generate_hash_key(pos);  // Get Zobrist key for the position
 
     update_vars(pos);
+
+    // parse_fen() pone las piezas directamente en pieces[]/bitboards, sin
+    // pasar por add_piece() -- asi que es el unico punto donde hay que
+    // reconstruir el acumulador NNUE entero desde esta posicion "de base".
+    // A partir de aqui, make_move/take_move lo mantienen solos via los
+    // ganchos en clear_piece/add_piece/move_piece. No-op si no hay red
+    // cargada.
+    nnue::refresh(pos);
 }
 
 /*

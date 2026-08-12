@@ -63,6 +63,13 @@ bool g_loaded = false;
 bool g_enabled = false;
 std::string g_desc = "sin red";
 
+// --- Estado del acumulador incremental ---
+// [0] = perspectiva blancas, [1] = perspectiva negras. Solo las primeras
+// g_red.h posiciones de cada fila son significativas.
+int16_t g_acc[2][H_MAX];
+int g_piezas = 0;
+bool g_acc_listo = false;
+
 // Indice de feature en Chess768 visto desde `persp` (0=blancas, 1=negras).
 // Convencion identica a bullet_lib::game::inputs::Chess768: las piezas
 // PROPIAS van al bloque 0..384 y las del rival al 384..768; ademas, desde
@@ -84,6 +91,36 @@ inline void sumar(int16_t* acc, size_t feat) {
         // Suma envolvente deliberada, igual que la referencia.
         acc[j] = static_cast<int16_t>(static_cast<uint16_t>(acc[j]) + static_cast<uint16_t>(col[j]));
     }
+}
+
+// Inversa exacta de sumar(): la aritmetica envolvente sobre i16 hace que
+// sumar seguido de restar (o viceversa) sea la identidad incluso si hubo
+// desbordamiento intermedio.
+inline void restar(int16_t* acc, size_t feat) {
+    const int16_t* col = &g_red.l0w[feat * g_red.h];
+    for (size_t j = 0; j < g_red.h; ++j) {
+        acc[j] = static_cast<int16_t>(static_cast<uint16_t>(acc[j]) - static_cast<uint16_t>(col[j]));
+    }
+}
+
+// Traduce una pieza en codificacion Dragonrose (wP..bK) a (color, tipo)
+// para indexar features. color: 0=blancas, 1=negras. tipo: 0=P..5=K.
+inline void color_y_tipo(int pce, size_t& color, size_t& tipo) {
+    color = (pce <= wK) ? 0u : 1u;
+    tipo = static_cast<size_t>((pce <= wK) ? pce - wP : pce - bP);
+}
+
+// Aplica a g_acc el efecto de anadir/quitar una pieza, en las dos
+// perspectivas a la vez. `sq` en la convencion de casillas de Dragonrose
+// (a8=0..h1=63); se convierte a la convencion de la red (a1=0..h8=63)
+// igual que en refrescar().
+template <void (*Op)(int16_t*, size_t)>
+inline void actualizar_pieza(int pce, int sq_dragonrose) {
+    size_t color, tipo;
+    color_y_tipo(pce, color, tipo);
+    size_t sq = static_cast<size_t>(sq_dragonrose ^ 56);
+    Op(g_acc[0], feature(0, color, tipo, sq));
+    Op(g_acc[1], feature(1, color, tipo, sq));
 }
 
 // Reconstruye los dos acumuladores desde cero y devuelve el numero total
@@ -199,6 +236,10 @@ bool load(const std::string& path) {
     g_red = std::move(nueva);
     g_loaded = true;
     g_desc = std::to_string(h) + " neuronas, " + std::to_string(b) + " output bucket(s)";
+    // Los pesos cambiaron: el acumulador que hubiera de una red anterior ya
+    // no vale nada. Se marca invalido; refresh() lo reconstruye (el llamador
+    // en UciHandler.cpp hace ese refresh justo despues de un load() exitoso).
+    g_acc_listo = false;
     std::cout << "info string NNUE: cargada red de " << g_desc << std::endl;
     return true;
 }
@@ -211,15 +252,49 @@ bool is_enabled() { return g_enabled && g_loaded; }
 
 std::string description() { return g_desc; }
 
+void refresh(const Board& pos) {
+    if (!g_loaded) return;
+    g_piezas = refrescar(pos, g_acc);
+    g_acc_listo = true;
+}
+
+void on_add_piece(int pce, int sq) {
+    if (!g_loaded) return;
+    actualizar_pieza<sumar>(pce, sq);
+    ++g_piezas;
+}
+
+void on_remove_piece(int pce, int sq) {
+    if (!g_loaded) return;
+    actualizar_pieza<restar>(pce, sq);
+    --g_piezas;
+}
+
+bool consistente_con_recalculo(const Board& pos) {
+    if (!g_loaded) return true;
+    int16_t tmp[2][H_MAX];
+    const int piezas = refrescar(pos, tmp);
+    if (piezas != g_piezas) return false;
+    return std::memcmp(g_acc[0], tmp[0], g_red.h * sizeof(int16_t)) == 0 &&
+           std::memcmp(g_acc[1], tmp[1], g_red.h * sizeof(int16_t)) == 0;
+}
+
 int evaluate(const Board& pos) {
-    int16_t acc[2][H_MAX];
-    const int piezas = refrescar(pos, acc);
+    // El acumulador se mantiene incrementalmente (refresh() en parse_fen +
+    // ganchos on_add_piece/on_remove_piece en make/unmake). Si por lo que
+    // sea nunca se inicializo para esta posicion (p.ej. UseNNUE se activo
+    // sin que hubiera una red cargada al hacer el ultimo parse_fen), se
+    // reconstruye aqui como red de seguridad -- no deberia pasar en uso
+    // normal, pero evita evaluar con basura sin inicializar.
+    if (!g_acc_listo) {
+        refresh(pos);
+    }
 
     const bool negras_mueven = (pos.side == BLACK);
-    const int16_t* yo = negras_mueven ? acc[1] : acc[0];
-    const int16_t* rival = negras_mueven ? acc[0] : acc[1];
+    const int16_t* yo = negras_mueven ? g_acc[1] : g_acc[0];
+    const int16_t* rival = negras_mueven ? g_acc[0] : g_acc[1];
 
-    const size_t bk = bucket_de(piezas);
+    const size_t bk = bucket_de(g_piezas);
     const int16_t* w = &g_red.l1w[bk * 2 * H_MAX];
 
     // SCReLU: clamp(x, 0, QA)^2. El cuadrado deja la escala en QA^2*QB, por

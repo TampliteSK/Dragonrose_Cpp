@@ -16,6 +16,7 @@
 #include "datatypes.hpp"
 #include "eval/evaluate.hpp"
 #include "eval/nnue.hpp"
+#include "eval/nnue_check.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
 
@@ -248,12 +249,24 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
             std::string path = line.substr(30);
             while (!path.empty() && (path.back() == '\r' || path.back() == '\n' || path.back() == ' '))
                 path.pop_back();
-            nnue::load(path);
+            if (nnue::load(path)) {
+                // La red cambio (y con ella los pesos que definen el
+                // acumulador): hay que reconstruirlo para la posicion
+                // actual antes de que make_move/take_move sigan
+                // manteniendolo de forma incremental.
+                nnue::refresh(pos);
+            }
         } else if (line.substr(0, 29) == "setoption name UseNNUE value ") {
             bool on = line.find("true") != std::string::npos;
             if (on && !nnue::is_loaded()) {
                 std::cout << "info string UseNNUE: no hay red cargada, sigue la eval clasica"
                           << std::endl;
+            }
+            if (on) {
+                // Por si se activa UseNNUE sin que el acumulador se haya
+                // sincronizado todavia con la posicion actual (orden de
+                // comandos UCI no garantizado).
+                nnue::refresh(pos);
             }
             nnue::set_enabled(on);
             std::cout << "info string UseNNUE = " << (nnue::is_enabled() ? "true" : "false")
@@ -263,6 +276,50 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
         } else if (line.substr(0, 4) == "eval") {
             int eval = evaluate_pos(pos);
             std::cout << "Static evaluation: " << eval << "cp\n";
+        } else if (line.substr(0, 9) == "nnuecheck") {
+            // Comando de depuracion (no UCI estandar): recorre exhaustivamente
+            // el arbol de jugadas legales hasta la profundidad dada, desde
+            // varias posiciones de partida (startpos + FENs con enroque, al
+            // paso y promociones), comprobando en cada nodo que el
+            // acumulador NNUE incremental coincide bit a bit con un
+            // recalculo completo. Uso: "nnuecheck [profundidad]" (defecto 4).
+            if (!nnue::is_loaded()) {
+                std::cout << "info string nnuecheck: no hay red cargada" << std::endl;
+            } else {
+                int profundidad = 4;
+                std::istringstream iss(line.substr(9));
+                iss >> profundidad;
+
+                static const char* FENS[] = {
+                    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                    // Kiwipete: enroques ambos lados, capturas, jaques.
+                    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+                    // Al paso y promociones inminentes en ambos flancos.
+                    "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N w - - 0 1",
+                    // Posicion con enpassant activo.
+                    "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+                };
+
+                uint64_t nodos = 0, fallos = 0;
+                for (const char* fen : FENS) {
+                    Board tmp;
+                    parse_fen(tmp, fen);
+                    nnue_check::Resultado res = nnue_check::verificar(tmp, profundidad);
+                    std::cout << "info string nnuecheck fen=[" << fen << "] nodos=" << res.nodos
+                              << " fallos=" << res.fallos << std::endl;
+                    nodos += res.nodos;
+                    fallos += res.fallos;
+                }
+                std::cout << "info string nnuecheck TOTAL nodos=" << nodos
+                          << " fallos=" << fallos
+                          << (fallos == 0 ? "  -- OK, acumulador incremental consistente"
+                                          : "  -- FALLO, revisar ganchos de makemove.cpp")
+                          << std::endl;
+
+                // El recorrido usa un Board temporal; refrescar el acumulador
+                // para que quede sincronizado con `pos` de nuevo.
+                nnue::refresh(pos);
+            }
         } else if (line.substr(0, 9) == "test") {
             // TODO: Fix hash discrepancy
             std::string test_fen =
