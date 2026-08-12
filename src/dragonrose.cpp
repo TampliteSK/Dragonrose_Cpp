@@ -11,6 +11,7 @@
 #include "chess/Board.hpp"
 #include "chess/bench.hpp"
 #include "eval/evaluate.hpp"
+#include "eval/nnue.hpp"
 #include "init.hpp"
 #include "search.hpp"
 #include "timeman.hpp"
@@ -21,6 +22,15 @@ int main(int argc, char *argv[]) {
 
     auto pos = std::make_unique<Board>();
     reset_board(*pos);
+
+    // NNUE: obligatoriamente incluida en el binario (pesos embebidos) y
+    // activada por defecto. `setoption name UseNNUE value false` la apaga
+    // si hace falta; NNUEFile permite reemplazar los pesos por otro archivo.
+    if (nnue::load_embebida()) {
+        nnue::set_enabled(true);
+        nnue::refresh(*pos);
+    }
+
     auto info = std::make_unique<SearchInfo>();
     init_searchinfo(*info);
     auto hash_table = std::make_unique<HashTable>();

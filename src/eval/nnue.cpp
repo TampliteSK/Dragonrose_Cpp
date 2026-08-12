@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "../datatypes.hpp"
+#include "nnue_pesos_embebidos.hpp"
 
 namespace nnue {
 
@@ -60,7 +61,7 @@ struct Red {
 
 Red g_red;
 bool g_loaded = false;
-bool g_enabled = false;
+bool g_enabled = true;
 std::string g_desc = "sin red";
 
 // --- Estado del acumulador incremental ---
@@ -160,20 +161,13 @@ inline size_t bucket_de(int piezas) {
 
 }  // namespace
 
-bool load(const std::string& path) {
-    std::ifstream f(path, std::ios::binary | std::ios::ate);
-    if (!f) {
-        std::cout << "info string NNUE: no se pudo abrir " << path << std::endl;
-        return false;
-    }
-    const std::streamsize n = f.tellg();
-    f.seekg(0, std::ios::beg);
-    if (n <= 0) {
-        std::cout << "info string NNUE: archivo vacio" << std::endl;
-        return false;
-    }
+namespace {
 
-    const size_t tam = static_cast<size_t>(n);
+// Logica de parseo compartida entre cargar desde archivo y cargar desde los
+// bytes embebidos en el binario. `datos` ya debe contener el archivo
+// completo (utiles + relleno de alineacion).
+bool cargar_desde_bytes(const std::vector<uint8_t>& datos) {
+    const size_t tam = datos.size();
     const Arq* arq = nullptr;
     for (const Arq& a : ARQUITECTURAS) {
         size_t utiles = bytes_utiles(a.h, a.b);
@@ -185,12 +179,6 @@ bool load(const std::string& path) {
     if (arq == nullptr) {
         std::cout << "info string NNUE: tamano " << tam
                   << " no corresponde a ninguna arquitectura conocida" << std::endl;
-        return false;
-    }
-
-    std::vector<uint8_t> datos(tam);
-    if (!f.read(reinterpret_cast<char*>(datos.data()), n)) {
-        std::cout << "info string NNUE: error leyendo el archivo" << std::endl;
         return false;
     }
 
@@ -242,6 +230,38 @@ bool load(const std::string& path) {
     g_acc_listo = false;
     std::cout << "info string NNUE: cargada red de " << g_desc << std::endl;
     return true;
+}
+
+}  // namespace
+
+bool load(const std::string& path) {
+    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    if (!f) {
+        std::cout << "info string NNUE: no se pudo abrir " << path << std::endl;
+        return false;
+    }
+    const std::streamsize n = f.tellg();
+    f.seekg(0, std::ios::beg);
+    if (n <= 0) {
+        std::cout << "info string NNUE: archivo vacio" << std::endl;
+        return false;
+    }
+    std::vector<uint8_t> datos(static_cast<size_t>(n));
+    if (!f.read(reinterpret_cast<char*>(datos.data()), n)) {
+        std::cout << "info string NNUE: error leyendo el archivo" << std::endl;
+        return false;
+    }
+    return cargar_desde_bytes(datos);
+}
+
+bool load_embebida() {
+    std::vector<uint8_t> datos(nnue_pesos_embebidos_bytes,
+                                nnue_pesos_embebidos_bytes + nnue_pesos_embebidos_bytes_len);
+    if (cargar_desde_bytes(datos)) {
+        std::cout << "info string NNUE: red embebida cargada, activada por defecto" << std::endl;
+        return true;
+    }
+    return false;
 }
 
 bool is_loaded() { return g_loaded; }

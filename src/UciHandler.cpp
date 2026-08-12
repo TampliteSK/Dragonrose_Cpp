@@ -221,8 +221,8 @@ void UciHandler::uci_loop(Board& pos, HashTable& table, SearchInfo& info, UciOpt
                     << std::endl;
             std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
             std::cout << "option name Move Overhead type spin default 75 min 0 max 5000" << std::endl;
-            std::cout << "option name UseNNUE type check default false" << std::endl;
-            std::cout << "option name NNUEFile type string default <empty>" << std::endl;
+            std::cout << "option name UseNNUE type check default true" << std::endl;
+            std::cout << "option name NNUEFile type string default <embebida>" << std::endl;
             std::cout << "uciok" << std::endl;
         } else if (line.substr(0, 26) == "setoption name Hash value ") {
             std::istringstream iss(line.substr(26));  // Extract the relevant substring

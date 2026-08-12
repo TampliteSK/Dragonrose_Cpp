@@ -29,6 +29,10 @@ namespace nnue {
 // si el relleno final no es la firma esperada.
 bool load(const std::string& path);
 
+// Carga la red embebida en el binario (pesos de produccion de Mittens,
+// 768->512x2->1). No depende de ningun archivo externo.
+bool load_embebida();
+
 bool is_loaded();
 
 // Activa/desactiva el uso de la red en evaluate_pos(). Apagado por
