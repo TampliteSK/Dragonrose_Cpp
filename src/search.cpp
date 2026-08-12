@@ -567,18 +567,38 @@ static inline void check_up(SearchInfo& info, bool soft_limit) {
     // Check if time is up
     uint64_t time_limit = info.hard_stop_time;
     uint64_t nodes_limit = info.nodes_limit;
-    bool& stopper = info.stopped;
     if (soft_limit) {
         time_limit = info.soft_stop_time;
-        stopper = info.soft_stopped;
     }
 
-    if (info.timeset && (get_time_ms() > time_limit)) {
-        stopper = true;
+    // El limite de nodos es una comparacion en registro: se puede mirar en
+    // cada nodo sin coste.
+    if (info.nodesset && info.nodes > nodes_limit) {
+        if (soft_limit) {
+            info.soft_stopped = true;
+        } else {
+            info.stopped = true;
+        }
+        return;
     }
-    // Check if nodes limit is reached
-    else if (info.nodesset && info.nodes > nodes_limit) {
-        stopper = true;
+
+    if (!info.timeset) return;
+
+    // get_time_ms() era la llamada mas cara del bucle de busqueda (~5% del
+    // perfil): consulta el reloj del sistema y se invocaba en CADA nodo.
+    // Basta con mirarlo cada 2048 nodos; a la velocidad del motor eso es
+    // ~1 ms de retraso en detectar que se acabo el tiempo, muy por debajo
+    // del margen que ya reserva el gestor de tiempo. La comprobacion del
+    // limite blando (una vez por iteracion de profundizacion) no se filtra.
+    constexpr uint64_t MASCARA_RELOJ = 2047;
+    if (!soft_limit && (info.nodes & MASCARA_RELOJ) != 0) return;
+
+    if (get_time_ms() > time_limit) {
+        if (soft_limit) {
+            info.soft_stopped = true;
+        } else {
+            info.stopped = true;
+        }
     }
 }
 

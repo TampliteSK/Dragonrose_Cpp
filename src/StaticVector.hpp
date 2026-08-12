@@ -24,8 +24,18 @@ typedef struct {
 
 template <typename T, std::size_t capacity>
 struct StaticVector {
-    // Initialise everything at creation
-    T moves[capacity] = {};
+    // OJO: `moves` se deja SIN inicializar a proposito.
+    //
+    // Antes llevaba `= {}`, lo que ponia a cero los 280 elementos (2240
+    // bytes) cada vez que se creaba una MoveList, o sea en practicamente
+    // cada nodo de la busqueda. Ese memset salia en el perfil y era trabajo
+    // tirado: la unica forma de escribir en el vector es add_move(), que
+    // rellena SIEMPRE los dos campos de la entrada, y todos los lectores
+    // recorren solo [0, length). Ninguna posicion se lee antes de haberse
+    // escrito, asi que poner a cero el resto no aportaba nada.
+    //
+    // `length` si se inicializa: es lo que delimita la parte valida.
+    T moves[capacity];
     uint16_t length = 0;
 };
 

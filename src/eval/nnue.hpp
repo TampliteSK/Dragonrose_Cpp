@@ -71,6 +71,13 @@ void refresh(const Board& pos);
 void on_add_piece(int pce, int sq);
 void on_remove_piece(int pce, int sq);
 
+// Version fusionada para el caso mas comun con diferencia: una pieza que se
+// mueve de `from` a `to` sin cambiar de tipo. Equivale exactamente a
+// on_remove_piece(pce, from) + on_add_piece(pce, to), pero recorre el
+// acumulador UNA sola vez en vez de dos (mitad de lecturas/escrituras).
+// Sigue siendo autoinversa: take_move llama con (to, from).
+void on_move_piece(int pce, int from, int to);
+
 // Solo para verificacion/tests: compara el acumulador mantenido
 // incrementalmente contra un recalculo completo desde `pos`. true si no
 // hay red cargada (nada que comprobar).

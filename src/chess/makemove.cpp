@@ -69,15 +69,17 @@ static void move_piece(Board &pos, const int from, const int to) {
     int pce = pos.pieces[from];
     int col = piece_col[pce];
 
+    // Una sola pasada por el acumulador NNUE en vez de dos (quitar+poner
+    // fusionados); es el caso mas frecuente del motor con diferencia.
+    nnue::on_move_piece(pce, from, to);
+
     HASH_PCE(pos, pce, from);
-    nnue::on_remove_piece(pce, from);
     pos.pieces[from] = EMPTY;
     CLR_BIT(pos.bitboards[pce], from);
     CLR_BIT(pos.occupancies[col], from);
     CLR_BIT(pos.occupancies[BOTH], from);
 
     HASH_PCE(pos, pce, to);
-    nnue::on_add_piece(pce, to);
     pos.pieces[to] = pce;
     SET_BIT(pos.bitboards[pce], to);
     SET_BIT(pos.occupancies[col], to);
