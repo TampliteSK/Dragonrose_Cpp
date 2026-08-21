@@ -315,7 +315,7 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
     int hash_move = NO_MOVE;
     int hash_score = -INF_BOUND;
     int hash_depth = -1;
-    uint8_t tt_flag = HFNONE;  // >>> SE
+    uint8_t tt_flag = HFNONE; 
     bool tt_hit = probe_hash_entry(pos, table, hash_move, hash_score, tt_flag, alpha, beta,
                                    hash_depth, depth);
 
@@ -404,13 +404,15 @@ static inline int negamax_alphabeta(Board& pos, HashTable& table, SearchInfo& in
         /*
             Singular extensions
         */
+        // Search an additional ply when the move comes from the
+        // Transposition Table and appears to beat all other moves by a fair margin.
         int extension = 0;
         bool do_singular_search = !is_root
             && !is_singular_search
-            && depth >= 6
+            && depth >= 8
             && curr_move == hash_move
             && hash_depth >= depth - 3
-            && (tt_flag == HFEXACT || tt_flag == HFBETA)
+            && tt_flag == HFBETA
             && abs(hash_score) < MATE_SCORE;
         if (do_singular_search) {
 
