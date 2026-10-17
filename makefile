@@ -9,6 +9,8 @@ STD_FLAGS = -std=c++20
 WARN_FLAGS = -Wall -Werror -Wextra -Wno-error=vla -Wpedantic
 
 # Optimization flags: use -Ofast for g++, -O3 otherwise
+OPT_FLAGS = -O3 -ffast-math -march=native -funroll-loops -flto=auto
+
 # First line make sure its not checking for "g++" subtring inside "clang++".
 ifeq ($(findstring clang++,$(CXX)),)
     ifeq ($(findstring g++,$(CXX)),g++)
