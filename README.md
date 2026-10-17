@@ -103,7 +103,8 @@ I would also like to thank:
 ## Playing Strength
 |   Version   | CCRL 2+1 est. | [UBC](https://e4e6.com/) |
 |:-----------:|:-------------:|:-----:|
-| v0.29 (dev) |     ~2455     |   -   |
+|  v0.3 (dev) |     ~2533     |   -   |
+|    v0.28    |     ~2033     |   -   |
 |    v0.25    |     ~2136     | 2157  |
 - CCRL 2+1 rating estimates are obtained from tests against various versions of Stash (v17 - 2295, v20 - 2509).
 - Note that the estimated ratings in the C repo are not accurate, as the engine used in gauntlets are bugged.
@@ -127,7 +128,7 @@ Below are some other metrics:
 0.29 (dev): Completely rewritten from scratch, surpassed 0.28 and 0.25.
 - Eval: Reworked structure and more terms
 - Search: Improved NMP, FP/EFP & LMR. Added PVS, RFP, LMP, MDP. Switched to fail-soft entirely. Added TT probing in QS.
-- Other: Patched misc bugs.
+- Fixed countless bugs that costed >100 elo.
 
 ## To-do list
 - Release at 2500 CCRL (vs. Stash), and then next big release at 3000.
